@@ -1,0 +1,30 @@
+module a;
+
+struct A kind:xmmword
+{
+    uint a;
+    ushort b;
+
+    uint foo()
+    {
+       return a; 
+    }
+}
+
+struct B
+{
+    uint a;
+    ubyte b;
+
+    ubyte bar()
+    {
+       return b; 
+    }
+}
+
+void main()
+{
+    A a;
+    uint b = a.foo();
+    ubyte c = a |> B.bar();
+}
