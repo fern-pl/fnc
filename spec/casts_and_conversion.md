@@ -12,17 +12,56 @@ Notable exceptions to this rule are float, scalar, and arrays, which will never 
 
 Reinterpreting is defined as a direct cast from one type to another, where no bits are lost or gained and field layout is retained across the cast.
 
+Classes will be implicitly dereferenced in order to achieve reinterpret casting.
+
+```
+struct A
+{
+    int a;
+    byte b;
+}
+
+struct B
+{
+    int a;
+    byte b;
+}
+
+// B is implicitly reinterpreted as A, since they have the same field layout
+A foo = B(1, 2);
+```
+
 ### Reorder
 
 Reordering is defined as a light conversion from one type to another, where no bits are lost or gained but field layout is not retained across the conversion.
+
+```
+struct A
+{
+    byte a;
+    int b;
+}
+
+struct B
+{
+    int a;
+    byte b;
+}
+
+// B is implicitly reordered to A, since the field layout needs only reordered.
+A foo = B(1, 2);
+```
 
 ### Promotion and Demotion
 
 Promotion and demotion are defined as casts in which one or more of the types involved are integral, bits may be lost or gained and field layout is irrelevant.
 
-### Dereference Cast
-
-References which may implicitly cast by the 2 above casts may be viable for dereference casting, in which the data at a reference is dereferenced and then subsequently cast to a type.
+```
+// Implicitly demoting a long to an int.
+int a = 8L;
+// Implicitly promoting an int to a long.
+long b = a;
+```
 
 ## Conversion
 
@@ -41,9 +80,35 @@ This same principle applies without members, and may be used like `foo |> B` whe
 
 Fulfillment is defined as a conversion in which as many fields as possible are transfered from one type to another.
 
-For example, suppose we have 2 types `A` and `B`, `A` shares 2 integer fields with `B` but also has an additional field that `B` does not have.
-Fulfillment conversion would allow conversion from `A` to `B`, but a field will be lost in the conversion.
+It is a comptime error for none of the fields in either type to be fulfilled.
+
+```
+struct A
+{
+    int a;
+    short b;
+    long c;
+}
+
+struct B
+{
+    int a;
+    byte b;
+}
+
+// The fields a and b from B are fulfilled in A as well as possible, meaning now the value of a and b in A are the same as they were in B, and c becomes zeroed.
+A foo = B(1, 2) |> A;
+```
 
 ### Array Conversion
 
+This conversion only is necessary when converting **to** an array type, casting from happens implicitly.
+
 Array conversion is defined as conversion in which the length field of the array is the only thing modified, as it adjusts to the correct size based on the element.
+
+```
+long[] foo = [1L];
+// long[] is converted to a byte[8], bounds checking determines if this is safe.
+byte[8] bar = foo |> byte[8];
+// byte[8] is converted to a long[], with the length automatically determined to be 1.
+long[] foo = bar |> long[];

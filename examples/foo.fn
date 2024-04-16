@@ -14,9 +14,9 @@ struct A kind:xmmword
 struct B
 {
     uint a;
-    ubyte b;
+    byte b;
 
-    ubyte bar()
+    byte bar()
     {
        return b; 
     }
@@ -26,5 +26,5 @@ void main()
 {
     A a;
     uint b = a.foo();
-    ubyte c = a |> B.bar();
+    byte c = a |> B.bar();
 }
