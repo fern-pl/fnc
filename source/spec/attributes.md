@@ -2,18 +2,20 @@
 
 ## `kind:`
 
-This attribute is used for defining the allocation strategy of a user-defined type (a `struct`, `class`, or `union`)
+User-defined types with the `kind:x` attribute have their allocation strategy chosen by one of the following kinds. This is not guaranteed to be honored by the implementation, but suggests a certain storage type.
 
 | Kind | Definition |
 |------|------------|
 | `heap` | Allocate on the heap. |
-| `stack` | Allocate on the stack, this may be ignored by the implementation and instead result in default behavior. |
+| `stack` | Allocate on the stack. |
 | `scalar` | Store in scalar registers, the implementation may throw a warning and or use the stack if registers are insufficient for storage. |
 | `float` | Store in float registers. |
 | `xmmword` | Store in `XMM` or appropriate vectors. |
 | `ymmword` | Store in `YMM` or appropriate vectors. |
 | `zmmword` | Store in `ZMM` or appropriate vectors. |
 | `default` | Implementation defined. |
+
+Types with the `kind:heap` attribute are voidable by default and must be constructed to create an instance.
 
 ## `const` 
 
@@ -60,3 +62,7 @@ Functions with the `property` attribute should abide by property syntax which de
 ## `mustuse`
 
 Functions with the `mustuse` attribute return a value which must be assigned to a variable, returned, or otherwise used by the calling code. Failure to do such will cause a comptime error unless the return is converted to `void`.
+
+## `inline`
+
+Functions with the `inline` attribute should be guaranteed inlining by the compiler, failure to inline is a comptime error.

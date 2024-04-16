@@ -96,11 +96,47 @@ Use of `void` or a user-defined type with no members should be treated as a comp
 
 All variable declarations are initialized with zero, this may be prevented by setting the initial value to `void`.
 
+### Alias
+
+Aliases are defined with `alias` or `alias[]` (for an array of aliases) to arbitrarily refer to code, this may be an expression, statement, type, or literal. You may not write to an alias at runtime, as they are evaluated during compilation, but reassignment to an alias at comptime is legal.
+
+Aliases may be instance data if assigned to a variable.
+
+### Generics
+
+Types and functions may declare generic arguments, these are added as an additional set of parameters inside of parenthesis, and aliases may be passed by not stating a type (ie: `(T)`.)
+
 ### Lambdas
 
 Lambdas (`=>`) may be declared in function/property syntax or as inline lambdas such as `a => return a == 1` where the parameter types are inferred.
 
 Use of a lambda for a property will result in the property only having a `get`.
+
+### Constructors and Destructors
+
+Constructors are functions which are used to construct an instance of a type, they are to be called on a type as if the type itself were a function and must be declared with the following syntax:
+
+```
+this(...)
+{
+    ...
+}
+```
+
+Constructors may be called on existing data by use of `foo.ctor()` in which the overload is chosen by the arguments.
+
+Destructors are functions which are used to free an instance of a type, they will be automatically run when freeing or may be directly called using `delete foo` and must be declared with the following syntax:
+
+```
+~this(...)
+{
+    ...
+}
+```
+
+`static` constructors and destructors will be executed the first time that a type is constructed or destructed, and never again.
+
+Neither constructors nor destructors are mandatory, and all types have a default constructor to initialize with zero (will never be void when using the default constructor) as well as a default destructor to free it.
 
 ### Properties
 
