@@ -96,6 +96,32 @@ Use of `void` or a user-defined type with no members should be treated as a comp
 
 All variable declarations are initialized with zero, this may be prevented by setting the initial value to `void`.
 
+### Module
+
+Modules are top level declarations which act like namespaces and may contain lower members inside of it.
+
+A module identifier cannot be used more than once unless the module was declared using the `partial` attribute.
+
+A declaration of a module appears as such `module name;` or `partial module name;` where `name` is the name of the module which is being declared.
+
+### Import
+
+Import declarations are used to import modules to be used, and may be used anywhere within code, with their effects only applicable in the scope which they were declared.
+
+A whole module may be imported with `import name;` where `name` is the name of the module being imported, this may include submodules such as in `import foo.bar;` where the submodule `bar` in `foo` is imported, along with all of the submodules of `bar`.
+
+A selection may be imported with `import name : foo` where `name` is the name of the module being imported from and `foo` is the symbol being imported from the module, the same submodule importing rules apply as with whole module imports.
+
+A public import may be import even to other modules which import the module in which the public import was declared, this can be done like `public import name` where `name` is the name of the module being imported.
+
+```
+module foo;
+
+public import bar;
+```
+
+In this example importing `foo` would result in also importing `bar`.
+
 ### Alias
 
 Aliases are defined with `alias` or `alias[]` (for an array of aliases) to arbitrarily refer to code, this may be an expression, statement, type, or literal. You may not write to an alias at runtime, as they are evaluated during compilation, but reassignment to an alias at comptime is legal.
