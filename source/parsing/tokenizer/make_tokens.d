@@ -1,10 +1,10 @@
-module tokenizer.make_tokens;
+module parsing.tokenizer.make_tokens;
 
 import std.algorithm : find;
 
 import std.utf : decode;
 
-import tokenizer.tokens;
+import parsing.tokenizer.tokens;
 
 import std.stdio;
 

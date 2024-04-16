@@ -1,6 +1,6 @@
 module main;
 
-import tokenizer.make_tokens;
+import parsing.tokenizer.make_tokens;
 
 void main()
 {
