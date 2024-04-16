@@ -1,12 +1,13 @@
 module main;
 
+import parsing.tokenizer.tokens;
 import parsing.tokenizer.make_tokens;
 
 void main()
 {
-	tokenizeText(
+	Token[] tokens = tokenizeText(
 		"
-			module a;
+			module a.test.module{
 
 			struct A kind:xmmword
 			{
@@ -37,4 +38,6 @@ void main()
 				byte c = a |> B.bar();
 			}
 		");
+	import parsing.treegen.gentree;
+	generateGlobalScopeForCompilationUnit(tokens);
 }

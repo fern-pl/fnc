@@ -16,7 +16,8 @@ enum TokenType
     WhiteSpace,
     Equals,
     Unknown,
-    Quotation
+    Quotation,
+    Period
 }
 
 const dchar[] validBraceVarieties = ['{', '}', '(', ')', '[', ']'];
@@ -31,6 +32,23 @@ TokenType getVarietyOfLetter(dchar symbol)
     // But using dchar to allow for easy integration
     if (!isASCII(symbol))
         return TokenType.Unknown;
+
+    switch (symbol)
+    {
+    case '=':
+        return TokenType.Equals;
+    case ';':
+        return TokenType.Semicolon;
+    case ':':
+        return TokenType.Colon;
+    case '|':
+        return TokenType.Pipe;
+    case '.':
+        return TokenType.Period;
+    default:
+        break;
+    }
+
     if (isDigit(symbol))
         return TokenType.Number;
     if (isAlpha(symbol))
@@ -45,15 +63,8 @@ TokenType getVarietyOfLetter(dchar symbol)
         return TokenType.Operator;
     if (validQuotation.find(symbol).length)
         return TokenType.Quotation;
-    if (symbol == '=')
-        return TokenType.Equals;
-    if (symbol == ';')
-        return TokenType.Semicolon;
-    if (symbol == ':')
-        return TokenType.Colon;
-    if (symbol == '|')
-        return TokenType.Pipe;
     return TokenType.Unknown;
+
 }
 
 struct Token
