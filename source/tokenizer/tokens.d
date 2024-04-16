@@ -1,37 +1,58 @@
 module tokenizer.tokens;
 
-import std.ascii : isASCII, isDigit, isAlpha, isAlphaNum;
+import std.ascii : isASCII, isDigit, isAlpha, isAlphaNum, isWhite;
 import std.algorithm : find;
 
 enum TokenType
 {
     Number,
     Operator,
-    Braces,
+    OpenBraces,
+    CloseBraces,
     Letter,
     Semicolon,
+    Colon,
     Pipe,
-    Unknown
+    WhiteSpace,
+    Equals,
+    Unknown,
+    Quotation
 }
 
 const dchar[] validBraceVarieties = ['{', '}', '(', ')', '[', ']'];
+const dchar[] validOpenBraceVarieties = ['{', '(', '['];
+const dchar[] validCloseBraceVarieties = ['}', ')', ']'];
 const dchar[] validOperators = ['<', '>', '+', '-', '*', '/', '%', '~'];
+const dchar[] validQuotation = ['\'', '"', '`'];
 
-TokenType getVarietyOfLetter(dchar letter)
+
+TokenType getVarietyOfLetter(dchar symbol)
 {
     // We do not (yet) support unicode source code. 
     // But using dchar to allow for easy integration
-    if (!isASCII(letter))
+    if (!isASCII(symbol))
         return TokenType.Unknown;
-    if (isDigit(letter))
+    if (isDigit(symbol))
         return TokenType.Number;
-    if (isAlpha(letter))
+    if (isAlpha(symbol))
         return TokenType.Letter;
-    if (validBraceVarieties.find(letter))
-        return TokenType.Braces;
-    if (validOperators.find(letter))
+    if (isWhite(symbol))
+        return TokenType.WhiteSpace;
+    if (validOpenBraceVarieties.find(symbol).length)
+        return TokenType.OpenBraces;
+    if (validCloseBraceVarieties.find(symbol).length)
+        return TokenType.CloseBraces;
+    if (validOperators.find(symbol).length)
         return TokenType.Operator;
-    if (letter == '|')
+    if (validQuotation.find(symbol).length)
+        return TokenType.Quotation;
+    if (symbol == '=')
+        return TokenType.Equals;
+    if (symbol == ';')
+        return TokenType.Semicolon;
+    if (symbol == ':')
+        return TokenType.Colon;
+    if (symbol == '|')
         return TokenType.Pipe;
     return TokenType.Unknown;
 }
