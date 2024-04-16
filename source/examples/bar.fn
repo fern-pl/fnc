@@ -1,0 +1,28 @@
+module bar;
+
+import std.stdio;
+
+union IpAddr
+{
+	V4(byte, byte, byte, byte);
+	V6(string);
+
+	void print()
+	{
+		if (this is IpAddr.V4)
+		{
+			print(this.0, this.1, this.2, this.3);
+		}
+		if (this is IpAddr.V6)
+		{
+			print(this.0);
+		}
+	}
+}
+
+
+void main()
+{
+	auto ip = IpAddr.V4(192, 168, 1, 212);
+	ip.print();
+}
