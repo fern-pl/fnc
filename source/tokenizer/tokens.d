@@ -25,7 +25,6 @@ const dchar[] validCloseBraceVarieties = ['}', ')', ']'];
 const dchar[] validOperators = ['<', '>', '+', '-', '*', '/', '%', '~'];
 const dchar[] validQuotation = ['\'', '"', '`'];
 
-
 TokenType getVarietyOfLetter(dchar symbol)
 {
     // We do not (yet) support unicode source code. 
@@ -60,5 +59,30 @@ TokenType getVarietyOfLetter(dchar symbol)
 struct Token
 {
     TokenType tokenVariety;
-    string value;
+    dchar[] value;
+}
+
+import tern.typecons.common : Nullable;
+
+Nullable!Token nextToken(Token[] tokens, ref size_t index)
+{
+    Nullable!Token found;
+    if (tokens.length >= index)
+        return found;
+    found = tokens[index++];
+    return found;
+}
+
+Nullable!Token nextNonWhiteToken(ref Token[] tokens, ref size_t index)
+{
+    Nullable!Token found;
+    while (tokens.length > index)
+    {
+        Token token = tokens[index++];
+        if (token.tokenVariety == TokenType.WhiteSpace)
+            continue;
+        found = token;
+        break;
+    }
+    return found;
 }
