@@ -19,12 +19,19 @@ enum TokenType
     Unknown,
     Quotation,
     Comment,
-    Period
+    Period,
+    Filler
 }
 
 const dchar[] validBraceVarieties = ['{', '}', '(', ')', '[', ']'];
 const dchar[] validOpenBraceVarieties = ['{', '(', '['];
 const dchar[] validCloseBraceVarieties = ['}', ')', ']'];
+const dchar[dchar] braceOpenToBraceClose = [
+    '{' : '}',
+    '(' : ')',
+    '[': ']'
+];
+
 const dchar[] validOperators = ['<', '>', '+', '-', '*', '/', '%', '~'];
 const dchar[] validQuotation = ['\'', '"', '`'];
 
