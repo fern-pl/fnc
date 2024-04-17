@@ -20,14 +20,30 @@ dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index)
         return [];
 
     size_t ending = input[index .. $].indexOf(endingSymbols);
-    dchar[] comment;
     if (ending == -1)
-       ending = input.length-index;
+        ending = input.length - index;
+
+    dchar[] comment = input[index + 2 .. index + ending];
+    index = min(index + ending + 2, input.length);
+
+    return comment;
+}
+
+dchar[] handleSinglelineCommentsAtIndex(dchar[] input, ref size_t index)
+{
+    if (index + 1 >= input.length)
+        return [];
+    bool isSingleLineComment = isSingleLineComment(input[index], input[index + 1]);
+    if (!isSingleLineComment)
+        return [];
     
-    // ending = input.length;
-    comment = input[index + 2 .. index + ending];
-    index += min(ending + 2, input.length);
-    
+    size_t ending = input[index .. $].findFirstNewLine();
+    if (ending == -1)
+        ending = input.length - index;
+    dchar[] comment = input[index + 3 .. index + ending];
+
+    index = min(index + ending, input.length);
+
     return comment;
 }
 
@@ -55,6 +71,13 @@ private Token[] protoTokenize(string input)
                 tokens ~= Token(TokenType.Comment, comment, startingIndex);
                 continue;
             }
+            comment = handleSinglelineCommentsAtIndex(chars, index);
+            if (comment.length != 0)
+            {
+                tokens ~= Token(TokenType.Comment, comment, startingIndex);
+                continue;
+            }
+
         }
         TokenType tokenType = getVarietyOfLetter(symbol);
         tokens ~= Token(tokenType, [symbol], index);

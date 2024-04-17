@@ -1,7 +1,8 @@
 module parsing.tokenizer.tokens;
 
 import std.ascii : isASCII, isDigit, isAlpha, isAlphaNum, isWhite;
-import std.algorithm : find;
+import std.algorithm : find, min;
+import std.string : indexOf;
 
 enum TokenType
 {
@@ -65,6 +66,27 @@ bool isSingleLineComment(dchar first, dchar secound)
             return true;
     }
     return false;
+}
+
+// 3 different styles of newline are used on different OSes:
+// \n    -  Linux
+// \r\n  -  Windows
+// \r    -  Old MacOS versions (although this is not the ascii deffinition of carriage return)
+size_t findFirstNewLine(in dchar[] input)
+{
+    size_t carriageReturn = input.indexOf('\r');
+    size_t newline = input.indexOf('\n');
+
+    if (carriageReturn == -1 && newline == -1)
+        return -1;
+    if (newline - 1 == carriageReturn)
+        return carriageReturn;
+    if (carriageReturn == -1)
+        return newline;
+    if (newline == -1)
+        return carriageReturn;
+
+    return min(carriageReturn, newline);
 }
 
 TokenType getVarietyOfLetter(dchar symbol)
