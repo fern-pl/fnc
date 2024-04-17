@@ -5,8 +5,8 @@ import parsing.tokenizer.make_tokens;
 
 void main()
 {
-	Token[] tokens = tokenizeText(
-		"/*
+    Token[] tokens = tokenizeText(
+        "/*
     This is an example file in the Fern project, along with an example
     of multi-line comments. Comments are automatically stripped before
     the tokenizing process, like any other language, so this works.
@@ -50,7 +50,7 @@ void main()
 
 }
 		");
-	import parsing.treegen.gentree;
+    import parsing.treegen.gentree;
 
-	generateGlobalScopeForCompilationUnit(tokens);
+    generateGlobalScopeForCompilationUnit(tokens);
 }

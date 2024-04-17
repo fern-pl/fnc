@@ -10,26 +10,24 @@ import parsing.tokenizer.tokens;
 
 import std.stdio;
 
-
 dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index)
 {
-    if (index+1 >= input.length)
+    if (index + 1 >= input.length)
         return [];
-    const(dchar[]) endingSymbols = testMultiLineStyle(input[index], input[index+1]);
-    
-    if (0==endingSymbols.length)
+    const(dchar[]) endingSymbols = testMultiLineStyle(input[index], input[index + 1]);
+
+    if (0 == endingSymbols.length)
         return [];
-    
-    size_t ending = input[index..$].indexOf(endingSymbols);
-    
+
+    size_t ending = input[index .. $].indexOf(endingSymbols);
+
     if (ending == -1)
         assert(false);
-        // ending = input.length;
-    dchar[] comment = input[index+2 .. index + ending];
+    // ending = input.length;
+    dchar[] comment = input[index + 2 .. index + ending];
     index += ending + 3;
     return comment;
 }
-
 
 private Token[] protoTokenize(string input)
 {
@@ -50,8 +48,9 @@ private Token[] protoTokenize(string input)
         {
             size_t startingIndex = index;
             dchar[] comment = handleMultilineCommentsAtIndex(chars, index);
-            if (comment.length != 0){
-                tokens~= Token(TokenType.Comment, comment, startingIndex);
+            if (comment.length != 0)
+            {
+                tokens ~= Token(TokenType.Comment, comment, startingIndex);
                 continue;
             }
         }
