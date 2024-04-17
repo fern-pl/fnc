@@ -8,14 +8,14 @@ Comments in Fern use the syntax `\\` for single-line and `\*..*\` for multi-line
 
 | Type | Definition | Size (b) |
 |------|------------|-------|
-| `int8` | 8-bit signed integer. | 1
-| `uint8` | 8-bit unsigned integer. | 1
-| `int16` | 16-bit signed integer. | 2
-| `uint16` | 16-bit unsigned integer. | 2
-| `int32` | 32-bit signed integer. | 4
-| `uint32` | 32-bit unsigned integer. | 4
-| `int64` | 64-bit signed integer. | 8
-| `uint64` | 64-bit unsigned integer. | 8
+| `byte` | 8-bit signed integer. | 1
+| `ubyte` | 8-bit unsigned integer. | 1
+| `short` | 16-bit signed integer. | 2
+| `ushort` | 16-bit unsigned integer. | 2
+| `int` | 32-bit signed integer. | 4
+| `uint` | 32-bit unsigned integer. | 4
+| `long` | 64-bit signed integer. | 8
+| `ulong` | 64-bit unsigned integer. | 8
 | `float` | 32-bit floating point. | 4
 | `double` | 64-bit floating point. | 8
 | `void` | Represents an untype, may be pointed to but not explicitly declared as a variable. | 1
@@ -87,8 +87,8 @@ An example of struct/class syntax is as follows:
 ```
 struct/class Element
 {
-    int32 kind;
-    int16 value;
+    int kind;
+    short value;
 }
 ```
 
@@ -96,7 +96,7 @@ An example of union syntax is as follows:
 ```
 union IpAddr
 {
-	V4(uint8, uint8, uint8, uint8);
+	V4(ubyte, ubyte, ubyte, ubyte);
 	V6(string);
 }
 ```
