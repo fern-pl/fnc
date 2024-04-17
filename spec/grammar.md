@@ -8,14 +8,14 @@ Comments in Fern use the syntax `\\` for single-line and `\*..*\` for multi-line
 
 | Type | Definition | Size (b) |
 |------|------------|-------|
-| `byte` | 8-bit unsigned integer. | 1
-| `sbyte` | 8-bit signed integer. | 1
-| `short` | 16-bit signed integer. | 2
-| `ushort` | 16-bit unsigned integer. | 2
-| `int` | 32-bit signed integer. | 4
-| `uint` | 32-bit unsigned integer. | 4
-| `long` | 64-bit signed integer. | 8
-| `ulong` | 64-bit unsigned integer. | 8
+| `int8` | 8-bit signed integer. | 1
+| `uint8` | 8-bit unsigned integer. | 1
+| `int16` | 16-bit signed integer. | 2
+| `uint16` | 16-bit unsigned integer. | 2
+| `int32` | 32-bit signed integer. | 4
+| `uint32` | 32-bit unsigned integer. | 4
+| `int64` | 64-bit signed integer. | 8
+| `uint64` | 64-bit unsigned integer. | 8
 | `float` | 32-bit floating point. | 4
 | `double` | 64-bit floating point. | 8
 | `void` | Represents an untype, may be pointed to but not explicitly declared as a variable. | 1
@@ -87,8 +87,8 @@ An example of struct/class syntax is as follows:
 ```
 struct/class Element
 {
-    int kind;
-    short value;
+    int32 kind;
+    int16 value;
 }
 ```
 
@@ -96,7 +96,7 @@ An example of union syntax is as follows:
 ```
 union IpAddr
 {
-	V4(byte, byte, byte, byte);
+	V4(uint8, uint8, uint8, uint8);
 	V6(string);
 }
 ```
@@ -201,6 +201,18 @@ Use of `void` or a user-defined type with no members as the type of a field or v
 
 All declarations are initialized with zero, this may be prevented by setting the initial value to `void`.
 
+### Bitfields 
+
+Bitfields are identical to normal fields besides being constrained to a specified bit size. If a type with fields is constrained by a bitfield, all fields must be able to maintain the same ratio of bits as they initially had or it is a comptime error.
+
+```
+struct A
+{
+    // foo is constrained to 3 bits but acts like a normal field would.
+    T foo : 3;
+}
+```
+
 ### Properties
 
 Properties are special functions which act as fields, they must have the following declaration syntax, both a `get` and `set` are not necessary but you must have one of them.
@@ -261,7 +273,20 @@ Destructors are functions which are used to free an instance of a type, they wil
 
 Neither constructors nor destructors are mandatory. All types will initially have a blank destructor as well as a default constructor which takes optional arguments for all fields.
 
+### Unittest
+
+Unittests are used for executing test code under a unittest build. They function identically to functions besides being automatically run at once and having no return values.
+
+```
+unittest foo
+{
+   ...
+}
+```
+
 ## Attributes
+
+Attributes applied to data or other symbols must be placed on the left side. Attributes applied to functions or types must be placed on the right side.
 
 ### `kind:`
 
