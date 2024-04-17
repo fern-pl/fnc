@@ -6,9 +6,6 @@ import std.stdio;
 
 import tern.typecons.common : Nullable, nullable;
 
-const Token MODULE_KEYWORD = Token(TokenType.Semicolon, [';']) /*tokenizeText("module")[0]*/;
-const Token SEMECOLON_TOKEN = Token(TokenType.Semicolon, [';']);
-
 private struct PossibleNameUnit
 {
     dchar[][] names;
@@ -51,9 +48,6 @@ void generateGlobalScopeForCompilationUnit(Token[] tokens)
     if (firstTokenNullable.ptr == null)
         throw new RequirementFailed("Empty source file detected!");
     Token firstToken = firstTokenNullable;
-
-    if (firstToken != MODULE_KEYWORD)
-        throw new RequirementFailed("Source file must begin with \"module your_package_name;\"");
 
     PossibleNameUnit nameUnit = tokens.genNameUnit(index);
     nameUnit.writeln();

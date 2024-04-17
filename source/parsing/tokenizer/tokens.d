@@ -40,9 +40,10 @@ const dchar[][] validSingleLineCommentStyles = [
 
 const(dchar[]) testMultiLineStyle(dchar first, dchar secound)
 {
-    static foreach (const dchar[][] style; validMultiLineCommentStyles)
+    // validMultiLineCommentStyles.writeln;
+    foreach (const(dchar[][]) style; validMultiLineCommentStyles)
     {
-        if (style[0][0] == first || style[0][1] == secound)
+        if (style[0][0] == first && style[0][1] == secound)
             return style[1];
     }
     return [];
