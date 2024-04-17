@@ -36,7 +36,7 @@ dchar[] handleSinglelineCommentsAtIndex(dchar[] input, ref size_t index)
     bool isSingleLineComment = isSingleLineComment(input[index], input[index + 1]);
     if (!isSingleLineComment)
         return [];
-    
+
     size_t ending = input[index .. $].findFirstNewLine();
     if (ending == -1)
         ending = input.length - index;
@@ -98,12 +98,21 @@ private Token[] groupTokens(Token[] tokens)
     Token[] groupedTokens;
     foreach (Token token; tokens)
     {
+        // Handles numbers with decimals
+        if (token.tokenVariety == TokenType.Period
+            && groupedTokens.length
+            && groupedTokens[$ - 1].tokenVariety == TokenType.Number)
+        {
+            groupedTokens[$ - 1].value ~= token.value;
+            continue;
+        }
 
         if (!groupedTokens.length)
         {
             groupedTokens ~= token;
             continue;
         }
+
         if (groupedTokens[$ - 1].tokenVariety == token.tokenVariety && groupableTokens.find(
                 token.tokenVariety).length)
         {
@@ -118,10 +127,7 @@ private Token[] groupTokens(Token[] tokens)
 
 Token[] tokenizeText(string input)
 {
-    // string strippedText = stripComments(input);
-    // strippedText.writeln;
     Token[] protoTokens = protoTokenize(input);
     Token[] grouped = groupTokens(protoTokens);
-    grouped.writeln;
     return grouped;
 }
