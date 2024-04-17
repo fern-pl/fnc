@@ -38,6 +38,14 @@ const dchar[][] validSingleLineCommentStyles = [
     ['\\', '\\']
 ];
 
+dchar[] makeUnicodeString(in string input)
+{
+    import std.algorithm : map;
+    import std.array : array;
+
+    return (cast(char[]) input).map!(x => cast(dchar) x).array();
+}
+
 const(dchar[]) testMultiLineStyle(dchar first, dchar secound)
 {
     // validMultiLineCommentStyles.writeln;
@@ -124,7 +132,7 @@ Nullable!Token nextNonWhiteToken(ref Token[] tokens, ref size_t index)
     while (tokens.length > index)
     {
         Token token = tokens[index++];
-        if (token.tokenVariety == TokenType.WhiteSpace)
+        if (token.tokenVariety == TokenType.WhiteSpace || token.tokenVariety == TokenType.Comment)
             continue;
         found = token;
         break;

@@ -1,6 +1,6 @@
 module parsing.tokenizer.make_tokens;
 
-import std.algorithm : find;
+import std.algorithm : find, min;
 import std.string : indexOf;
 
 import std.utf : decode;
@@ -20,12 +20,14 @@ dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index)
         return [];
 
     size_t ending = input[index .. $].indexOf(endingSymbols);
-
+    dchar[] comment;
     if (ending == -1)
-        assert(false);
+       ending = input.length-index;
+    
     // ending = input.length;
-    dchar[] comment = input[index + 2 .. index + ending];
-    index += ending + 3;
+    comment = input[index + 2 .. index + ending];
+    index += min(ending + 2, input.length);
+    
     return comment;
 }
 
