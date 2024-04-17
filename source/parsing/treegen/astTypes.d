@@ -9,20 +9,28 @@ struct NameUnit
 
 enum AstAction
 {
-    Keyword, // Standalong keywords Ex: import std.std.io;
+    Keyword,                 // Standalong keywords Ex: import std.std.io;
     Scope,
     DefineFunction,
-    DefineVariable,
-    AssignVariable,
+    DefineVariable,          // Ex: int x;
+    AssignVariable,          // Ex: x = 5;
+    
+    SingleArgumentOperation, // Ex: x++, ++x, |x|, ||x||, -8
+    DoubleArgumentOperation, // Ex: 9+10 
 
-    NamedUnit,
-    LiteralUnit
+    Call,                    // Ex: foo(bar);
+
+    Expression,              // Ex: (4+5*9)
+    NamedUnit,               // Ex: std.io
+    LiteralUnit,             // Ex: 6, 6L, "Hello world"
+
+    TokenHolder              // A temporary Node that is yet to be parsed 
 }
 
 struct KeywordNodeData
 {
     dchar[] keywordName;
-    NameUnit[] keywardArgs;
+    Token[] keywardArgs;
 }
 
 struct DefineFunctionNodeData
@@ -45,6 +53,43 @@ struct AssignVariableNodeData
     AstNode* value;
 }
 
+enum OperationVariety
+{
+    Increment,
+    Decrement,
+    AbsuluteValue,
+    Magnitude,
+
+    Add,
+    Substract,
+    Multiply,
+    Divide,
+    Mod,
+    Pipe,
+
+    BitwiseOr,
+    BitwiseXor,
+    BitwiseAnd,
+    BitshiftLeft,
+    BitshiftRight
+}
+struct SingleArgumentOperationNodeData
+{
+    OperationVariety pperationVariety;
+    AstNode* value;
+}
+struct DoubleArgumentOperationNodeData
+{
+    OperationVariety pperationVariety;
+    AstNode* left;
+    AstNode* right;
+}
+struct CallNodeData
+{
+    NameUnit func;
+    AstNode* args;
+}
+
 struct AstNode
 {
     AstAction action;
@@ -55,8 +100,13 @@ struct AstNode
         DefineFunctionNodeData defineFunctionNodeData; // DefineFunction
         DefineVariableNodeData defineVariableNodeData; // DefineVariable
         AssignVariableNodeData assignVariableNodeData; // AssignVariable
-        NameUnit               namedUnit;             // NamedUnit
-        Token[]                literalUnitCompenents;  // LiteralUnit
 
+        SingleArgumentOperationNodeData singleArgumentOperationNodeData; // SingleArgumentOperation
+        DoubleArgumentOperationNodeData doubleArgumentOperationNodeData; // DoubleArgumentOperation
+        CallNodeData           callNodeData;           // Call
+        AstNode[]              expressionComponents;   // Expression
+        NameUnit               namedUnit;              // NamedUnit
+        Token[]                literalUnitCompenents;  // LiteralUnit
+        Token                  tokenBeingHeld;         // TokenHolder
     }
 }
