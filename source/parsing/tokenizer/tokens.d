@@ -17,6 +17,7 @@ enum TokenType
     Equals,
     Unknown,
     Quotation,
+    Comment,
     Period
 }
 
@@ -25,6 +26,37 @@ const dchar[] validOpenBraceVarieties = ['{', '(', '['];
 const dchar[] validCloseBraceVarieties = ['}', ')', ']'];
 const dchar[] validOperators = ['<', '>', '+', '-', '*', '/', '%', '~'];
 const dchar[] validQuotation = ['\'', '"', '`'];
+
+const dchar[][][] validMultiLineCommentStyles = [
+    [['/', '*'], ['*', '/']],
+    [['/', '+'], ['+', '/']],
+    [['\\', '*'], ['*', '\\']],
+    [['\\', '+'], ['+', '\\']]
+];
+const dchar[][] validSingleLineCommentStyles = [
+    ['/', '/'],
+    ['\\', '\\']
+];
+
+const(dchar[]) testMultiLineStyle(dchar first, dchar secound)
+{
+    static foreach (const dchar[][] style; validMultiLineCommentStyles)
+    {
+        if (style[0][0] == first || style[0][1] == secound)
+            return style[1];
+    }
+    return [];
+}
+
+bool isSingleLineComment(dchar first, dchar secound)
+{
+    static foreach (const dchar[] style; validSingleLineCommentStyles)
+    {
+        if (style[0] == first || style[0] == secound)
+            return true;
+    }
+    return false;
+}
 
 TokenType getVarietyOfLetter(dchar symbol)
 {
@@ -71,6 +103,7 @@ struct Token
 {
     TokenType tokenVariety;
     dchar[] value;
+    size_t startingIndex;
 }
 
 import tern.typecons.common : Nullable;

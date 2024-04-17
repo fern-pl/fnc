@@ -1,5 +1,6 @@
 module parsing.compolation;
 
-struct CompalationUnit{
+struct CompalationUnit
+{
 
 }

@@ -6,7 +6,7 @@ import std.stdio;
 
 import tern.typecons.common : Nullable, nullable;
 
-const Token MODULE_KEYWORD = tokenizeText("module")[0];
+const Token MODULE_KEYWORD = Token(TokenType.Semicolon, [';']) /*tokenizeText("module")[0]*/;
 const Token SEMECOLON_TOKEN = Token(TokenType.Semicolon, [';']);
 
 private struct PossibleNameUnit
@@ -24,14 +24,14 @@ PossibleNameUnit genNameUnit(Token[] tokens, ref size_t index)
     if (tokenNullable.ptr == null)
         return ret;
     token = tokenNullable;
-    
-    while (token.tokenVariety == TokenType.Letter || token.tokenVariety == TokenType.Period){
 
-        
+    while (token.tokenVariety == TokenType.Letter || token.tokenVariety == TokenType.Period)
+    {
+
         if (token.tokenVariety == TokenType.Period)
             continue;
-        
-        ret.names~=token.value;
+
+        ret.names ~= token.value;
         tokenNullable = tokens.nextToken(index);
 
         // We hit an EOF
@@ -47,7 +47,6 @@ void generateGlobalScopeForCompilationUnit(Token[] tokens)
 {
     size_t index = 0;
     Nullable!Token firstTokenNullable = tokens.nextNonWhiteToken(index);
-    
 
     if (firstTokenNullable.ptr == null)
         throw new RequirementFailed("Empty source file detected!");
@@ -55,7 +54,7 @@ void generateGlobalScopeForCompilationUnit(Token[] tokens)
 
     if (firstToken != MODULE_KEYWORD)
         throw new RequirementFailed("Source file must begin with \"module your_package_name;\"");
-    
+
     PossibleNameUnit nameUnit = tokens.genNameUnit(index);
     nameUnit.writeln();
 }
