@@ -33,6 +33,9 @@ private Token OPR(dchar o){
 
 const OperatorPrecedenceLayer[] operatorPrecedence = [
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+        // TODO: Unary
+    ]),
+    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
         OperationPrecedenceEntry(OperationVariety.PreIncrement, [OPR('+'), OPR('+'), Token(TokenType.Filler)]),
         OperationPrecedenceEntry(OperationVariety.PreDecrement, [OPR('-'), OPR('-'), Token(TokenType.Filler)]),
         OperationPrecedenceEntry(OperationVariety.PostIncrement, [Token(TokenType.Filler), OPR('+'), OPR('+')]),

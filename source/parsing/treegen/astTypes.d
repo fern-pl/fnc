@@ -82,7 +82,7 @@ enum OperationVariety
     BitwiseOr,
     BitwiseXor,
     BitwiseAnd,
-    
+
     BitwiseNotEq,
     BitwiseOrEq,
     BitwiseXorEq,
@@ -172,4 +172,9 @@ struct AstNode
         }
         sink("}");
     }
+}
+
+struct ScopeParsingMode{
+    bool allowDefiningObjects;
+    bool allowDefiningFunctions;
 }
