@@ -21,11 +21,11 @@ Literal suffixes are suffixes which may be appended to a literal to change the w
 
 ## Comments, Terminators, and Scopes
 
-`[//][\\] comment`
+`// comment`
 
-`[/*][\*] multi-line comment [*/][*\]`
+`/* multi-line comment */`
 
-Comments in Fern use the syntax `\\` or `//` for single-line and `/*..*/` or `/*..*/` for multi-line.
+Comments in Fern use the syntax `\\` for single-line and `/*..*/` for multi-line.
 
 `[type] name;`
 

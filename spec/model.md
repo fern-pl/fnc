@@ -38,7 +38,7 @@ void baz(long a) : foo;
 
 ### Type Inheritance
 
-Types may inherit from other types, causing all members to be inherited. If the inheriting type has a member identical to an inherited type, the inheritance of that member will be ignored (retaining only one.) 
+Types may inherit from other types, causing all members to be inherited. If the inheriting type has a member identical to an inherited type, the inheritance of that member will be ignored (retaining only one.)
 
 An inherited type must have at least one member to inherit, not have any non-abstract member collisions, and not be a builtin, array, pointer, or tagged, or a comptime error is thrown.
 
