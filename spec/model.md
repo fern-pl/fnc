@@ -6,7 +6,7 @@ This is intended to be without compromise, errors will be thrown if Fern cannot 
 
 ## Versioning and Contracts
 
-Versioning may be done by using `static if` to influence code generation, and various flags are provided to aid in this. The `debug` keyword is provided to selectively compile a line or scope if targeting debug build.
+Versioning may be done by using `static if` to influence code generation alongside [compilation symbols](lexical.md#special-symbols). The `debug` keyword is provided to selectively compile a line or scope if targeting debug build.
 
 ## Memory Management
 

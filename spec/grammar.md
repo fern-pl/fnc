@@ -116,6 +116,8 @@ Pointers are natively sized integers which point to memory, they may be created 
 
 Pointers may be represented as `void*`, `nint`, `nuint`, or appending `*` to the end of a type.
 
+> Pointers share operators with static arrays, meaning they may be sliced, indexed, and so on.
+
 > Pointers are cumulative, meaning that you can point to pointers and so on.
 
 ### User-defined Types
@@ -145,6 +147,12 @@ tagged IpAddr
 
 All types may, but not must, contain member declarations, and the above are only examples.
 
+### Tagged
+
+`(types..)`
+
+Tagged may be implicitly created by wrapping multiple types in parenthesis, like `(int, short) foo` where `foo` is one of `int` and `short`.
+
 ## Functions
 
 `[type] name([(parameters)]) { .. }`
@@ -159,6 +167,10 @@ T foo(...)
     ...
 }
 ```
+
+Functions that return a type other than `void` must have a return value. This can be done by using `return`, which may be used as a variable that will be returned at the end of the function, or as a `return;` statement which would cause an early return of the function.
+
+Setting or modifying the value of `return` does not have any effect in a `void` function, but the `return;` statement will always lead to an early return.
 
 ### Parameters and Arguments
 
@@ -434,15 +446,3 @@ Statements are declarations which have special executive functionality, Fern def
 | `with` | Used to declare a scope in which all function calls are first evaluated as members of a variable. |
 | `break` | Exits the current scope. |
 | `continue` | Continues to the next iteration in a loop. |
-
-### Static
-
-Fern defines static statements as statements which may be evalutated at comptime. Statements may be speculated and executed at comptime, but also may be explicitly declared if they are of the following:
-
-| Statement |
-|-----------|
-| `static if` |
-| `static foreach` |
-| `static foreach_reverse` |
-| `static while` |
-| `static switch` |

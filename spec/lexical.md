@@ -42,6 +42,7 @@ Scopes in Fern are started and ended using curly brackets.
 | Keyword | Definition |
 |---------|------------|
 | `this` | Refers to the parent instance of the scope in which it was used, it is a comptime error if the scope has no instance. |
+| `return` | [Return](grammar.md#functions)
 | `delete` | [Destruct](grammar.md#constructors-and-destructors) |
 | `bool` | [Builtin](grammar.md#builtins)
 | `true` | [Builtin](grammar.md#builtins)
@@ -83,7 +84,7 @@ Scopes in Fern are started and ended using curly brackets.
 | `struct` | [Type](grammar.md#user-defined-types)
 | `class` | [Type](grammar.md#user-defined-types)
 | `tagged` | [Type](grammar.md#user-defined-types)
-| `unittest` | [Function Pointer](grammar.md#unittest)
+| `unittest` | [Unittest](grammar.md#unittest)
 | `function` | [Function Pointer](grammar.md#function-and-delegate-pointer-types)
 | `delegate` | [Function Pointer](grammar.md#function-and-delegate-pointer-types)
 | `if` | [Statement](grammar.md#statements)
