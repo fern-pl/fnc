@@ -1,10 +1,40 @@
-## Grammar
+# Grammar
 
-## Comments
+## Module
 
-Comments in Fern use the syntax `\\` for single-line and `\*..*\` for multi-line.
+`module name`
 
-## Builtin Types
+Modules are top level declarations which act like namespaces and may contain lower members inside of it.
+
+A module identifier cannot be used more than once unless the module was declared using the `partial` attribute.
+
+A declaration of a module appears as such `module name;` or `partial module name;` where `name` is the name of the module which is being declared.
+
+## Import
+
+`import name`
+
+Import declarations are used to import modules to be used, and may be used anywhere within code, with their effects only applicable in the scope which they were declared.
+
+A whole module may be imported with `import name;` where `name` is the name of the module being imported, this may include submodules such as in `import foo.bar;` where the submodule `bar` in `foo` is imported, along with all of the submodules of `bar`.
+
+A selection may be imported with `import name : foo` where `name` is the name of the module being imported from and `foo` is the symbol being imported from the module, the same submodule importing rules apply as with whole module imports.
+
+A public import may be import even to other modules which import the module in which the public import was declared, this can be done like `public import name` where `name` is the name of the module being imported.
+
+```
+module foo;
+
+public import bar;
+```
+
+In this example importing `foo` would result in also importing `bar`.
+
+## Types
+
+### Builtins
+
+The following types are built into Fern, and may be used without any imports:
 
 | Type | Definition | Size (b) |
 |------|------------|-------|
@@ -28,28 +58,11 @@ Comments in Fern use the syntax `\\` for single-line and `\*..*\` for multi-line
 | `wstring` | A string formed out of `wchar` | variable (array)
 | `dstring` | A string formed out of `dchar` | variable (array)
 
-| Integer Literal Suffix | Definition |
-|------------------------|------------|
-| `u` | Unsigned. |
-| `U` | Signed. |
-| `L` | 64-bit integer. |
+Strings are defined as dynamic arrays if their value is not known at comptime, or static arrays if their value is known at comptime (ie: string literals.)
 
-Strings are defined as dynamic arrays if their value is not known at comptime, or static arrays if their value is known at comptime (ie: string literals through use of the below.)
+#### Operators
 
-String literals may be defined using `q{...}` or `"..."`, when using the latter syntax `d` or `w` may be prepended to dictate the size of the characters (`dchar` or `wchar`) or `r` to dictate that all escapes are ignored. 
-
-## Arrays
-
-Fern defines 2 kinds of arrays, static arrays and dynamic arrays.
-Upon construction, all arrays may use the syntax `T[x]` to define their length.
-
-Dynamic arrays may be created out of any type using the syntax `T[]` and they store their length and pointer to data as fields `length` and `ptr`.
-
-Static arrays must have their length known at comptime and may be created out of any type using the syntax `T[L]` where `L` is the length of the array. Unlike dynamic arrays, static arrays do not store data by reference, and instead are value-types. However, they still retain comptime data for `length` and `ptr` gets a pointer to the data.
-
-Static arrays may not be concatenated through use of `~`, however they still must have their length initialized at first.
-
-## Operators
+Operators are a builtin part of the language used to perform certain operations. All of these may be overloaded and functionality varies, but should by default apply by normal rationality.
 
 | Operator | Definition |
 |----------|------------|
@@ -72,16 +85,27 @@ The following operators are defined as op-assign, meaning that they perform the 
 | `+=` `-=` `*=` `/=` `%=` `^^=` `~=` |
 | `<<=` `>>=` `<<<=` `^=` `&=` `\|=` |
 
-## User-defined Types
+### Arrays
+
+`T[]`
+
+`T[L]`
+
+Fern defines 2 kinds of arrays, static arrays, dynamic arrays.
+Upon construction, all arrays may use the syntax `T[x]` to define their length.
+
+Dynamic arrays may be created out of any type using the syntax `T[]` and they store their length and pointer to data as fields `length` and `ptr`.
+
+Static arrays must have their length known at comptime and may be created out of any type using the syntax `T[L]` where `L` is the length of the array. Unlike dynamic arrays, static arrays do not store data by reference, and instead are value-types. However, they still retain comptime data for `length` and `ptr` gets a pointer to the data.
+
+Static arrays may not be concatenated through use of `~`, however they still must have their length initialized at first.
+
+### User-defined Types
+
+`[aggregation] name`
 
 Fern declares 3 different kinds of user-defined types.
 A type with no members has a minimum size of 1 byte, however it may also not be explicitly used to declare a variable.
-
-| Keyword | Definition |
-|---------|------------|
-| `struct` | A value-type, typically will have a `kind:default` of `kind:stack`. |
-| `class` | A reference type, typically will have a `kind:default` of `kind:heap`. |
-| `union` | A union/sum-type, typically will have a `kind:default` of `kind:stack` |
 
 An example of struct/class syntax is as follows:
 ```
@@ -103,80 +127,11 @@ union IpAddr
 
 All types may, but not must, contain member declarations, and the above are only examples.
 
-## Declarations
+## Functions
 
-Semicolons are not mandatory in Fern, however, they are also not removed explicitly from the language and can be used as you please.
-Fern is **not** whitespace dependent, meaning that you may use any symbol whereever you want, so long as it is ordered correctly.
+`[type] name { .. }`
 
-### Module
-
-Modules are top level declarations which act like namespaces and may contain lower members inside of it.
-
-A module identifier cannot be used more than once unless the module was declared using the `partial` attribute.
-
-A declaration of a module appears as such `module name;` or `partial module name;` where `name` is the name of the module which is being declared.
-
-### Import
-
-Import declarations are used to import modules to be used, and may be used anywhere within code, with their effects only applicable in the scope which they were declared.
-
-A whole module may be imported with `import name;` where `name` is the name of the module being imported, this may include submodules such as in `import foo.bar;` where the submodule `bar` in `foo` is imported, along with all of the submodules of `bar`.
-
-A selection may be imported with `import name : foo` where `name` is the name of the module being imported from and `foo` is the symbol being imported from the module, the same submodule importing rules apply as with whole module imports.
-
-A public import may be import even to other modules which import the module in which the public import was declared, this can be done like `public import name` where `name` is the name of the module being imported.
-
-```
-module foo;
-
-public import bar;
-```
-
-In this example importing `foo` would result in also importing `bar`.
-
-### Alias
-
-Aliases are defined with `alias` or `alias[]` (for an array of aliases) to arbitrarily refer to any symbol or value. You may not write to an alias at runtime, as they are evaluated during compilation, but reassignment to an alias at comptime is legal.
-
-Aliases may be instance data if assigned to a variable and are able to be used in replacement of any symbol anywhere in code.
-
-```
-alias foo = 1;
-
-// This function will be evaluated at comptime
-void bar() pure
-{
-    // foo now contains a direct alias to bar, this allows us to use foo like it is that symbol.
-    foo = bar;
-
-    // foo now contains a direct alias to int.
-    foo = int;
-
-    // Declared a variable with the type of int because it's the symbol stored in foo.
-    foo a = 2;
-}
-```
-
-### Generics
-
-Types and functions may declare generic arguments, these are added as an additional set of parameters inside of parenthesis, and aliases may be passed by not stating a type (ie: `(T)`.)
-
-Assignment of generic arguments uses the syntax `!(...)` or `!...` if you are passing a single argument.
-
-```
-// T acts as an alias to a symbol, in this case a type.
-T foo(T)(T a)
-{
-    return a;
-}
-
-foo!int(1);
-// or foo!(int)(1);
-```
-
-### Functions
-
-Functions must follow the proceeding syntax:
+Functions are executable code with parameters.
 
 ```
 T foo(...)
@@ -185,35 +140,33 @@ T foo(...)
 }
 ```
 
-If a function has void as its return type it will have no return value.
+### Delegates and Function Pointers
 
-### Fields and Variables
+`[(parameters)] { ... }`
 
-Fields and variables both must follow the proceeding syntax:
+Delegates are scope-independent variable functions which may be passed around and called, they are identical to function pointers in practice, but store context data meaning they are aware of `this`.
 
-```
-T foo;
-// We avoid initialization here.
-T foo = void;
-```
+You may explicitly create a delegate, but functions and function pointers will also become delegates implicitly.
 
-Use of `void` or a user-defined type with no members as the type of a field or variable should be treated as a comptime error, you may get around this through aliasing.
+### Lambdas
 
-All declarations are initialized with zero, this may be prevented by setting the initial value to `void`.
+`[parameters] => ..`
 
-### Bitfields 
+Lambdas may be declared in function/property syntax or as inline lambdas such as `a => return a == 1` where the parameter types are inferred and a delegate is constructed based on the lambda.
 
-Bitfields are identical to normal fields besides being constrained to a specified bit size. If a type with fields is constrained by a bitfield, all fields must be able to maintain the same ratio of bits as they initially had or it is a comptime error.
+Use of a lambda for a property will result in the property only having a `get`.
 
 ```
-struct A
-{
-    // foo is constrained to 3 bits but acts like a normal field would.
-    T foo : 3;
-}
+// foo will always return 1.
+int foo() => 1;
+
+// foo is a property that will always return 1.
+property int foo() => 1;
 ```
 
 ### Properties
+
+`property [type] name { [get { .. }] [set { .. }]`
 
 Properties are special functions which act as fields, they must have the following declaration syntax, both a `get` and `set` are not necessary but you must have one of them.
 
@@ -233,21 +186,11 @@ property T foo()
 
 This may be accessed in code as such `T foo_value = foo` or `foo = new_foo_value`.
 
-### Lambdas
-
-Lambdas (`=>`) may be declared in function/property syntax or as inline lambdas such as `a => return a == 1` where the parameter types are inferred.
-
-Use of a lambda for a property will result in the property only having a `get`.
-
-```
-// foo will always return 1.
-int foo() => 1;
-
-// foo is a property that will always return 1.
-property int foo() => 1;
-```
-
 ### Constructors and Destructors
+
+`this[(parameters)] { .. }`
+
+`~this[(parameters)] { .. }`
 
 Constructors are functions which are used to construct an instance of a type, they are to be called on a type as if the type itself were a function and must be declared with the following syntax:
 
@@ -275,6 +218,8 @@ Neither constructors nor destructors are mandatory. All types will initially hav
 
 ### Unittest
 
+`unittest [name] { .. }`
+
 Unittests are used for executing test code under a unittest build. They function identically to functions besides being automatically run at once and having no return values.
 
 ```
@@ -284,11 +229,60 @@ unittest foo
 }
 ```
 
+## Fields and Variables
+
+`[type] name`
+
+A field, return value, or parameter are variables, but variables are not a field, return value, or parameter. This distinction is important.
+
+Use of `void` or a user-defined type with no members as the type of a field or variable should be treated as a comptime error, you may get around this through aliasing.
+
+All declarations are initialized with zero, this may be prevented by setting the initial value to `void`.
+
+#### Bitfields
+
+`[type] name : [bits]`
+
+Bitfields are identical to normal variables besides being constrained to a specified bit size. If a type with variables is constrained by a bitfield, all fields must be able to maintain the same ratio of bits as they initially had or it is a comptime error.
+
+Despite the deceiving name, bitfields may apply to any variable.
+
+```
+struct A
+{
+    // foo is constrained to 3 bits but acts like a normal field would.
+    T foo : 3;
+}
+```
+
 ## Attributes
 
-Attributes applied to data or other symbols must be placed on the left side. Attributes applied to functions or types must be placed on the right side.
+`[attributes] [arregation] name..`
 
-### `kind:`
+`[attributes] [type] name..`
+
+Attributes are special metadata which may be applied to certain things. They do not necessarily indicate special functionality but may be assigned such.
+
+| Attribute | Definition | Applicable |
+|-----------|------------|------------|
+| `public` | Public accessibility, may be accessed anywhere. | All |
+| `private` | Private accessibility, may only be accessed by the same declaration it is a part of. | All |
+| `internal` | Internal accessibility, may only be accessed by the same package as it was declared. | All |
+| `static` | Data is stored globally rather than by-instance. | Variables |
+| `partial` | May be distributed across several declarations of the given symbol, allows for splitting across multiple files. | Types, Modules |
+| `pure` | Does not modify any state except its parent type (if it has any.) | Function |
+| `unsafe` | Ignores all safety checks usually applied to functions. | Function |
+| `@tapped` | Ignores all attributes that may be inferred or applied to the parent scope(s). | Function |
+| `inline` | Guarantees that a function is inlined by the compiler or an error is thrown. | Function |
+| `const` | Immutable, including by any direct references, does not indicate read-only memory. | Variables |
+| `auto` | Infers type at comptime, similar to type aliasing but implicit. | Variables |
+| `ref` | Carries a reference to data. | Parameters, Return Values |
+| `mustuse` | Must be used or cast to `void` or an error is thrown. | Return Values |
+| `align(n)` | Aligns data to the given boundary `n` which must be a power of 2 and supplied. | Fields |
+
+### `kind:x`
+
+`[aggregation] name kind:[x]`
 
 User-defined types with the `kind:x` attribute have their allocation strategy chosen by one of the following kinds. This is not guaranteed to be honored by the implementation, but suggests a certain storage type.
 
@@ -296,65 +290,107 @@ User-defined types with the `kind:x` attribute have their allocation strategy ch
 |------|------------|
 | `heap` | Allocate on the heap. |
 | `stack` | Allocate on the stack. |
-| `scalar` | Store in scalar registers, the implementation may throw a warning and or use the stack if registers are insufficient for storage. |
+| `scalar` | Store in scalar registers. |
 | `float` | Store in float registers. |
 | `xmmword` | Store in `XMM` or appropriate vectors. |
 | `ymmword` | Store in `YMM` or appropriate vectors. |
 | `zmmword` | Store in `ZMM` or appropriate vectors. |
 | `default` | Implementation defined. |
 
-Types with the `kind:heap` attribute are voidable by default and must be constructed to create an instance.
+Types with the `kind:heap` attribute are `voidable` by default and must be constructed to create an instance.
 
-### `const` 
+### `voidable`
 
-Variables with the `const` attribute are immutable, including by any direct references, however, they are not necessarily stored in read-only memory.
+`type[?] name`
 
-### `pure`
+Any variable may be `voidable` by appending `?` to the end of the provided type. Declaring a variable as such will result in it being able to evaluate to `void`, this is indicates that no value has been assigned to it and is fundamentally different from being zeroed, as it exists as a separate state.
 
-Functions with the `pure` attribute declare that they will have the same output for every same input and do not read or write global state.
+### User-defined Attributes
 
-If a `pure` function resides within a user-defined type, the function is assumed to have the same output for every same input and is able to read and write the state of the type it resides in.
+`[@][symbol] [aggregation] name..`
 
->This may be confusing, but just know that the type which the `pure` function nests in is not considered to be global state, and it acts as if it has a first parameter of that type.
+`[@][symbol] [type] name..`
 
-### `partial`
+User-defined attributes may be created by simply prepending `@` before a symbol.
 
-User-defined types and modules may be declared partial, meaning that they may be declared again later and all declarations will be merged during compilation.
+## Symbols and Aliases
 
-For instance, one may declare a `partial struct A` in one file, and declare `partial struct A` again in another file, and the final output will result in a single `struct A`
+A symbol is any literal, statement, or otherwise declaration.
 
-### `ref`
+Aliases are defined with `alias` or `alias[]` (for an array of aliases) to arbitrarily refer to any symbol or value. You may not write to an alias at runtime, as they are evaluated during compilation, but reassignment to an alias at comptime is legal.
 
-Parameters and return values with the `ref` attribute will pass data by reference implicitly.
+Aliases may be instance data if assigned to a variable and are able to be used in replacement of any symbol anywhere in code.
 
-All other use of `ref` is invalid and should be treated as a comptime error.
+```
+alias foo = 1;
 
-### `unsafe`
+// This function will be evaluated at comptime
+void bar() pure
+{
+    // foo now contains a direct alias to bar, this allows us to use foo like it is that symbol.
+    foo = bar;
 
-Functions with the `unsafe` attribute have all non-fatal language safety checks disabled.
+    // foo now contains a direct alias to int.
+    foo = int;
 
-### `auto`
+    // Declared a variable with the type of int because it's the symbol stored in foo.
+    foo a = 2;
+}
+```
 
-Variables (and parameters) with the `auto` attribute infer their types based on input, despite being an attribute, you may not have both `auto` and a type declaration for data.
+### Generics
 
-### `static`
+`name[(parameters)]`
 
-Members with the `static` attribute have their data shared on a by-type basis, rather than by-instance.
+Parameters must be typed as they are normally typed, however, aliases to arbitrary symbols must have the format `alias name` and type symbols may have the format `name` where neither `alias` nor a type is declared.
 
-Variables with the `static` attribute have their data shared across all instances of that same variable.
+`!([arguments])`
 
-### `property`
+`![argument]`
 
-Functions with the `property` attribute should abide by property syntax which declares that they act as a field but may execute code and must return a value that is not `void`.
+Types and functions may declare generic arguments, these are added as an additional set of parameters inside of parenthesis, and must always evaluate to aliases which makes them comptime exclusive and allow for specialized code-generation.
 
-### `mustuse`
+```
+// T acts as an alias to a type.
+T foo(T)(T a)
+{
+    return a;
+}
 
-Functions with the `mustuse` attribute return a value which must be assigned to a variable, returned, or otherwise used by the calling code. Failure to do such will cause a comptime error unless the return is converted to `void`.
+foo!int(1);
+// or foo!(int)(1);
+```
 
-### `inline`
+### Mixins
 
-Functions with the `inline` attribute should be guaranteed inlining by the compiler, failure to inline is a comptime error.
+TBD
 
-### `align(n)`
+## Statements
 
-Fields with the `align` attribute will be aligned to a `n` byte boundary. `n` must be supplied or it is a comptime error.
+`statement [(arguments)]` (varies)
+
+Statements are declarations which have special executive functionality, Fern defines the following statements:
+
+| Statement | Definition |
+|-----------|------------|
+| `if` | Conditionally executes the next line or scope. |
+| `foreach` | Iterates the next line or scope over a range of values, this may be a data range or integral range by use of `L..U` where `L` is the lower bound and `U` is the upper bound |
+| `foreach_reverse` | Identical to `foreach` but operates in reverse. |
+| `while` | Iterates the next line or scope while a condition is true. |
+| `switch` | Selects a `case` based on the value provided to the switch. Should evaluate to a jump-table after compilation. |
+| `case` | Conditionally executes the next line or scope based on the value of a `switch` statement. This is declared as `case value:`. |
+| `default` | A default case for `switch` statements which executes if no other cases execute. This is declared as `default:`. |
+| `goto` | Jumps to a `label` within code, this is declared as `goto name` |
+| `label` | Labels a part of code to be jumped to by a `goto` statement, this is declared as `name:`. |
+
+### Static
+
+Fern defines static statements as statements which may be evalutated at comptime. Statements may be speculated and executed at comptime, but also may be explicitly declared if they are of the following:
+
+| Statement |
+|-----------|
+| `static if` |
+| `static foreach` |
+| `static foreach_reverse` |
+| `static while` |
+| `static switch` |
