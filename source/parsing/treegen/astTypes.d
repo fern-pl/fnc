@@ -177,4 +177,8 @@ struct AstNode
 struct ScopeParsingMode{
     bool allowDefiningObjects;
     bool allowDefiningFunctions;
+    bool allowVariableDefinitions;
+    bool allowInlineVariableAssignments;
+    bool hasProperties;
+    bool isCommaSeperated;
 }
