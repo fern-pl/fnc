@@ -1,7 +1,8 @@
 module parsing.tokenizer.tokens;
 
 import std.ascii : isASCII, isDigit, isAlpha, isAlphaNum, isWhite;
-import std.algorithm : find;
+import std.algorithm : find, min;
+import std.string : indexOf;
 
 enum TokenType
 {
@@ -18,12 +19,19 @@ enum TokenType
     Unknown,
     Quotation,
     Comment,
-    Period
+    Period,
+    Filler
 }
 
 const dchar[] validBraceVarieties = ['{', '}', '(', ')', '[', ']'];
 const dchar[] validOpenBraceVarieties = ['{', '(', '['];
 const dchar[] validCloseBraceVarieties = ['}', ')', ']'];
+const dchar[dchar] braceOpenToBraceClose = [
+    '{' : '}',
+    '(' : ')',
+    '[': ']'
+];
+
 const dchar[] validOperators = ['<', '>', '+', '-', '*', '/', '%', '~'];
 const dchar[] validQuotation = ['\'', '"', '`'];
 
@@ -37,6 +45,14 @@ const dchar[][] validSingleLineCommentStyles = [
     ['/', '/'],
     ['\\', '\\']
 ];
+
+dchar[] makeUnicodeString(in string input)
+{
+    import std.algorithm : map;
+    import std.array : array;
+
+    return (cast(char[]) input).map!(x => cast(dchar) x).array();
+}
 
 const(dchar[]) testMultiLineStyle(dchar first, dchar secound)
 {
@@ -57,6 +73,27 @@ bool isSingleLineComment(dchar first, dchar secound)
             return true;
     }
     return false;
+}
+
+// 3 different styles of newline are used on different OSes:
+// \n    -  Linux
+// \r\n  -  Windows
+// \r    -  Old MacOS versions (although this is not the ascii deffinition of carriage return)
+size_t findFirstNewLine(in dchar[] input)
+{
+    size_t carriageReturn = input.indexOf('\r');
+    size_t newline = input.indexOf('\n');
+
+    if (carriageReturn == -1 && newline == -1)
+        return -1;
+    if (newline - 1 == carriageReturn)
+        return carriageReturn;
+    if (carriageReturn == -1)
+        return newline;
+    if (newline == -1)
+        return carriageReturn;
+
+    return min(carriageReturn, newline);
 }
 
 TokenType getVarietyOfLetter(dchar symbol)
@@ -124,7 +161,7 @@ Nullable!Token nextNonWhiteToken(ref Token[] tokens, ref size_t index)
     while (tokens.length > index)
     {
         Token token = tokens[index++];
-        if (token.tokenVariety == TokenType.WhiteSpace)
+        if (token.tokenVariety == TokenType.WhiteSpace || token.tokenVariety == TokenType.Comment)
             continue;
         found = token;
         break;

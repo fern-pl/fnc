@@ -1,6 +1,6 @@
 module parsing.tokenizer.make_tokens;
 
-import std.algorithm : find;
+import std.algorithm : find, min;
 import std.string : indexOf;
 
 import std.utf : decode;
@@ -20,12 +20,30 @@ dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index)
         return [];
 
     size_t ending = input[index .. $].indexOf(endingSymbols);
-
     if (ending == -1)
-        assert(false);
-    // ending = input.length;
+        ending = input.length - index;
+
     dchar[] comment = input[index + 2 .. index + ending];
-    index += ending + 3;
+    index = min(index + ending + 2, input.length);
+
+    return comment;
+}
+
+dchar[] handleSinglelineCommentsAtIndex(dchar[] input, ref size_t index)
+{
+    if (index + 1 >= input.length)
+        return [];
+    bool isSingleLineComment = isSingleLineComment(input[index], input[index + 1]);
+    if (!isSingleLineComment)
+        return [];
+
+    size_t ending = input[index .. $].findFirstNewLine();
+    if (ending == -1)
+        ending = input.length - index;
+    dchar[] comment = input[index + 3 .. index + ending];
+
+    index = min(index + ending, input.length);
+
     return comment;
 }
 
@@ -53,6 +71,13 @@ private Token[] protoTokenize(string input)
                 tokens ~= Token(TokenType.Comment, comment, startingIndex);
                 continue;
             }
+            comment = handleSinglelineCommentsAtIndex(chars, index);
+            if (comment.length != 0)
+            {
+                tokens ~= Token(TokenType.Comment, comment, startingIndex);
+                continue;
+            }
+
         }
         TokenType tokenType = getVarietyOfLetter(symbol);
         tokens ~= Token(tokenType, [symbol], index);
@@ -73,12 +98,21 @@ private Token[] groupTokens(Token[] tokens)
     Token[] groupedTokens;
     foreach (Token token; tokens)
     {
+        // Handles numbers with decimals
+        if (token.tokenVariety == TokenType.Period
+            && groupedTokens.length
+            && groupedTokens[$ - 1].tokenVariety == TokenType.Number)
+        {
+            groupedTokens[$ - 1].value ~= token.value;
+            continue;
+        }
 
         if (!groupedTokens.length)
         {
             groupedTokens ~= token;
             continue;
         }
+
         if (groupedTokens[$ - 1].tokenVariety == token.tokenVariety && groupableTokens.find(
                 token.tokenVariety).length)
         {
@@ -93,10 +127,7 @@ private Token[] groupTokens(Token[] tokens)
 
 Token[] tokenizeText(string input)
 {
-    // string strippedText = stripComments(input);
-    // strippedText.writeln;
     Token[] protoTokens = protoTokenize(input);
     Token[] grouped = groupTokens(protoTokens);
-    grouped.writeln;
     return grouped;
 }
