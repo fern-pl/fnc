@@ -8,16 +8,35 @@ Character literals may be defined using `'...'` in which a single character is d
 
 ### Escapes
 
+Escape sequences are sequences of characters which result in a special character being used.
+
+| Sequence | Definition |
+|----------|------------|
+| `\'` | ' |
+| `\"` | " |
+| `\\` | \ |
+| `\0` | Null terminator. |
+| `\a` | Alert. |
+| `\b` | Backspace. |
+| `\f` | Form backfeed. |
+| `\n` | Newline. |
+| `\r` | Carriage return. |
+| `\t` | Horizontal tab. |
+| `\v` | Vertical tab. |
+| `\xhh..` | Hexadecimal character insert. |
+
 ## Literal Suffixes
 
 Literal suffixes are suffixes which may be appended to a literal to change the way that the literal is formatted or interpreted.
 
-| Integral Suffix | Definition |
+| Integral -Fix | Definition |
 |------------------------|------------|
-| `u` | Unsigned. |
-| `U` | Signed. |
-| `L` | 64-bit integer. |
-| `f` | 32-bit floating point. |
+| `u` | Unsigned, suffix. |
+| `U` | Signed, suffix. |
+| `L` | 64-bit integer, suffix. |
+| `f` | 32-bit floating point, suffix. |
+| `0x` | Hexadecimal, prefix. |
+| `0X` | Hexadecimal, prefix. |
 
 ## Comments, Terminators, and Scopes
 

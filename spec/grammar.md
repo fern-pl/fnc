@@ -317,7 +317,13 @@ struct A
 
 `[attributes] [type] name..`
 
+##### Function Exclusive
+
+`[attributes] [type] name.. [attributes]`
+
 Attributes are special metadata which may be applied to certain things. They do not necessarily indicate special functionality but may be assigned such.
+
+Functions have their attributes ***after*** their signature, having attributes prepended the return type will result in the return type having such attributes applied to it.
 
 | Attribute | Definition | Applicable |
 |-----------|------------|------------|
