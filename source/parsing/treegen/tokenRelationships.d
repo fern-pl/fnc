@@ -13,6 +13,8 @@ struct OperatorPrecedenceLayer
 }
 
 struct OperationPrecedenceEntry{
+    OperationVariety operation;
+
     // These tokens are just the template used for
     // determining what is parsed in what order.
     
@@ -29,66 +31,69 @@ private Token OPR(dchar o){
 // into layers, the layers are what is done first. And inside
 // of each layer they are read left to right, or right to left.
 
-OperatorPrecedenceLayer[] operatorPrecedence = [
+const OperatorPrecedenceLayer[] operatorPrecedence = [
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([OPR('+'), OPR('+'), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([OPR('-'), OPR('-'), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('+'), OPR('+')]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('-'), OPR('-')]),
+        // TODO: Unary
+    ]),
+    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+        OperationPrecedenceEntry(OperationVariety.PreIncrement, [OPR('+'), OPR('+'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.PreDecrement, [OPR('-'), OPR('-'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.PostIncrement, [Token(TokenType.Filler), OPR('+'), OPR('+')]),
+        OperationPrecedenceEntry(OperationVariety.PostDecrement, [Token(TokenType.Filler), OPR('-'), OPR('-')]),
 
-        OperationPrecedenceEntry([OPR('!'), Token(TokenType.Filler)]), // Logical not
-        OperationPrecedenceEntry([OPR('~'), Token(TokenType.Filler)]), // bitwise NOT
+        OperationPrecedenceEntry(OperationVariety.LogicalNot, [OPR('!'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.BitwiseNot, [OPR('~'), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('*'), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('/'), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('%'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.Multiply,[Token(TokenType.Filler), OPR('*'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.Divide, [Token(TokenType.Filler), OPR('/'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.Mod, [Token(TokenType.Filler), OPR('%'), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('+'), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('-'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.Add, [Token(TokenType.Filler), OPR('+'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.Substract, [Token(TokenType.Filler), OPR('-'), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('<'), OPR('<'), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('>'), OPR('>'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.BitshiftLeftSigned, [Token(TokenType.Filler), OPR('<'), OPR('<'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.BitshiftRightSigned, [Token(TokenType.Filler), OPR('>'), OPR('>'), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('<'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('>'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('<'), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('>'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.LessThanEq, [Token(TokenType.Filler), OPR('<'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.GreaterThanEq, [Token(TokenType.Filler), OPR('>'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.LessThan, [Token(TokenType.Filler), OPR('<'), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.GreaterThan, [Token(TokenType.Filler), OPR('>'), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('!'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('='), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.NotEqualTo, [Token(TokenType.Filler), OPR('!'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.EqualTo ,[Token(TokenType.Filler), OPR('='), OPR('='), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('&'), Token(TokenType.Filler)]), // Bitwise AND
+        OperationPrecedenceEntry(OperationVariety.BitwiseAnd, [Token(TokenType.Filler), OPR('&'), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('^'), Token(TokenType.Filler)]), // Bitwise XOR
+        OperationPrecedenceEntry(OperationVariety.BitwiseXor, [Token(TokenType.Filler), OPR('^'), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('|'), Token(TokenType.Filler)]), // Bitwise OR
+        OperationPrecedenceEntry(OperationVariety.BitwiseOr, [Token(TokenType.Filler), OPR('|'), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('&'), OPR('&'), Token(TokenType.Filler)]), // Logical and
+        OperationPrecedenceEntry(OperationVariety.LogicalAnd, [Token(TokenType.Filler), OPR('&'), OPR('&'), Token(TokenType.Filler)]),
     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('|'), OPR('|'), Token(TokenType.Filler)]), // Logical or
+        OperationPrecedenceEntry(OperationVariety.LogicalOr, [Token(TokenType.Filler), OPR('|'), OPR('|'), Token(TokenType.Filler)]), 
     ]),
     OperatorPrecedenceLayer(OperatorOrder.RightToLeft, [
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('='), Token(TokenType.Filler)]), // asignment
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('+'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('-'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('*'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('/'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('%'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.Assignment, [Token(TokenType.Filler), OPR('='), Token(TokenType.Filler)]), // asignment
+        OperationPrecedenceEntry(OperationVariety.AddEq, [Token(TokenType.Filler), OPR('+'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.SubstractEq, [Token(TokenType.Filler), OPR('-'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.MultiplyEq, [Token(TokenType.Filler), OPR('*'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.DivideEq, [Token(TokenType.Filler), OPR('/'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.ModEq, [Token(TokenType.Filler), OPR('%'), OPR('='), Token(TokenType.Filler)]),
 
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('&'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('^'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('|'), OPR('='), Token(TokenType.Filler)]),
-        OperationPrecedenceEntry([Token(TokenType.Filler), OPR('/'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.BitwiseAndEq, [Token(TokenType.Filler), OPR('&'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.BitwiseXorEq, [Token(TokenType.Filler), OPR('^'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.BitwiseOrEq, [Token(TokenType.Filler), OPR('|'), OPR('='), Token(TokenType.Filler)]),
+        OperationPrecedenceEntry(OperationVariety.BitwiseNotEq, [Token(TokenType.Filler), OPR('~'), OPR('='), Token(TokenType.Filler)]),
     ])
     
 
