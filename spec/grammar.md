@@ -36,7 +36,7 @@ In this example importing `foo` would result in also importing `bar`.
 
 `variable is type`
 
-Types and variables may be compared to a type using `is` to evaluate if they are of the same type.
+Types and variables may be compared to a type using `is` to evaluate if they are of the same type, this may also be used for comparing a variable to a tagged to see what it contains.
 
 Types have a minimum size of 1 byte, but it is a comptime error to use a type with no members to declare a variable. (see [Fields and Variables](grammar.md#fields-and-variables))
 
@@ -134,9 +134,9 @@ struct/class Element
 }
 ```
 
-An example of union syntax is as follows:
+An example of tagged syntax is as follows:
 ```
-union IpAddr
+tagged IpAddr
 {
 	V4(ubyte, ubyte, ubyte, ubyte);
 	V6(string);
