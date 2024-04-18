@@ -38,6 +38,7 @@ The following types are built into Fern, and may be used without any imports:
 
 | Type | Definition | Size (b) |
 |------|------------|-------|
+| `bool` | Boolean, `false` if 0, `true` otherwise. | 1 |
 | `byte` | 8-bit signed integer. | 1
 | `ubyte` | 8-bit unsigned integer. | 1
 | `short` | 16-bit signed integer. | 2
@@ -50,7 +51,7 @@ The following types are built into Fern, and may be used without any imports:
 | `double` | 64-bit floating point. | 8
 | `void` | Represents an untype, may be pointed to but not explicitly declared as a variable. | 1
 | `nint` | Represents the max size signed integer available. | variable
-| `unint` | Represents the max size unsigned integer available. | variable
+| `nuint` | Represents the max size unsigned integer available. | variable
 | `char` | 8-bit character integer. | 1
 | `wchar` | 16-bit character integer. | 2
 | `dchar` | 32-bit character integer. | 4
@@ -77,6 +78,7 @@ Operators are a builtin part of the language used to perform certain operations.
 | `[x]` | Indexing operator, used for range interfaces by default. |
 | `--` `++` `~` `-` | Unary postdecrement, postincrement, not, and neg operators. Postdecrement and postincrement may appear as preX versions in which they are after a variable. |
 | `*` `&` | Unary pointer dereference and reference. |
+| `x ? y : z` | Ternary operator, if `x` evaluates to `true`, the output will be `y`, otherwise it will be `z` |
 
 The following operators are defined as op-assign, meaning that they perform the operation followed by an assignment.
 
@@ -382,6 +384,7 @@ Statements are declarations which have special executive functionality, Fern def
 | `default` | A default case for `switch` statements which executes if no other cases execute. This is declared as `default:`. |
 | `goto` | Jumps to a `label` within code, this is declared as `goto name` |
 | `label` | Labels a part of code to be jumped to by a `goto` statement, this is declared as `name:`. |
+| `with` | Used to declare a scope in which all function calls are first evaluated as members of a variable. |
 
 ### Static
 

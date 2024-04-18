@@ -17,15 +17,15 @@ Literal suffixes are suffixes which may be appended to a literal to change the w
 | `u` | Unsigned. |
 | `U` | Signed. |
 | `L` | 64-bit integer. |
-| `f` | 32-bit floating point |
+| `f` | 32-bit floating point. |
 
 ## Comments, Terminators, and Scopes
 
-`// comment`
+`[//][\\] comment`
 
-`/* multi-line comment */`
+`[/*][\*] multi-line comment [*/][*\]`
 
-Comments in Fern use the syntax `\\` for single-line and `\*..*\` for multi-line.
+Comments in Fern use the syntax `\\` or `//` for single-line and `/*..*/` or `/*..*/` for multi-line.
 
 `[type] name;`
 
