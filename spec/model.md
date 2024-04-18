@@ -1,10 +1,22 @@
 # Model
 
+Fern is symbol-oriented, meaning that no matter what you're doing, it prioritizes symbols and guaranteeing semantics over strong-typing and data storage.
+
+This is intended to be without compromise, errors will be thrown if Fern cannot determine how to make your code function, but also the backend may implicitly do things without your knowledge if it means compilation.
+
+## Versioning and Contracts
+
+Versioning may be done by using `static if` to influence code generation, and various flags are provided to aid in this. The `debug` keyword is provided to selectively compile a line or scope if targeting debug build.
+
+## Memory Management
+
 ## Casts and Conversions
 
 Casts in Fern are largely implicit, and need not an operator, however, the `|>` is used for conversion and may also perform casting or conversion piping.
 
 All casts and conversions will recursively try to cast members, but will not try to convert.
+
+> An comptime error will be thrown if it is impossible to cast from one type to another or to convert from one type to another.
 
 ### Conversion Pipe
 
@@ -13,6 +25,14 @@ All casts and conversions will recursively try to cast members, but will not try
 Conversion piping is used to pipe data to a type's member. It may also be used to normally convert data to a type if no member is specified.
 
 > Piping to a member will result in the data first being cast or converted to the type in order to access the member.
+
+### Downcast
+
+`variable <|`
+
+`type <|`
+
+Downcasting casts a variable to its superior type or retrieves the symbol of a type's superior type.
 
 ### Reinterpret Cast
 
@@ -169,3 +189,9 @@ long foo = 1;
 /// 32 bits are lost, in this conversion.
 int bar = foo |> int;
 ```
+
+## UFCS
+
+## CTFE
+
+## ABI

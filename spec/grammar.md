@@ -32,6 +32,14 @@ In this example importing `foo` would result in also importing `bar`.
 
 ## Types
 
+`type is type`
+
+`variable is type`
+
+Types and variables may be compared to a type using `is` to evaluate if they are of the same type.
+
+Types have a minimum size of 1 byte, but it is a comptime error to use a type with no members to declare a variable. (see [Fields and Variables](grammar.md#fields-and-variables))
+
 ### Builtins
 
 The following types are built into Fern, and may be used without any imports:
@@ -89,9 +97,9 @@ The following operators are defined as op-assign, meaning that they perform the 
 
 ### Arrays
 
-`T[]`
+`type[]`
 
-`T[L]`
+`type[length]`
 
 Fern defines 2 kinds of arrays, static arrays, dynamic arrays.
 Upon construction, all arrays may use the syntax `T[x]` to define their length.
@@ -101,6 +109,16 @@ Dynamic arrays may be created out of any type using the syntax `T[]` and they st
 Static arrays must have their length known at comptime and may be created out of any type using the syntax `T[L]` where `L` is the length of the array. Unlike dynamic arrays, static arrays do not store data by reference, and instead are value-types. However, they still retain comptime data for `length` and `ptr` gets a pointer to the data.
 
 Static arrays may not be concatenated through use of `~`, however they still must have their length initialized at first.
+
+### Pointers
+
+`type*`
+
+Pointers are natively sized integers which point to memory, they may be created by using the reference operator `&` and dereferenced by using the dereference operator `*`.
+
+Pointers may be represented as `void*`, `nint`, `nuint`, or appending `*` to the end of a type.
+
+> Pointers are cumulative, meaning that you can point to pointers and so on.
 
 ### User-defined Types
 
@@ -144,7 +162,15 @@ T foo(...)
 
 ### Delegates and Function Pointers
 
+##### Delegate declaration:
+
 `[(parameters)] { ... }`
+
+##### Function and delegate pointer types:
+
+`type function([parameters])`
+
+`type delegate([parameters])`
 
 Delegates are scope-independent variable functions which may be passed around and called, they are identical to function pointers in practice, but store context data meaning they are aware of `this`.
 
@@ -223,6 +249,8 @@ Neither constructors nor destructors are mandatory. All types will initially hav
 `unittest [name] { .. }`
 
 Unittests are used for executing test code under a unittest build. They function identically to functions besides being automatically run at once and having no return values.
+
+Names are not mandatory for unittests, but highly recommended for clarity.
 
 ```
 unittest foo
@@ -376,6 +404,7 @@ Statements are declarations which have special executive functionality, Fern def
 | Statement | Definition |
 |-----------|------------|
 | `if` | Conditionally executes the next line or scope. |
+| `else` | Alternate of `if` in which the next line or scope will be executed if an `if` was present prior and failed |
 | `foreach` | Iterates the next line or scope over a range of values, this may be a data range or integral range by use of `L..U` where `L` is the lower bound and `U` is the upper bound |
 | `foreach_reverse` | Identical to `foreach` but operates in reverse. |
 | `while` | Iterates the next line or scope while a condition is true. |
@@ -385,6 +414,8 @@ Statements are declarations which have special executive functionality, Fern def
 | `goto` | Jumps to a `label` within code, this is declared as `goto name` |
 | `label` | Labels a part of code to be jumped to by a `goto` statement, this is declared as `name:`. |
 | `with` | Used to declare a scope in which all function calls are first evaluated as members of a variable. |
+| `break` | Exits the current scope. |
+| `continue` | Continues to the next iteration in a loop. |
 
 ### Static
 
