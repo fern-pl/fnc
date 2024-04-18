@@ -325,7 +325,7 @@ Attributes are special metadata which may be applied to certain things. They do 
 | `private` | Private accessibility, may only be accessed by the same declaration it is a part of. | All |
 | `internal` | Internal accessibility, may only be accessed by the same package as it was declared. | All |
 | `partial` | May be distributed across several declarations of the given symbol, allows for splitting across multiple files. | Types, Modules |
-| `abstract` | Does not have an implementation but enforces that, if inherited, it must have an implementation | Function |
+| `abstract` | Does not have an implementation but enforces that, if inherited, it must have an implementation. It is a comptime error to call an abstract function. | Function |
 | `pure` | Does not modify any state except its parent type (if it has any.) | Function |
 | `unsafe` | Ignores all safety checks usually applied to functions. | Function |
 | `@tapped` | Ignores all attributes that may be inferred or applied to the parent scope(s). | Function |

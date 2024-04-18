@@ -12,6 +12,61 @@ Versioning may be done by using `static if` to influence code generation alongsi
 
 ## Inheritance
 
+`name [: [^]inherits..]`
+
+Inheritance allows for code to be easier reused across your codebase and more consistent, clear distribution of members and data across inheriting symbols. 
+
+> The [downcasting](grammar.md#operators) (`<|`) operator helps facilitate moving to inherited types.
+
+> Where are interfaces? Fret not child, they exist no more, use abstract functions to achieve such lofty goals.
+
+### Function Inheritance
+
+Functions may inherit from another function, this simply causes the function to act as another function but with localized attributes.
+
+Return value and parameters must match up with the inherited function.
+
+```
+int foo(long a) => a |> int;
+
+// bar inherits all of the code from foo, meaning that it functions the exact same, but we can change the attributes.
+int bar(long a) pure : foo;
+
+// This is illegal, baz may not inherit from foo because it has a different return value.
+void baz(long a) : foo;
+```
+
+### Type Inheritance
+
+Types may inherit from other types, causing all members to be inherited. If the inheriting type has a member identical to an inherited type, the inheritance of that member will be ignored (retaining only one.) 
+
+An inherited type must have at least one member to inherit, not have any non-abstract member collisions, and not be a builtin, array, pointer, or tagged, or a comptime error is thrown.
+
+Abstract functions contained within an inherited type must be implemented by the inheriting type or a comptime error will be thrown, this is done by defining the member and giving it a body.
+
+A type may inherit a single prime (`^`) type prepended before the inherited type name, this will result in all operators to be inherited, which is disabled by default.
+
+```
+struct A
+{
+    int a;
+
+    abstract int foo();
+}
+
+struct B
+{
+    long b;
+}
+
+// C inherits all members of A and B, with A being the prime inherit and thus technically the operators of A are inherited, but we don't have any. 
+struct C : ^A, B
+{
+    // We must declare a body for foo, as it is an abstract and requires an implementation;
+    int foo() => 1337;
+}
+```
+
 ## Casts and Conversions
 
 Casts in Fern are largely implicit, and need not an operator, however, the `|>` is used for conversion and may also perform casting or conversion piping.
