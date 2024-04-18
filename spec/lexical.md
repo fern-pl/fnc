@@ -106,9 +106,10 @@ Scopes in Fern are started and ended using curly brackets.
 
 ## Special Symbols
 
-Fern defines various special symbols for certain functionalities, they are as follows:
+The prefix `__` is resserved for implementation and thus should be blacklisted for use in declarations. Such implementation are as follows, but implementations may add to this:
 
 | Symbol | Definition |
+|--------|------------|
 | `__Windows` | Is Windows being targeted? |
 | `__Linux` | Is Linux being targeted? |
 | `__OSX` | Is OSX being targeted? |

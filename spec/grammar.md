@@ -77,8 +77,6 @@ Operators are a builtin part of the language used to perform certain operations.
 |----------|------------|
 | `\|>` | Conversion pipe operator, used to pipe data to a type, member function, or field. |
 | `<\|` | Downcast operator, downcasts data to its superior type. |
-| `\|x\|` | Absolute value operator. |
-| `\|\|x\|\|` | Magnitude operator. |
 | `>` `<` `<=` `>=` | Comparison operators, special behavior is defined for array types, which return a mask of where the comparison returned true. |
 | `+` `-` `*` `/` `%` `^^` `<<` `>>` `<<<` `^` `&` `\|` `~` `in` | Binary operators. `in` is used for checking if an associative array contains an element, and `~` is used for array concatenation by default. |
 | `==` `!=` `&&` `\|\|` | Equality operators. |
@@ -149,9 +147,11 @@ All types may, but not must, contain member declarations, and the above are only
 
 ## Functions
 
-`[type] name { .. }`
+`[type] name([(parameters)]) { .. }`
 
-Functions are executable code with parameters.
+`name([arguments])`
+
+Functions are executable code with parameters which may be invoked through the syntax `name([arguments])`.
 
 ```
 T foo(...)
@@ -159,6 +159,20 @@ T foo(...)
     ...
 }
 ```
+
+### Parameters and Arguments
+
+##### Parameters
+
+`[variable declaration]...`
+
+##### Arguments
+
+`[variable][value]...`
+
+Parameters are syntactically an array of variable declarations, and are part of the signature of a declaration.
+
+Arguments are the actual values passed to something, like a function, and are either variables or values. You may declare a variable inline as an argument, like `foo(int a)` which would create a new variable `a` from the point of that call onwards.
 
 ### Delegates and Function Pointers
 
@@ -298,8 +312,8 @@ Attributes are special metadata which may be applied to certain things. They do 
 | `public` | Public accessibility, may be accessed anywhere. | All |
 | `private` | Private accessibility, may only be accessed by the same declaration it is a part of. | All |
 | `internal` | Internal accessibility, may only be accessed by the same package as it was declared. | All |
-| `static` | Data is stored globally rather than by-instance. | Variables |
 | `partial` | May be distributed across several declarations of the given symbol, allows for splitting across multiple files. | Types, Modules |
+| `abstract` | Does not have an implementation but enforces that, if inherited, it must have an implementation | Function |
 | `pure` | Does not modify any state except its parent type (if it has any.) | Function |
 | `unsafe` | Ignores all safety checks usually applied to functions. | Function |
 | `@tapped` | Ignores all attributes that may be inferred or applied to the parent scope(s). | Function |
@@ -308,7 +322,10 @@ Attributes are special metadata which may be applied to certain things. They do 
 | `auto` | Infers type at comptime, similar to type aliasing but implicit. | Variables |
 | `ref` | Carries a reference to data. | Parameters, Return Values |
 | `mustuse` | Must be used or cast to `void` or an error is thrown. | Return Values |
+| `static` | Data is stored globally rather than by-instance. | Variables |
 | `align(n)` | Aligns data to the given boundary `n` which must be a power of 2 and supplied. | Fields |
+
+Abstract functions must have their signature end in a semicolon without declaring a body.
 
 ### `kind:x`
 
