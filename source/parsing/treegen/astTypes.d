@@ -56,8 +56,10 @@ struct AssignVariableNodeData
 
 enum OperationVariety
 {
-    Increment,
-    Decrement,
+    PreIncrement,
+    PostIncrement,
+    PreDecrement,
+    PostDecrement,
     AbsuluteValue,
     Magnitude,
 
@@ -66,13 +68,41 @@ enum OperationVariety
     Multiply,
     Divide,
     Mod,
-    Pipe,
 
+    AddEq,
+    SubstractEq,
+    MultiplyEq,
+    DivideEq,
+    ModEq,
+
+    Pipe,
+    Assignment,
+
+    BitwiseNot,
     BitwiseOr,
     BitwiseXor,
     BitwiseAnd,
-    BitshiftLeft,
-    BitshiftRight
+    
+    BitwiseNotEq,
+    BitwiseOrEq,
+    BitwiseXorEq,
+    BitwiseAndEq,
+
+    BitshiftLeftSigned,
+    BitshiftRightSigned,
+    BitshiftLeftUnSigned,
+    BitshiftRightUnSigned,
+
+    LogicalOr,
+    LogicalAnd,
+    LogicalNot,
+
+    GreaterThan, // >
+    GreaterThanEq,
+    LessThan, // <
+    LessThanEq,
+    EqualTo,
+    NotEqualTo
 }
 
 struct SingleArgumentOperationNodeData
