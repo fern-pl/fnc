@@ -324,6 +324,7 @@ Attributes are special metadata which may be applied to certain things. They do 
 | `mustuse` | Must be used or cast to `void` or an error is thrown. | Return Values |
 | `static` | Data is stored globally rather than by-instance. | Variables |
 | `align(n)` | Aligns data to the given boundary `n` which must be a power of 2 and supplied. | Fields |
+| `offset(n)` | Sets the offset of a field to a specific byte in its parent type, this may change the size of the type and can be used to create unions, `n` must be supplied. | Fields |
 
 Abstract functions must have their signature end in a semicolon without declaring a body.
 
