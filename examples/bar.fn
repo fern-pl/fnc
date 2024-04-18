@@ -2,7 +2,7 @@ module bar;
 
 import std.stdio;
 
-union IpAddr
+tagged IpAddr
 {
 	V4(byte, byte, byte, byte);
 	V6(string);

@@ -10,6 +10,8 @@ Versioning may be done by using `static if` to influence code generation, and va
 
 ## Memory Management
 
+## Inheritance
+
 ## Casts and Conversions
 
 Casts in Fern are largely implicit, and need not an operator, however, the `|>` is used for conversion and may also perform casting or conversion piping.

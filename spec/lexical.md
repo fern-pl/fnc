@@ -82,7 +82,7 @@ Scopes in Fern are started and ended using curly brackets.
 | `import` | [Type](grammar.md#import)
 | `struct` | [Type](grammar.md#user-defined-types)
 | `class` | [Type](grammar.md#user-defined-types)
-| `union` | [Type](grammar.md#user-defined-types)
+| `tagged` | [Type](grammar.md#user-defined-types)
 | `unittest` | [Function Pointer](grammar.md#unittest)
 | `function` | [Function Pointer](grammar.md#function-and-delegate-pointer-types)
 | `delegate` | [Function Pointer](grammar.md#function-and-delegate-pointer-types)
@@ -99,6 +99,7 @@ Scopes in Fern are started and ended using curly brackets.
 | `break` | [Statement](grammar.md#statements)
 | `continue` | [Statement](grammar.md#statements)
 | `mixin` | [Mixin](grammar.md#mixins)
+| `is` | [Conditional](grammar.md#types)
 | `export` | Reserved |
 | `extern` | Reserved |
 | `assert` | Reserved |
@@ -106,9 +107,10 @@ Scopes in Fern are started and ended using curly brackets.
 
 ## Special Symbols
 
-Fern defines various special symbols for certain functionalities, they are as follows:
+The prefix `__` is resserved for implementation and thus should be blacklisted for use in declarations. Such implementation are as follows, but implementations may add to this:
 
 | Symbol | Definition |
+|--------|------------|
 | `__Windows` | Is Windows being targeted? |
 | `__Linux` | Is Linux being targeted? |
 | `__OSX` | Is OSX being targeted? |
