@@ -1,23 +1,26 @@
 module parsing.treegen.expressionParser;
 
+import tern.typecons.common : Nullable, nullable;
 import parsing.treegen.astTypes;
 import parsing.tokenizer.tokens;
 import parsing.treegen.tokenRelationships;
 import errors;
 import std.stdio;
+import std.container.array;
 
-// First step of the AST gen process. Puts the tokens into
-// AstNode objects and extracts parenthesis into deeper
-// levels of nesting so that later they can be recursivly parsed
-AstNode[] parenthesisExtract(Token[] tokens)
+// Group letters.letters.letters into NamedUnit s
+// Group Parenthesis into AstNode.Expression s to be parsed speratly
+private AstNode[] phaseOne(Token[] tokens)
 {
     AstNode[] ret;
     AstNode[] parenthesisStack;
-    foreach (Token token; tokens)
+    bool isLastTokenWhite = false;
+    for (size_t index = 0; index < tokens.length; index++)
     {
+        Token token = tokens[index];
         if (token.tokenVariety == TokenType.OpenBraces)
         {
-            AstNode newExpression;
+            AstNode newExpression = new AstNode();
             newExpression.action = AstAction.Expression;
             newExpression.expressionNodeData = ExpressionNodeData(
                 token.value[0],
@@ -46,10 +49,24 @@ AstNode[] parenthesisExtract(Token[] tokens)
                 parenthesisStack[$ - 1].expressionNodeData.components ~= node;
             continue;
         }
+        AstNode tokenToBeParsedLater = new AstNode();
+        if (token.tokenVariety == TokenType.Letter){
+            tokenToBeParsedLater.action = AstAction.NamedUnit;
+            tokenToBeParsedLater.namedUnit = tokens.genNameUnit(index);
+            index--;
+        }else if(token.tokenVariety == TokenType.Number){
+            tokenToBeParsedLater.action = AstAction.LiteralUnit;
+            tokenToBeParsedLater.literalUnitCompenents = [token];
+        }
+        else if(token.tokenVariety != TokenType.Comment){
+            bool isWhite = token.tokenVariety == TokenType.WhiteSpace;
+            if (isWhite && isLastTokenWhite) continue;
+            isLastTokenWhite = isWhite;
 
-        AstNode tokenToBeParsedLater;
-        tokenToBeParsedLater.action = AstAction.TokenHolder;
-        tokenToBeParsedLater.tokenBeingHeld = token;
+            tokenToBeParsedLater.action = AstAction.TokenHolder;
+            tokenToBeParsedLater.tokenBeingHeld = token;
+        }        
+
         if (parenthesisStack.length == 0)
             ret ~= tokenToBeParsedLater;
         else
@@ -57,30 +74,48 @@ AstNode[] parenthesisExtract(Token[] tokens)
     }
     return ret;
 }
-void parseExpression(AstNode[] nodes){
-    for(size_t index = 0; index < nodes.length; index++){
+// Handle function calls
+private void phaseTwo(Array!AstNode nodes){
+    for (size_t index = 0; index < nodes.length; index++){
         AstNode node = nodes[index];
-        if (index != 0 && node.action == AstAction.Expression && node.expressionNodeData.opener == '('
-                && nodes[index-1].action == AstAction.TokenHolder 
-                && nodes[index-1].tokenBeingHeld.tokenVariety == TokenType.Letter){
-            AstNode functionCall;
+        if (node.action == AstAction.NamedUnit && index+1 < nodes.length && nodes[index+1].action == AstAction.Expression){
+            AstNode functionCall = new AstNode();
+            AstNode args = nodes[index+1];
+            
+            Array!AstNode components;
+            components~=args.expressionNodeData.components;
+            phaseTwo(components);
+            args.expressionNodeData.components.length = components.data.length;
+            args.expressionNodeData.components[0..$] = components.data[0..$];
+            
+            
             functionCall.action = AstAction.Call;
+            functionCall.callNodeData = CallNodeData(
+                node.namedUnit,
+                args
+            );
+            nodes[index] = functionCall;
+            nodes.linearRemove(nodes[index+1..index+2]);   
         }
+        // else if(node.action == AstAction.TokenHolder && node.tokenBeingHeld.tokenVariety == TokenType.Number){
+
+        // }
     }
 }
 
-void parseExpression(Token[] tokens)
-{
-    parseExpression(parenthesisExtract(tokens));
-    // tokens[0].tokenVariety
-
-
-}
+import parsing.treegen.treeGenUtils;
 
 
 unittest
 {
     
     import parsing.tokenizer.make_tokens;
-    parseExpression("sqrt(8*9+5*2 / (6+10*2))".tokenizeText);
+    AstNode[] phaseOneNodes =  phaseOne("math.sqrt(P(1) + 1 + 2 + 3)".tokenizeText);
+    
+    Array!AstNode nodes;
+    nodes~=phaseOneNodes;
+    phaseTwo(nodes);
+    nodes.writeln;
+    ";".writeln;
+    
 }

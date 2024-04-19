@@ -16,10 +16,10 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
         return ret;
     token = tokenNullable;
 
-    while (token.tokenVariety == TokenType.Letter || token.tokenVariety == TokenType.Period)
+    while (token.tokenVariety == TokenType.Letter || token.tokenVariety == TokenType.Number || token.tokenVariety == TokenType.Period)
     {
         
-        if (token.tokenVariety == TokenType.Letter)
+        if (token.tokenVariety != TokenType.Period)
             ret.names ~= token.value;
         
         tokenNullable = tokens.nextToken(index);
