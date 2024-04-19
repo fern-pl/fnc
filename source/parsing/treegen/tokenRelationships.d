@@ -42,20 +42,6 @@ TokenGrepPacket TokenGrepPacketRec(TokenGrepMethod method, TokenGrepPacket[] lis
     return ret;
 }
 
-const TokenGrepPacket[] IF_STATEMENT_WITH_SCOPE = [
-    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-            Token(TokenType.Letter, "if".makeUnicodeString)
-        ]),
-    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-            Token(TokenType.OpenBraces, ['('])
-        ]),
-    TokenGrepPacketToken(TokenGrepMethod.ConditionWithCertainReturnType, []),
-    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-            Token(TokenType.CloseBraces, [')'])
-        ]),
-
-    TokenGrepPacketToken(TokenGrepMethod.Scope, []),
-];
 const TokenGrepPacket[] IfStatementWithoutScope = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Letter, "if".makeUnicodeString)
@@ -70,6 +56,25 @@ const TokenGrepPacket[] IfStatementWithoutScope = [
     TokenGrepPacketToken(TokenGrepMethod.Glob, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Semicolon, [';'])
+        ]),
+];
+const TokenGrepPacket[] IfStatementWithScope = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.Letter, "if".makeUnicodeString)
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.OpenBraces, ['('])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.CloseBraces, [')'])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.OpenBraces, ['{'])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.CloseBraces, ['}'])
         ]),
 ];
 
@@ -98,8 +103,8 @@ const TokenGrepPacket[] DeclarationAndAssignment = [
         ]),
     TokenGrepPacketToken(TokenGrepMethod.Glob, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
-        Token(TokenType.Semicolon, [])
-    ])
+            Token(TokenType.Semicolon, [])
+        ])
 ];
 
 bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
@@ -135,7 +140,8 @@ private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref siz
                 if (potentialMatch.tokenVariety == token.tokenVariety)
                     doRet = false;
             }
-            if (doRet) return false;
+            if (doRet)
+                return false;
             break;
         case TokenGrepMethod.MatchesTokens:
             foreach (const(Token) testToken; packet.tokens)
@@ -158,7 +164,7 @@ private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref siz
             {
                 if (token.tokenVariety == TokenType.Comma)
                 {
-                    maxComma = secountIndex+1;
+                    maxComma = secountIndex + 1;
                     tstack ~= currentGroup;
                     currentGroup = new Token[0];
                     continue;
@@ -170,27 +176,31 @@ private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref siz
             foreach (Token[] tokenGroup; tstack)
             {
                 searchExtent = 0;
-                
+
                 if (!matchesToken(packet.packets, tokenGroup, searchExtent))
                     return false;
             }
             index += maxComma + searchExtent;
-            
+
             break;
-        
+
         case TokenGrepMethod.Glob:
+            if (testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $]))
+                return true;
             int braceDeph = 0;
-            while(true){
+            while (true)
+            {
                 Nullable!Token tokenNullable = tokens.nextToken(index);
                 if (tokenNullable.ptr == null)
                     return false;
                 Token token = tokenNullable;
                 if (token.tokenVariety == TokenType.OpenBraces)
-                    braceDeph+=1;
+                    braceDeph += 1;
                 else if (token.tokenVariety == TokenType.CloseBraces && braceDeph != 0)
-                    braceDeph-=1;
-                else if (braceDeph == 0){
-                    if (testWith[testIndex+1..$].matchesToken(tokens[index..$]))
+                    braceDeph -= 1;
+                else if (braceDeph == 0)
+                {
+                    if (testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $]))
                         return true;
                 }
             }
@@ -208,16 +218,23 @@ unittest
 {
     import parsing.tokenizer.make_tokens;
 
-    assert(DeclarationLine.matchesToken(tokenizeText("mod.type.submod x,r,q,a, A_variable  \n\r\t ;")));
+    assert(DeclarationLine.matchesToken(
+            tokenizeText("mod.type.submod x,r,q,a, A_variable  \n\r\t ;")));
     assert(DeclarationLine.matchesToken(tokenizeText("mod.type.submod x, a, e ,y;")));
     assert(!DeclarationLine.matchesToken(tokenizeText(";mod.type x;")));
     assert(!DeclarationLine.matchesToken(tokenizeText("123 mod.type x;")));
     assert(!DeclarationLine.matchesToken(tokenizeText("mod.type x = 5;")));
-    assert(DeclarationAndAssignment.matchesToken(tokenizeText("mod.type x, y, z  , o = someFunc();")));
+    assert(DeclarationAndAssignment.matchesToken(
+            tokenizeText("mod.type x, y, z  , o = someFunc();")));
     assert(!DeclarationAndAssignment.matchesToken(tokenizeText("someFunc();")));
     assert(!DeclarationLine.matchesToken(tokenizeText("someFunc();")));
     assert(IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) testText;")));
     assert(IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) v = ()=>print(1235);")));
+    assert(IfStatementWithScope.matchesToken(tokenizeText("if (hello){}")));
+    assert(IfStatementWithScope.matchesToken(tokenizeText("if (hello world){}")));
+    assert(IfStatementWithScope.matchesToken(tokenizeText(
+            "if (hello world){\n\n\r if(Some possible nested code) still works;}"
+        )));
 }
 
 enum OperatorOrder
