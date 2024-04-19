@@ -1,0 +1,22 @@
+module inheritance;
+
+struct A
+{
+    int a;
+
+    abstract int foo();
+}
+
+class B : A
+{
+    long b;
+
+    int foo() => 1337;
+}
+
+struct C : ^B
+{
+    string c;
+
+    int bar() pure const : foo;
+}

@@ -1,13 +1,14 @@
 module a;
 
-struct A kind:xmmword
+kind:xmmword struct A 
 {
     uint a;
-    ushort b;
+    ushort b; 
 
+    // This is a comment. // Still a comment. \\ Still still a comment.
     uint foo()
     {
-       return a; 
+       return = a;  
     }
 }
 
@@ -18,7 +19,7 @@ struct B
 
     byte bar()
     {
-       return b; 
+       return = b;
     }
 }
 

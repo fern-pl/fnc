@@ -8,24 +8,43 @@ Character literals may be defined using `'...'` in which a single character is d
 
 ### Escapes
 
+Escape sequences are sequences of characters which result in a special character being used.
+
+| Sequence | Definition |
+|----------|------------|
+| `\'` | ' |
+| `\"` | " |
+| `\\` | \ |
+| `\0` | Null terminator. |
+| `\a` | Alert. |
+| `\b` | Backspace. |
+| `\f` | Form backfeed. |
+| `\n` | Newline. |
+| `\r` | Carriage return. |
+| `\t` | Horizontal tab. |
+| `\v` | Vertical tab. |
+| `\xhh..` | Hexadecimal character insert. |
+
 ## Literal Suffixes
 
 Literal suffixes are suffixes which may be appended to a literal to change the way that the literal is formatted or interpreted.
 
-| Integral Suffix | Definition |
+| Integral -Fix | Definition |
 |------------------------|------------|
-| `u` | Unsigned. |
-| `U` | Signed. |
-| `L` | 64-bit integer. |
-| `f` | 32-bit floating point. |
+| `u` | Unsigned, suffix. |
+| `U` | Signed, suffix. |
+| `L` | 64-bit integer, suffix. |
+| `f` | 32-bit floating point, suffix. |
+| `0x` | Hexadecimal, prefix. |
+| `0X` | Hexadecimal, prefix. |
 
 ## Comments, Terminators, and Scopes
 
-`[//][\\] comment`
+`// comment`
 
-`[/*][\*] multi-line comment [*/][*\]`
+`/* multi-line comment */`
 
-Comments in Fern use the syntax `\\` or `//` for single-line and `/*..*/` or `/*..*/` for multi-line.
+Comments in Fern use the syntax `\\` for single-line and `/*..*/` for multi-line.
 
 `[type] name;`
 
@@ -42,6 +61,7 @@ Scopes in Fern are started and ended using curly brackets.
 | Keyword | Definition |
 |---------|------------|
 | `this` | Refers to the parent instance of the scope in which it was used, it is a comptime error if the scope has no instance. |
+| `return` | [Return](grammar.md#functions)
 | `delete` | [Destruct](grammar.md#constructors-and-destructors) |
 | `bool` | [Builtin](grammar.md#builtins)
 | `true` | [Builtin](grammar.md#builtins)
@@ -77,13 +97,16 @@ Scopes in Fern are started and ended using curly brackets.
 | `mustuse` | [Attribute](grammar.md#attributes)
 | `ref` | [Attribute](grammar.md#attributes)
 | `align` | [Attribute](grammar.md#attributes)
+| `offset` | [Attribute](grammar.md#attributes)
+| `transient` | [Attribute](grammar.md#attributes)
+| `atomic` | [Attribute](grammar.md#attributes)
 | `alias` | [Alias](grammar.md#symbols-and-aliases)
 | `module` | [Type](grammar.md#module)
 | `import` | [Type](grammar.md#import)
 | `struct` | [Type](grammar.md#user-defined-types)
 | `class` | [Type](grammar.md#user-defined-types)
 | `tagged` | [Type](grammar.md#user-defined-types)
-| `unittest` | [Function Pointer](grammar.md#unittest)
+| `unittest` | [Unittest](grammar.md#unittest)
 | `function` | [Function Pointer](grammar.md#function-and-delegate-pointer-types)
 | `delegate` | [Function Pointer](grammar.md#function-and-delegate-pointer-types)
 | `if` | [Statement](grammar.md#statements)

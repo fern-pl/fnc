@@ -108,6 +108,8 @@ Static arrays must have their length known at comptime and may be created out of
 
 Static arrays may not be concatenated through use of `~`, however they still must have their length initialized at first.
 
+> Arrays are cumulative, meaning that you can have arrays of arrays and so on.
+
 ### Pointers
 
 `type*`
@@ -115,6 +117,8 @@ Static arrays may not be concatenated through use of `~`, however they still mus
 Pointers are natively sized integers which point to memory, they may be created by using the reference operator `&` and dereferenced by using the dereference operator `*`.
 
 Pointers may be represented as `void*`, `nint`, `nuint`, or appending `*` to the end of a type.
+
+> Pointers share operators with static arrays, meaning they may be sliced, indexed, and so on.
 
 > Pointers are cumulative, meaning that you can point to pointers and so on.
 
@@ -145,11 +149,29 @@ tagged IpAddr
 
 All types may, but not must, contain member declarations, and the above are only examples.
 
+### Tagged
+
+`(types..)`
+
+Tagged may be implicitly created by wrapping multiple types in parenthesis, like `(int, short) foo` and assignment when value is one of `int` and `short`.
+
+### Tuple
+
+`[types..]`
+
+`[values..]`
+
+Tuples may be implicitly created by wrapping multiple types in braces, like `[int, short] foo` and assignment when value is both of `int` and `short` as an array literal.
+
+Tuples will usually be weighted above array literals when assigning with the brace syntax to a tuple, otherwise array literals will be weighted above.
+
 ## Functions
 
 `[type] name([(parameters)]) { .. }`
 
 `name([arguments])`
+
+`return => [variable][value]`
 
 Functions are executable code with parameters which may be invoked through the syntax `name([arguments])`.
 
@@ -159,6 +181,10 @@ T foo(...)
     ...
 }
 ```
+
+Functions that return a type other than `void` must have a return value. This can be done by using `return`, which may be used as a variable that will be returned at the end of the function, or as a `return` statement, which may appear as `return;` or `return => [variable][value];`.
+
+Setting or modifying the value of `return` does not have any effect in a `void` function, but the `return;` statement will always lead to an early return.
 
 ### Parameters and Arguments
 
@@ -170,9 +196,13 @@ T foo(...)
 
 `[variable][value]...`
 
+`parameter_name: [variable][value]...`
+
 Parameters are syntactically an array of variable declarations, and are part of the signature of a declaration.
 
 Arguments are the actual values passed to something, like a function, and are either variables or values. You may declare a variable inline as an argument, like `foo(int a)` which would create a new variable `a` from the point of that call onwards.
+
+Named arguments may be used by using `parameter_name:` before the value being passed as an argument, where `parameter_name` is the name of the parameter the argument corresponds to.
 
 ### Delegates and Function Pointers
 
@@ -283,7 +313,21 @@ Use of `void` or a user-defined type with no members as the type of a field or v
 
 All declarations are initialized with zero, this may be prevented by setting the initial value to `void`.
 
-#### Bitfields
+### Successive Declaration
+
+`, name..`
+
+Variables of the same type may be successively defined by using `, name..`, this allows for tuple assignment to multiple variables.
+
+```
+// Variables a, b, and c are all defined as int.
+int a, b, c;
+
+// Variables d, e, and f are all defined as int and have the respective values 1, 2, and 3.
+int d, e, f = [1, 2, 3];
+```
+
+### Bitfields
 
 `[type] name : [bits]`
 
@@ -305,7 +349,13 @@ struct A
 
 `[attributes] [type] name..`
 
+##### Function Exclusive
+
+`[attributes] [type] name.. [attributes]`
+
 Attributes are special metadata which may be applied to certain things. They do not necessarily indicate special functionality but may be assigned such.
+
+Functions have their attributes ***after*** their signature, having attributes prepended the return type will result in the return type having such attributes applied to it.
 
 | Attribute | Definition | Applicable |
 |-----------|------------|------------|
@@ -313,7 +363,7 @@ Attributes are special metadata which may be applied to certain things. They do 
 | `private` | Private accessibility, may only be accessed by the same declaration it is a part of. | All |
 | `internal` | Internal accessibility, may only be accessed by the same package as it was declared. | All |
 | `partial` | May be distributed across several declarations of the given symbol, allows for splitting across multiple files. | Types, Modules |
-| `abstract` | Does not have an implementation but enforces that, if inherited, it must have an implementation | Function |
+| `abstract` | Does not have an implementation but enforces that, if inherited, it must have an implementation. It is a comptime error to call an abstract function. | Function |
 | `pure` | Does not modify any state except its parent type (if it has any.) | Function |
 | `unsafe` | Ignores all safety checks usually applied to functions. | Function |
 | `@tapped` | Ignores all attributes that may be inferred or applied to the parent scope(s). | Function |
@@ -325,6 +375,8 @@ Attributes are special metadata which may be applied to certain things. They do 
 | `static` | Data is stored globally rather than by-instance. | Variables |
 | `align(n)` | Aligns data to the given boundary `n` which must be a power of 2 and supplied. | Fields |
 | `offset(n)` | Sets the offset of a field to a specific byte in its parent type, this may change the size of the type and can be used to create unions, `n` must be supplied. | Fields |
+| `transient` | Prevents cache pollution by declaring a variable as non-temporal data. | Variables |
+| `atomic` | Makes data thread-safe through use of atomics. | Variables |
 
 Abstract functions must have their signature end in a semicolon without declaring a body.
 
@@ -434,15 +486,3 @@ Statements are declarations which have special executive functionality, Fern def
 | `with` | Used to declare a scope in which all function calls are first evaluated as members of a variable. |
 | `break` | Exits the current scope. |
 | `continue` | Continues to the next iteration in a loop. |
-
-### Static
-
-Fern defines static statements as statements which may be evalutated at comptime. Statements may be speculated and executed at comptime, but also may be explicitly declared if they are of the following:
-
-| Statement |
-|-----------|
-| `static if` |
-| `static foreach` |
-| `static foreach_reverse` |
-| `static while` |
-| `static switch` |
