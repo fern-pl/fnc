@@ -4,7 +4,6 @@ import parsing.treegen.astTypes;
 import parsing.tokenizer.tokens;
 import tern.typecons.common : Nullable, nullable;
 
-
 NameUnit genNameUnit(Token[] tokens, ref size_t index)
 {
     NameUnit ret;
@@ -18,17 +17,19 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
 
     while (token.tokenVariety == TokenType.Letter || token.tokenVariety == TokenType.Period)
     {
-
         if (token.tokenVariety == TokenType.Period)
             continue;
 
         ret.names ~= token.value;
+
         tokenNullable = tokens.nextToken(index);
 
         // We hit an EOF
         if (tokenNullable.ptr == null)
             return ret;
+
         token = tokenNullable;
+        // token.writeln;
     }
     return ret;
 

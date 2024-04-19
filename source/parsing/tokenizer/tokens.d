@@ -13,6 +13,7 @@ enum TokenType
     Letter,
     Semicolon,
     Colon,
+    Comma,
     Pipe,
     WhiteSpace,
     Equals,
@@ -115,6 +116,8 @@ TokenType getVarietyOfLetter(dchar symbol)
         return TokenType.Pipe;
     case '.':
         return TokenType.Period;
+    case ',':
+        return TokenType.Comma;
     default:
         break;
     }
@@ -149,9 +152,9 @@ import tern.typecons.common : Nullable;
 Nullable!Token nextToken(Token[] tokens, ref size_t index)
 {
     Nullable!Token found;
-    if (tokens.length >= index)
+    if (tokens.length <= index+1)
         return found;
-    found = tokens[index++];
+    found = tokens[++index];
     return found;
 }
 
