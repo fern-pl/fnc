@@ -108,6 +108,8 @@ Static arrays must have their length known at comptime and may be created out of
 
 Static arrays may not be concatenated through use of `~`, however they still must have their length initialized at first.
 
+> Arrays are cumulative, meaning that you can have arrays of arrays and so on.
+
 ### Pointers
 
 `type*`
@@ -151,7 +153,17 @@ All types may, but not must, contain member declarations, and the above are only
 
 `(types..)`
 
-Tagged may be implicitly created by wrapping multiple types in parenthesis, like `(int, short) foo` where `foo` is one of `int` and `short`.
+Tagged may be implicitly created by wrapping multiple types in parenthesis, like `(int, short) foo` and assignment when value is one of `int` and `short`.
+
+### Tuple
+
+`[types..]`
+
+`[values..]`
+
+Tuples may be implicitly created by wrapping multiple types in braces, like `[int, short] foo` and assignment when value is both of `int` and `short` as an array literal.
+
+Tuples will usually be weighted above array literals when assigning with the brace syntax to a tuple, otherwise array literals will be weighted above.
 
 ## Functions
 
@@ -310,6 +322,9 @@ Variables of the same type may be successively defined by using `, name..`, this
 ```
 // Variables a, b, and c are all defined as int.
 int a, b, c;
+
+// Variables d, e, and f are all defined as int and have the respective values 1, 2, and 3.
+int d, e, f = [1, 2, 3];
 ```
 
 ### Bitfields
@@ -360,6 +375,8 @@ Functions have their attributes ***after*** their signature, having attributes p
 | `static` | Data is stored globally rather than by-instance. | Variables |
 | `align(n)` | Aligns data to the given boundary `n` which must be a power of 2 and supplied. | Fields |
 | `offset(n)` | Sets the offset of a field to a specific byte in its parent type, this may change the size of the type and can be used to create unions, `n` must be supplied. | Fields |
+| `transient` | Prevents cache pollution by declaring a variable as non-temporal data. | Variables |
+| `atomic` | Makes data thread-safe through use of atomics. | Variables |
 
 Abstract functions must have their signature end in a semicolon without declaring a body.
 
