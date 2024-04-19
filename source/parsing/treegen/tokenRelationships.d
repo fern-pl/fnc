@@ -115,7 +115,7 @@ bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 
 import std.stdio;
 
-private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index)
+bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index)
 {
     foreach (testIndex, packet; testWith)
     {
@@ -200,8 +200,12 @@ private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref siz
                     braceDeph -= 1;
                 else if (braceDeph == 0)
                 {
-                    if (testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $]))
+                    size_t index_inc;
+                    if (testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $], index_inc))
+                    {
+                        index += index_inc;
                         return true;
+                    }
                 }
             }
             break;
@@ -219,22 +223,28 @@ unittest
     import parsing.tokenizer.make_tokens;
 
     assert(DeclarationLine.matchesToken(
-            tokenizeText("mod.type.submod x,r,q,a, A_variable  \n\r\t ;")));
+            tokenizeText("mod.type.submod x,r,q,a, A_variable  \n\r\t ;")
+    ));
     assert(DeclarationLine.matchesToken(tokenizeText("mod.type.submod x, a, e ,y;")));
     assert(!DeclarationLine.matchesToken(tokenizeText(";mod.type x;")));
     assert(!DeclarationLine.matchesToken(tokenizeText("123 mod.type x;")));
     assert(!DeclarationLine.matchesToken(tokenizeText("mod.type x = 5;")));
     assert(DeclarationAndAssignment.matchesToken(
-            tokenizeText("mod.type x, y, z  , o = someFunc();")));
+            tokenizeText("mod.type x, y, z  , o = someFunc();")
+    ));
     assert(!DeclarationAndAssignment.matchesToken(tokenizeText("someFunc();")));
     assert(!DeclarationLine.matchesToken(tokenizeText("someFunc();")));
     assert(IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) testText;")));
     assert(IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) v = ()=>print(1235);")));
     assert(IfStatementWithScope.matchesToken(tokenizeText("if (hello){}")));
     assert(IfStatementWithScope.matchesToken(tokenizeText("if (hello world){}")));
-    assert(IfStatementWithScope.matchesToken(tokenizeText(
-            "if (hello world){\n\n\r if(Some possible nested code) still works;}"
-        )));
+    assert(IfStatementWithScope.matchesToken(
+            tokenizeText(
+            "if (hello world){\n\n\r if(Some possible nested code) still works;}")
+    ));
+    assert(
+        DeclarationAndAssignment.matchesToken(tokenizeText("int x = 4;"))
+    );
 }
 
 enum OperatorOrder

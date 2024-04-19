@@ -8,12 +8,14 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
 {
     NameUnit ret;
     Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
+    index--;
     Token token;
 
     // An attempt to generate a name at an EOF
     if (tokenNullable.ptr == null)
         return ret;
     token = tokenNullable;
+
     while (token.tokenVariety == TokenType.Letter || token.tokenVariety == TokenType.Period)
     {
         
@@ -27,6 +29,7 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
             return ret;
 
         token = tokenNullable;
+
     }
     return ret;
 
@@ -81,4 +84,17 @@ AstNode[] parenthesisExtract(Token[] tokens)
             parenthesisStack[$ - 1].expressionNodeData.components ~= tokenToBeParsedLater;
     }
     return ret;
+}
+
+unittest
+{
+    import parsing.tokenizer.make_tokens;
+
+    size_t s = 0;
+    assert("int x = 4;".tokenizeText.genNameUnit(s).names == ["int".makeUnicodeString]);
+    s = 0;
+    assert("std.int x = 4;".tokenizeText.genNameUnit(s).names == [
+        "std".makeUnicodeString,
+        "int".makeUnicodeString
+        ]);
 }
