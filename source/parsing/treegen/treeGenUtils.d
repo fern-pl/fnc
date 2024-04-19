@@ -14,14 +14,12 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
     if (tokenNullable.ptr == null)
         return ret;
     token = tokenNullable;
-
     while (token.tokenVariety == TokenType.Letter || token.tokenVariety == TokenType.Period)
     {
-        if (token.tokenVariety == TokenType.Period)
-            continue;
-
-        ret.names ~= token.value;
-
+        
+        if (token.tokenVariety == TokenType.Letter)
+            ret.names ~= token.value;
+        
         tokenNullable = tokens.nextToken(index);
 
         // We hit an EOF
@@ -29,7 +27,6 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
             return ret;
 
         token = tokenNullable;
-        // token.writeln;
     }
     return ret;
 

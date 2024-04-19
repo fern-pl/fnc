@@ -82,10 +82,29 @@ const TokenGrepPacket[] DeclarationLine = [
                     Token(TokenType.Letter, [])
                 ])
         ]),
-    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [ Token(TokenType.Semicolon, []) ])
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+            Token(TokenType.Semicolon, [])
+        ])
+];
+// int x, y, z = [1, 2, 3];
+const TokenGrepPacket[] DeclarationAndAssignment = [
+    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
+            TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+                    Token(TokenType.Letter, [])
+                ])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+            Token(TokenType.Equals, [])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+        Token(TokenType.Semicolon, [])
+    ])
 ];
 
-bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens){
+bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
+{
     size_t index = 0;
     return matchesToken(testWith, tokens, index);
 }
@@ -94,7 +113,7 @@ import std.stdio;
 
 private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index)
 {
-    foreach (packet; testWith)
+    foreach (testIndex, packet; testWith)
     {
         switch (packet.method)
         {
@@ -104,20 +123,20 @@ private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref siz
             NameUnit name = genNameUnit(tokens, index);
             if (name.names.length == 0)
                 return false;
-            name.writeln;
             break;
         case TokenGrepMethod.MatchesTokenType:
             Nullable!Token potential = tokens.nextNonWhiteToken(index);
             if (potential.ptr == null)
                 return false;
             Token token = potential;
-            foreach (const(Token) potentialMatch ; packet.tokens){
-                if (potentialMatch.tokenVariety == token.tokenVariety) 
-                    goto MATCH;
-            }
-            return false;
+            bool doRet = true;
 
-            MATCH:
+            foreach (const(Token) potentialMatch; packet.tokens)
+            {
+                if (potentialMatch.tokenVariety == token.tokenVariety)
+                    doRet = false;
+            }
+            if (doRet) return false;
             break;
         case TokenGrepMethod.PossibleCommaSeperated:
             if (index >= tokens.length)
@@ -128,7 +147,8 @@ private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref siz
             size_t secountIndex = 0;
             foreach (token; tokens[index .. $])
             {
-                scope (exit) secountIndex++;
+                
+                secountIndex++;
 
                 if (token.tokenVariety == TokenType.Comma)
                 {
@@ -144,11 +164,31 @@ private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref siz
             foreach (Token[] tokenGroup; tstack)
             {
                 searchExtent = 0;
+                
                 if (!matchesToken(packet.packets, tokenGroup, searchExtent))
                     return false;
             }
             index += maxComma + searchExtent;
-
+            
+            break;
+        
+        case TokenGrepMethod.Glob:
+            int braceDeph = 0;
+            while(true){
+                Nullable!Token tokenNullable = tokens.nextToken(index);
+                // auto tokenNullable=nextToken(tokens, index);
+                if (tokenNullable.ptr == null)
+                    return false;
+                Token token = tokenNullable;
+                if (token.tokenVariety == TokenType.OpenBraces)
+                    braceDeph+=1;
+                else if (token.tokenVariety == TokenType.CloseBraces)
+                    braceDeph-=1;
+                else if (braceDeph == 0){
+                    if (testWith[testIndex+1..$].matchesToken(tokens[index..$]))
+                        return true;
+                }
+            }
             break;
         default:
             assert(0, "Not implemented");
@@ -163,7 +203,12 @@ unittest
 {
     import parsing.tokenizer.make_tokens;
 
-    DeclarationLine.matchesToken(tokenizeText("mod.type x;")).writeln;
+    assert(DeclarationLine.matchesToken(tokenizeText("mod.type.submod x,r,q,a, A_variable  \n\r\t ;")));
+    assert(DeclarationLine.matchesToken(tokenizeText("mod.type.submod x, a, e ,y;")));
+    assert(!DeclarationLine.matchesToken(tokenizeText(";mod.type x;")));
+    assert(!DeclarationLine.matchesToken(tokenizeText("123 mod.type x;")));
+    assert(!DeclarationLine.matchesToken(tokenizeText("mod.type x = 5;")));
+    assert(DeclarationAndAssignment.matchesToken(tokenizeText("mod.type x, y, z  , o = someFunc();")));
 }
 
 enum OperatorOrder
