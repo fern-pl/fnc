@@ -56,18 +56,17 @@ const TokenGrepPacket[] IF_STATEMENT_WITH_SCOPE = [
 
     TokenGrepPacketToken(TokenGrepMethod.Scope, []),
 ];
-const TokenGrepPacket[] IF_STATEMENT_WITHOUT_SCOPE = [
+const TokenGrepPacket[] IfStatementWithoutScope = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Letter, "if".makeUnicodeString)
         ]),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['('])
         ]),
-    TokenGrepPacketToken(TokenGrepMethod.ConditionWithCertainReturnType, []),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.CloseBraces, [')'])
         ]),
-
     TokenGrepPacketToken(TokenGrepMethod.Glob, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Semicolon, [';'])
@@ -138,21 +137,28 @@ private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref siz
             }
             if (doRet) return false;
             break;
+        case TokenGrepMethod.MatchesTokens:
+            foreach (const(Token) testToken; packet.tokens)
+            {
+                Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
+                if (tokenNullable.ptr == null)
+                    return false;
+                Token token = tokenNullable;
+                if (token.tokenVariety != testToken.tokenVariety || token.value != testToken.value)
+                    return false;
+            }
+            break;
         case TokenGrepMethod.PossibleCommaSeperated:
             if (index >= tokens.length)
                 return false;
             Token[][] tstack;
             Token[] currentGroup;
             size_t maxComma = 0;
-            size_t secountIndex = 0;
-            foreach (token; tokens[index .. $])
+            foreach (secountIndex, token; tokens[index .. $])
             {
-                
-                secountIndex++;
-
                 if (token.tokenVariety == TokenType.Comma)
                 {
-                    maxComma = secountIndex;
+                    maxComma = secountIndex+1;
                     tstack ~= currentGroup;
                     currentGroup = new Token[0];
                     continue;
@@ -176,13 +182,12 @@ private bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref siz
             int braceDeph = 0;
             while(true){
                 Nullable!Token tokenNullable = tokens.nextToken(index);
-                // auto tokenNullable=nextToken(tokens, index);
                 if (tokenNullable.ptr == null)
                     return false;
                 Token token = tokenNullable;
                 if (token.tokenVariety == TokenType.OpenBraces)
                     braceDeph+=1;
-                else if (token.tokenVariety == TokenType.CloseBraces)
+                else if (token.tokenVariety == TokenType.CloseBraces && braceDeph != 0)
                     braceDeph-=1;
                 else if (braceDeph == 0){
                     if (testWith[testIndex+1..$].matchesToken(tokens[index..$]))
@@ -209,6 +214,10 @@ unittest
     assert(!DeclarationLine.matchesToken(tokenizeText("123 mod.type x;")));
     assert(!DeclarationLine.matchesToken(tokenizeText("mod.type x = 5;")));
     assert(DeclarationAndAssignment.matchesToken(tokenizeText("mod.type x, y, z  , o = someFunc();")));
+    assert(!DeclarationAndAssignment.matchesToken(tokenizeText("someFunc();")));
+    assert(!DeclarationLine.matchesToken(tokenizeText("someFunc();")));
+    assert(IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) testText;")));
+    assert(IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) v = ()=>print(1235);")));
 }
 
 enum OperatorOrder
