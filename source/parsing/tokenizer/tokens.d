@@ -70,7 +70,7 @@ bool isSingleLineComment(dchar first, dchar secound)
 {
     static foreach (const dchar[] style; validSingleLineCommentStyles)
     {
-        if (style[0] == first || style[0] == secound)
+        if (style[0] == first && style[0] == secound)
             return true;
     }
     return false;

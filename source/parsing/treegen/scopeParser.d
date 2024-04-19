@@ -17,9 +17,9 @@ struct LineVarietyAndLength
     size_t length;
 }
 
-LineVarietyAndLength getLineVarietyAndLength(Token[] tokens)
+LineVarietyAndLength getLineVarietyAndLength(Token[] tokens, size_t index)
 {
-    size_t length;
+    size_t temp_index = index;
 
     static foreach (i, func; [
             IfStatementWithScope,
@@ -28,24 +28,24 @@ LineVarietyAndLength getLineVarietyAndLength(Token[] tokens)
             DeclarationAndAssignment
         ])
     {
-        if (func.matchesToken(tokens, length))
+        if (func.matchesToken(tokens, temp_index))
             return LineVarietyAndLength(
                 [
                 LineVariety.IfStatementWithScope,
                 LineVariety.IfStatementWithoutScope,
                 LineVariety.DeclarationLine,
                 LineVariety.DeclarationAndAssignment
-            ][i], length
+            ][i], temp_index - index
             );
-        length = 0;
+        temp_index = index;
     }
 
     return LineVarietyAndLength(LineVariety.SimpleExpression, -1);
 }
-
-void parseLine(Token[] tokens)
+import std.stdio;
+void parseLine(Token[] tokens, ref size_t index)
 {
-
+    LineVarietyAndLength lineVariety = tokens.getLineVarietyAndLength(index);
 }
 
 unittest
@@ -55,7 +55,9 @@ unittest
 
     // assert(LineVariety.IfStatementWithoutScope == getLineVariety("if (hello) world;".tokenizeText));
     // assert(LineVariety.IfStatementWithScope == getLineVariety("if (hello) {wo\n rl\nd};".tokenizeText));
-    getLineVarietyAndLength("int x = 4;".tokenizeText).writeln;
+    size_t i = 0;
+    // getLineVarietyAndLength("int x = 4;".tokenizeText, 0).writeln;
+    // parseLine("int x = 4;".tokenizeText, i);
     // DeclarationLine.matchesToken()
 
 }
