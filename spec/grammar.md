@@ -159,6 +159,8 @@ Tagged may be implicitly created by wrapping multiple types in parenthesis, like
 
 `name([arguments])`
 
+`return => [variable][value]`
+
 Functions are executable code with parameters which may be invoked through the syntax `name([arguments])`.
 
 ```
@@ -168,7 +170,7 @@ T foo(...)
 }
 ```
 
-Functions that return a type other than `void` must have a return value. This can be done by using `return`, which may be used as a variable that will be returned at the end of the function, or as a `return;` statement which would cause an early return of the function.
+Functions that return a type other than `void` must have a return value. This can be done by using `return`, which may be used as a variable that will be returned at the end of the function, or as a `return` statement, which may appear as `return;` or `return => [variable][value];`.
 
 Setting or modifying the value of `return` does not have any effect in a `void` function, but the `return;` statement will always lead to an early return.
 
@@ -182,9 +184,13 @@ Setting or modifying the value of `return` does not have any effect in a `void` 
 
 `[variable][value]...`
 
+`parameter_name: [variable][value]...`
+
 Parameters are syntactically an array of variable declarations, and are part of the signature of a declaration.
 
 Arguments are the actual values passed to something, like a function, and are either variables or values. You may declare a variable inline as an argument, like `foo(int a)` which would create a new variable `a` from the point of that call onwards.
+
+Named arguments may be used by using `parameter_name:` before the value being passed as an argument, where `parameter_name` is the name of the parameter the argument corresponds to.
 
 ### Delegates and Function Pointers
 
@@ -295,7 +301,18 @@ Use of `void` or a user-defined type with no members as the type of a field or v
 
 All declarations are initialized with zero, this may be prevented by setting the initial value to `void`.
 
-#### Bitfields
+### Successive Declaration
+
+`, name..`
+
+Variables of the same type may be successively defined by using `, name..`, this allows for tuple assignment to multiple variables.
+
+```
+// Variables a, b, and c are all defined as int.
+int a, b, c;
+```
+
+### Bitfields
 
 `[type] name : [bits]`
 
