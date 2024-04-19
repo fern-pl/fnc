@@ -26,8 +26,8 @@ const dchar[][] KEYWORDS = [
     "mixin".makeUnicodeString,
 ] ~ FUNC_STYLE_KEYWORD;
 
-
-private bool scontains(const(dchar[][]) list, const(dchar[]) str){
+private bool scontains(const(dchar[][]) list, const(dchar[]) str)
+{
     foreach (const(dchar[]) list_item; list)
     {
         if (list_item == str)
@@ -37,25 +37,32 @@ private bool scontains(const(dchar[][]) list, const(dchar[]) str){
 }
 
 import std.stdio;
+
 // Keywords break many other parts of parsing, so best to get them out of the way first
-dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index){
+dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
+{
     dchar[][] keywords;
-    while(index < tokens.length && tokens[index].tokenVariety == TokenType.Letter){
+    while (index < tokens.length && tokens[index].tokenVariety == TokenType.Letter)
+    {
         dchar[] data = tokens[index].value;
-        
+
         bool isKeyword = KEYWORDS.scontains(data);
-        if (!isKeyword) break;
+        if (!isKeyword)
+            break;
         bool isFucKeyword = FUNC_STYLE_KEYWORD.scontains(data);
         if (!isFucKeyword)
             keywords ~= data;
-        else{
-            
-            if(index+1 >= tokens.length || tokens[index+1].tokenVariety != TokenType.OpenBraces)
+        else
+        {
+
+            if (index + 1 >= tokens.length || tokens[index + 1].tokenVariety != TokenType
+                .OpenBraces)
                 throw new SyntaxError("Keyword must have arguments");
 
             dchar[] keyword = new dchar[data.length];
-            keyword[0..$] = data;
-            while (++index < tokens.length && tokens[index].tokenVariety != TokenType.CloseBraces){
+            keyword[0 .. $] = data;
+            while (++index < tokens.length && tokens[index].tokenVariety != TokenType.CloseBraces)
+            {
                 keyword ~= tokens[index].value;
             }
             if (index >= tokens.length)
@@ -69,15 +76,17 @@ dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index){
     return keywords;
 }
 
-
 unittest
 {
     import parsing.tokenizer.make_tokens;
+
     Token[] tokens = tokenizeText("align(an invalid alignment) abstract pure int x();");
-    
+
     size_t index = 0;
     assert(
-        ["align(an invalid alignment)".makeUnicodeString, "abstract".makeUnicodeString, "pure".makeUnicodeString]
-          == skipAndExtractKeywords(tokens, index));
-    assert(tokens[index].value == "int".makeUnicodeString );
+        [
+            "align(an invalid alignment)".makeUnicodeString,
+            "abstract".makeUnicodeString, "pure".makeUnicodeString
+        ] == skipAndExtractKeywords(tokens, index));
+    assert(tokens[index].value == "int".makeUnicodeString);
 }
