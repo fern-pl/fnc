@@ -272,8 +272,8 @@ struct OperationPrecedenceEntry
 }
 
 private Token OPR(dchar o)
-{
-    return Token(TokenType.Operator, [o]);
+{   
+    return Token(o != '=' ?TokenType.Operator : TokenType.Equals, [o]);
 }
 
 // https://en.cppreference.com/w/c/language/operator_precedence
@@ -282,30 +282,30 @@ private Token OPR(dchar o)
 // of each layer they are read left to right, or right to left.
 
 const OperatorPrecedenceLayer[] operatorPrecedence = [
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            // TODO: Unary
-        ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.PreIncrement, [
-                    OPR('+'), OPR('+'), Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.PreDecrement, [
-                    OPR('-'), OPR('-'), Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.PostIncrement, [
-                    Token(TokenType.Filler), OPR('+'), OPR('+')
-                ]),
-            OperationPrecedenceEntry(OperationVariety.PostDecrement, [
-                    Token(TokenType.Filler), OPR('-'), OPR('-')
-                ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         // TODO: Unary
+    //     ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         OperationPrecedenceEntry(OperationVariety.PreIncrement, [
+    //                 OPR('+'), OPR('+'), Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.PreDecrement, [
+    //                 OPR('-'), OPR('-'), Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.PostIncrement, [
+    //                 Token(TokenType.Filler), OPR('+'), OPR('+')
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.PostDecrement, [
+    //                 Token(TokenType.Filler), OPR('-'), OPR('-')
+    //             ]),
 
-            OperationPrecedenceEntry(OperationVariety.LogicalNot, [
-                    OPR('!'), Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.BitwiseNot, [
-                    OPR('~'), Token(TokenType.Filler)
-                ]),
-        ]),
+    //         OperationPrecedenceEntry(OperationVariety.LogicalNot, [
+    //                 OPR('!'), Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.BitwiseNot, [
+    //                 OPR('~'), Token(TokenType.Filler)
+    //             ]),
+    //     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.Multiply, [
                     Token(TokenType.Filler), OPR('*'), Token(TokenType.Filler)
@@ -325,111 +325,202 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                     Token(TokenType.Filler), OPR('-'), Token(TokenType.Filler)
                 ]),
         ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.BitshiftLeftSigned, [
-                    Token(TokenType.Filler), OPR('<'), OPR('<'),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.BitshiftRightSigned, [
-                    Token(TokenType.Filler), OPR('>'), OPR('>'),
-                    Token(TokenType.Filler)
-                ]),
-        ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.LessThanEq, [
-                    Token(TokenType.Filler), OPR('<'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.GreaterThanEq, [
-                    Token(TokenType.Filler), OPR('>'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.LessThan, [
-                    Token(TokenType.Filler), OPR('<'), Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.GreaterThan, [
-                    Token(TokenType.Filler), OPR('>'), Token(TokenType.Filler)
-                ]),
-        ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.NotEqualTo, [
-                    Token(TokenType.Filler), OPR('!'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.EqualTo, [
-                    Token(TokenType.Filler), OPR('='), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-        ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.BitwiseAnd, [
-                    Token(TokenType.Filler), OPR('&'), Token(TokenType.Filler)
-                ]),
-        ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.BitwiseXor, [
-                    Token(TokenType.Filler), OPR('^'), Token(TokenType.Filler)
-                ]),
-        ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.BitwiseOr, [
-                    Token(TokenType.Filler), OPR('|'), Token(TokenType.Filler)
-                ]),
-        ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.LogicalAnd, [
-                    Token(TokenType.Filler), OPR('&'), OPR('&'),
-                    Token(TokenType.Filler)
-                ]),
-        ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.LogicalOr, [
-                    Token(TokenType.Filler), OPR('|'), OPR('|'),
-                    Token(TokenType.Filler)
-                ]),
-        ]),
-    OperatorPrecedenceLayer(OperatorOrder.RightToLeft, [
-            OperationPrecedenceEntry(OperationVariety.Assignment, [
-                    Token(TokenType.Filler), OPR('='), Token(TokenType.Filler)
-                ]), // asignment
-            OperationPrecedenceEntry(OperationVariety.AddEq, [
-                    Token(TokenType.Filler), OPR('+'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.SubstractEq, [
-                    Token(TokenType.Filler), OPR('-'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.MultiplyEq, [
-                    Token(TokenType.Filler), OPR('*'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.DivideEq, [
-                    Token(TokenType.Filler), OPR('/'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.ModEq, [
-                    Token(TokenType.Filler), OPR('%'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         OperationPrecedenceEntry(OperationVariety.BitshiftLeftSigned, [
+    //                 Token(TokenType.Filler), OPR('<'), OPR('<'),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.BitshiftRightSigned, [
+    //                 Token(TokenType.Filler), OPR('>'), OPR('>'),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //     ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         OperationPrecedenceEntry(OperationVariety.LessThanEq, [
+    //                 Token(TokenType.Filler), OPR('<'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.GreaterThanEq, [
+    //                 Token(TokenType.Filler), OPR('>'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.LessThan, [
+    //                 Token(TokenType.Filler), OPR('<'), Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.GreaterThan, [
+    //                 Token(TokenType.Filler), OPR('>'), Token(TokenType.Filler)
+    //             ]),
+    //     ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         OperationPrecedenceEntry(OperationVariety.NotEqualTo, [
+    //                 Token(TokenType.Filler), OPR('!'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.EqualTo, [
+    //                 Token(TokenType.Filler), OPR('='), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //     ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         OperationPrecedenceEntry(OperationVariety.BitwiseAnd, [
+    //                 Token(TokenType.Filler), OPR('&'), Token(TokenType.Filler)
+    //             ]),
+    //     ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         OperationPrecedenceEntry(OperationVariety.BitwiseXor, [
+    //                 Token(TokenType.Filler), OPR('^'), Token(TokenType.Filler)
+    //             ]),
+    //     ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         OperationPrecedenceEntry(OperationVariety.BitwiseOr, [
+    //                 Token(TokenType.Filler), OPR('|'), Token(TokenType.Filler)
+    //             ]),
+    //     ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         OperationPrecedenceEntry(OperationVariety.LogicalAnd, [
+    //                 Token(TokenType.Filler), OPR('&'), OPR('&'),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //     ]),
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    //         OperationPrecedenceEntry(OperationVariety.LogicalOr, [
+    //                 Token(TokenType.Filler), OPR('|'), OPR('|'),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //     ]),
+    // OperatorPrecedenceLayer(OperatorOrder.RightToLeft, [
+    //         OperationPrecedenceEntry(OperationVariety.Assignment, [
+    //                 Token(TokenType.Filler), OPR('='), Token(TokenType.Filler)
+    //             ]), // asignment
+    //         OperationPrecedenceEntry(OperationVariety.AddEq, [
+    //                 Token(TokenType.Filler), OPR('+'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.SubstractEq, [
+    //                 Token(TokenType.Filler), OPR('-'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.MultiplyEq, [
+    //                 Token(TokenType.Filler), OPR('*'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.DivideEq, [
+    //                 Token(TokenType.Filler), OPR('/'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.ModEq, [
+    //                 Token(TokenType.Filler), OPR('%'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
 
-            OperationPrecedenceEntry(OperationVariety.BitwiseAndEq, [
-                    Token(TokenType.Filler), OPR('&'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.BitwiseXorEq, [
-                    Token(TokenType.Filler), OPR('^'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.BitwiseOrEq, [
-                    Token(TokenType.Filler), OPR('|'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.BitwiseNotEq, [
-                    Token(TokenType.Filler), OPR('~'), OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-        ])
+    //         OperationPrecedenceEntry(OperationVariety.BitwiseAndEq, [
+    //                 Token(TokenType.Filler), OPR('&'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.BitwiseXorEq, [
+    //                 Token(TokenType.Filler), OPR('^'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.BitwiseOrEq, [
+    //                 Token(TokenType.Filler), OPR('|'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //         OperationPrecedenceEntry(OperationVariety.BitwiseNotEq, [
+    //                 Token(TokenType.Filler), OPR('~'), OPR('='),
+    //                 Token(TokenType.Filler)
+    //             ]),
+    //     ])
 
 ];
+import std.container.array;
+private bool testAstEntry(const(OperationPrecedenceEntry) entry, AstNode[] nodes){
+    if (entry.tokens.length > nodes.length)
+        return false;
+    for(size_t index = 0; index < entry.tokens.length; index++){
+        switch (entry.tokens[index].tokenVariety){
+            case TokenType.Filler:
+                AstNode node = nodes[index];
+                if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction.Scope)
+                    return false;
+                break;
+            case TokenType.Operator:
+                AstNode node = nodes[index];
+                if (node.action != AstAction.TokenHolder)
+                    return false;
+                Token token = node.tokenBeingHeld;
+                if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType.Operator)
+                    return false;
+                if (token.value != entry.tokens[index].value)
+                    return false;
+                break;
+            default:
+                // entry.tokens[index].writeln;
+                assert(0);
+            
+        }
+    }
+    return true;
+}
+private void merge(const(OperationPrecedenceEntry) entry, Array!AstNode nodes, size_t startIndex){
+    AstNode[] nodeData;
 
+     for(size_t index = 0; index < entry.tokens.length; index++){
+        switch (entry.tokens[index].tokenVariety){
+            case TokenType.Filler:
+                nodeData ~= nodes[startIndex + index];
+                break;
+            case TokenType.Operator:
+                break;
+            default:
+                assert(0);
+        }
+    }
+    AstNode oprNode = new AstNode();
+    oprNode.action = AstAction.DoubleArgumentOperation;
+    oprNode.doubleArgumentOperationNodeData = DoubleArgumentOperationNodeData(
+        entry.operation,
+        nodeData[0],
+        nodeData[1]
+    );
+    nodes[startIndex] = oprNode;
+    nodes.linearRemove(nodes[startIndex+1..startIndex+entry.tokens.length]);
+
+}
+
+void scanForOperators(Array!AstNode nodes){
+    // OperatorOrder order;
+    auto data = nodes.data;
+    static foreach (layer; operatorPrecedence)
+    {
+        static if (layer.order == OperatorOrder.LeftToRight){
+            for (size_t index = 0; index < nodes.length; index++){
+                // layer.layer.writeln;
+                // nodes.data.writeln;
+                foreach (entry; layer.layer)
+                {
+                    // entry.writeln;
+                    // data[index..$].writeln;
+                    bool isEntry = entry.testAstEntry(data[index..$]);
+                    if (isEntry) entry.merge(nodes, index);
+                }
+                
+            }
+            
+        }
+        // static if (layer.order == OperatorOrder.RightToLeft){
+        //     "right".writeln;
+        //     for (size_t index = nodes.length; index != -1; index--){
+        //         foreach (entry; layer.layer)
+        //         {
+        //             bool isEntry = entry.testAstEntry(nodes.data[index..$]);
+        //             if (isEntry) entry.operation.writeln;
+        //         }
+        //     }
+        // }
+        // order = layer.order;
+        // foreach (entry; layer.layer)
+        // {
+            
+        // }
+    }
+}

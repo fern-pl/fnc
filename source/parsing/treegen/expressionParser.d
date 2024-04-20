@@ -74,7 +74,13 @@ private AstNode[] phaseOne(Token[] tokens)
     }
     return ret;
 }
-// Handle function calls
+
+private void operatorPairingPhase(Array!AstNode nodes){
+
+}
+
+
+// Handle function calls and operators
 private void phaseTwo(Array!AstNode nodes){
     for (size_t index = 0; index < nodes.length; index++){
         AstNode node = nodes[index];
@@ -85,6 +91,7 @@ private void phaseTwo(Array!AstNode nodes){
             Array!AstNode components;
             components~=args.expressionNodeData.components;
             phaseTwo(components);
+            operatorPairingPhase(components);
             args.expressionNodeData.components.length = components.data.length;
             args.expressionNodeData.components[0..$] = components.data[0..$];
             
@@ -97,25 +104,30 @@ private void phaseTwo(Array!AstNode nodes){
             nodes[index] = functionCall;
             nodes.linearRemove(nodes[index+1..index+2]);   
         }
-        // else if(node.action == AstAction.TokenHolder && node.tokenBeingHeld.tokenVariety == TokenType.Number){
-
-        // }
+        else if (node.action == AstAction.Expression){
+            Array!AstNode components;
+            components~=node.expressionNodeData.components;
+            phaseTwo(components);
+            operatorPairingPhase(components);
+            node.expressionNodeData.components.length = components.data.length;
+            node.expressionNodeData.components[0..$] = components.data[0..$];
+        }
     }
 }
 
 import parsing.treegen.treeGenUtils;
 
-
+import parsing.treegen.tokenRelationships;
 unittest
 {
     
     import parsing.tokenizer.make_tokens;
-    AstNode[] phaseOneNodes =  phaseOne("math.sqrt(P(1) + 1 + 2 + 3)".tokenizeText);
+    AstNode[] phaseOneNodes =  phaseOne("3*5+6*7/2".tokenizeText);
     
     Array!AstNode nodes;
     nodes~=phaseOneNodes;
     phaseTwo(nodes);
+    nodes.scanForOperators;
     nodes.writeln;
-    ";".writeln;
     
 }
