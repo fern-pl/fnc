@@ -107,13 +107,13 @@ enum OperationVariety
 
 struct SingleArgumentOperationNodeData
 {
-    OperationVariety pperationVariety;
+    OperationVariety operationVariety;
     AstNode value;
 }
 
 struct DoubleArgumentOperationNodeData
 {
-    OperationVariety pperationVariety;
+    OperationVariety operationVariety;
     AstNode left;
     AstNode right;
 }
@@ -180,10 +180,49 @@ class AstNode
         case AstAction.LiteralUnit:
             sink(literalUnitCompenents.to!string);
             break;
+        case AstAction.DoubleArgumentOperation:
+            sink(doubleArgumentOperationNodeData.operationVariety.to!string);
+            sink(", ");
+            sink(doubleArgumentOperationNodeData.left.to!string);
+            sink(", ");
+            sink(doubleArgumentOperationNodeData.right.to!string);
+            break;
         default:
             break;
         }
         sink("}");
+    }
+
+    void tree(size_t tabCount)
+    {
+        import std.stdio;
+        import std.conv;
+
+        foreach (i; 0 .. tabCount)
+            write("|  ");
+
+        switch (action)
+        {
+        case AstAction.Call:
+            writeln(callNodeData.func.to!string ~ ":");
+            callNodeData.args.tree(tabCount + 1);
+            break;
+        case AstAction.DoubleArgumentOperation:
+            writeln(doubleArgumentOperationNodeData.operationVariety.to!string ~ ":");
+            doubleArgumentOperationNodeData.left.tree(tabCount + 1);
+            doubleArgumentOperationNodeData.right.tree(tabCount + 1);
+            break;
+        case AstAction.Expression:
+            writeln("Result of expression with " ~ expressionNodeData.components.length.to!string ~ " components:");
+            foreach (subnode; expressionNodeData.components)
+            {
+                subnode.tree(tabCount + 1);
+            }
+            break;
+        default:
+            writeln(this.to!string);
+            break;
+        }
     }
 }
 
@@ -203,6 +242,7 @@ Nullable!AstNode nextNonWhiteNode(Array!AstNode nodes, ref size_t index)
     while (nodes.length > index)
     {
         import parsing.tokenizer.tokens;
+
         AstNode node = nodes[index++];
         if (node.action == AstAction.TokenHolder &&
             (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace

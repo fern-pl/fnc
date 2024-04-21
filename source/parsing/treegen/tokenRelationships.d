@@ -272,8 +272,8 @@ struct OperationPrecedenceEntry
 }
 
 private Token OPR(dchar o)
-{   
-    return Token(o != '=' ?TokenType.Operator : TokenType.Equals, [o]);
+{
+    return Token(o != '=' ? TokenType.Operator : TokenType.Equals, [o]);
 }
 
 // https://en.cppreference.com/w/c/language/operator_precedence
@@ -433,94 +433,106 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
 
 ];
 import std.container.array;
-private bool testAstEntry(const(OperationPrecedenceEntry) entry, AstNode[] nodes){
+
+private bool testAstEntry(const(OperationPrecedenceEntry) entry, AstNode[] nodes)
+{
     if (entry.tokens.length > nodes.length)
         return false;
-    for(size_t index = 0; index < entry.tokens.length; index++){
-        switch (entry.tokens[index].tokenVariety){
-            case TokenType.Filler:
-                AstNode node = nodes[index];
-                if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction.Scope)
-                    return false;
-                break;
-            case TokenType.Operator:
-                AstNode node = nodes[index];
-                if (node.action != AstAction.TokenHolder)
-                    return false;
-                Token token = node.tokenBeingHeld;
-                if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType.Operator)
-                    return false;
-                if (token.value != entry.tokens[index].value)
-                    return false;
-                break;
-            default:
-                // entry.tokens[index].writeln;
-                assert(0);
-            
+    for (size_t index = 0; index < entry.tokens.length; index++)
+    {
+        switch (entry.tokens[index].tokenVariety)
+        {
+        case TokenType.Filler:
+            AstNode node = nodes[index];
+            if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction
+                .Scope)
+                return false;
+            break;
+        case TokenType.Operator:
+            AstNode node = nodes[index];
+            if (node.action != AstAction.TokenHolder)
+                return false;
+            Token token = node.tokenBeingHeld;
+            if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType.Operator)
+                return false;
+            if (token.value != entry.tokens[index].value)
+                return false;
+            break;
+        default:
+            // entry.tokens[index].writeln;
+            assert(0);
+
         }
     }
     return true;
 }
-private void merge(const(OperationPrecedenceEntry) entry, Array!AstNode nodes, size_t startIndex){
-    AstNode[] nodeData;
 
-     for(size_t index = 0; index < entry.tokens.length; index++){
-        switch (entry.tokens[index].tokenVariety){
-            case TokenType.Filler:
-                nodeData ~= nodes[startIndex + index];
-                break;
-            case TokenType.Operator:
-                break;
-            default:
-                assert(0);
+private void merge(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, size_t startIndex)
+{
+    AstNode[] nodeData;
+    for (size_t index = 0; index < entry.tokens.length; index++)
+    {
+        switch (entry.tokens[index].tokenVariety)
+        {
+        case TokenType.Filler:
+            nodeData ~= nodes[startIndex + index];
+            break;
+        case TokenType.Operator:
+            break;
+        default:
+            assert(0);
         }
     }
     AstNode oprNode = new AstNode();
     oprNode.action = AstAction.DoubleArgumentOperation;
-    oprNode.doubleArgumentOperationNodeData = DoubleArgumentOperationNodeData(
-        entry.operation,
-        nodeData[0],
-        nodeData[1]
-    );
+    if (nodeData.length == 0)
+        assert(0);
+    if (nodeData.length == 1)
+    {
+        oprNode.action = AstAction.SingleArgumentOperation;
+        oprNode.singleArgumentOperationNodeData = SingleArgumentOperationNodeData(
+            entry.operation,
+            nodeData[0],
+        );
+    }
+    if (nodeData.length == 2)
+        oprNode.doubleArgumentOperationNodeData = DoubleArgumentOperationNodeData(
+            entry.operation,
+            nodeData[0],
+            nodeData[1]
+        );
+
     nodes[startIndex] = oprNode;
-    nodes.linearRemove(nodes[startIndex+1..startIndex+entry.tokens.length]);
+    nodes.linearRemove(nodes[startIndex + 1 .. startIndex + entry.tokens.length]);
 
 }
 
-void scanForOperators(Array!AstNode nodes){
+void scanAndMergeOperators(Array!AstNode nodes)
+{
     // OperatorOrder order;
     auto data = nodes.data;
     static foreach (layer; operatorPrecedence)
     {
-        static if (layer.order == OperatorOrder.LeftToRight){
-            for (size_t index = 0; index < nodes.length; index++){
-                // layer.layer.writeln;
-                // nodes.data.writeln;
+        static if (layer.order == OperatorOrder.LeftToRight)
+        {
+            for (size_t index = 0; index < nodes.length; index++)
+            {
                 foreach (entry; layer.layer)
                 {
-                    // entry.writeln;
-                    // data[index..$].writeln;
-                    bool isEntry = entry.testAstEntry(data[index..$]);
-                    if (isEntry) entry.merge(nodes, index);
+                    if (entry.testAstEntry(data[index .. $]))
+                        entry.merge(nodes, index);
                 }
-                
+
             }
-            
         }
-        // static if (layer.order == OperatorOrder.RightToLeft){
-        //     "right".writeln;
-        //     for (size_t index = nodes.length; index != -1; index--){
-        //         foreach (entry; layer.layer)
-        //         {
-        //             bool isEntry = entry.testAstEntry(nodes.data[index..$]);
-        //             if (isEntry) entry.operation.writeln;
-        //         }
-        //     }
-        // }
-        // order = layer.order;
-        // foreach (entry; layer.layer)
-        // {
-            
-        // }
+        static if (layer.order == OperatorOrder.RightToLeft){
+            for (size_t index = nodes.length; index != -1; index--){
+                foreach (entry; layer.layer)
+                {
+                    if (entry.testAstEntry(data[index .. $]))
+                        entry.merge(nodes, index);
+                }
+            }
+        }
     }
 }

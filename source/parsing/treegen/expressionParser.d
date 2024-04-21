@@ -91,7 +91,7 @@ private void phaseTwo(Array!AstNode nodes){
             Array!AstNode components;
             components~=args.expressionNodeData.components;
             phaseTwo(components);
-            operatorPairingPhase(components);
+            scanAndMergeOperators(components);
             args.expressionNodeData.components.length = components.data.length;
             args.expressionNodeData.components[0..$] = components.data[0..$];
             
@@ -108,7 +108,7 @@ private void phaseTwo(Array!AstNode nodes){
             Array!AstNode components;
             components~=node.expressionNodeData.components;
             phaseTwo(components);
-            operatorPairingPhase(components);
+            scanAndMergeOperators(components);
             node.expressionNodeData.components.length = components.data.length;
             node.expressionNodeData.components[0..$] = components.data[0..$];
         }
@@ -122,12 +122,12 @@ unittest
 {
     
     import parsing.tokenizer.make_tokens;
-    AstNode[] phaseOneNodes =  phaseOne("3*5+6*7/2".tokenizeText);
+    AstNode[] phaseOneNodes =  phaseOne("math.sqrt(3*5+6*7/2)*3".tokenizeText);
     
     Array!AstNode nodes;
     nodes~=phaseOneNodes;
     phaseTwo(nodes);
-    nodes.scanForOperators;
-    nodes.writeln;
+    scanAndMergeOperators(nodes);
+    nodes[0].tree(0);
     
 }
