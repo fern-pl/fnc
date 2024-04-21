@@ -122,6 +122,7 @@ public enum Modifiers : ubyte
     WORD = 1 << 5,
     DWORD = 1 << 6,
     QWORD = 1 << 7,
+
     MASK = 0b11100000
 }
 
