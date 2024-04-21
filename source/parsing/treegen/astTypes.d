@@ -107,15 +107,15 @@ enum OperationVariety
 
 struct SingleArgumentOperationNodeData
 {
-    OperationVariety pperationVariety;
-    AstNode* value;
+    OperationVariety operationVariety;
+    AstNode value;
 }
 
 struct DoubleArgumentOperationNodeData
 {
-    OperationVariety pperationVariety;
-    AstNode* left;
-    AstNode* right;
+    OperationVariety operationVariety;
+    AstNode left;
+    AstNode right;
 }
 
 struct ExpressionNodeData
@@ -128,10 +128,10 @@ struct ExpressionNodeData
 struct CallNodeData
 {
     NameUnit func;
-    AstNode* args;
+    AstNode args;
 }
 
-struct AstNode
+class AstNode
 {
     AstAction action;
     union
@@ -159,26 +159,97 @@ struct AstNode
         sink("{");
         switch (action)
         {
-            case AstAction.Keyword:
-                sink(keywordNodeData.to!string);
-                break;
-            case AstAction.TokenHolder:
-                sink(tokenBeingHeld.to!string);
-                break;
-            case AstAction.Expression:
-                sink(expressionNodeData.components.to!string);
-                break;
-            default: break;
+        case AstAction.Keyword:
+            sink(keywordNodeData.to!string);
+            break;
+        case AstAction.TokenHolder:
+            sink(tokenBeingHeld.to!string);
+            break;
+        case AstAction.Expression:
+            sink(expressionNodeData.components.to!string);
+            break;
+        case AstAction.NamedUnit:
+            sink(namedUnit.names.to!string);
+            break;
+        case AstAction.Call:
+            sink(callNodeData.func.names.to!string);
+            sink("(\n");
+            sink(callNodeData.args.to!string);
+            sink("\n)");
+            break;
+        case AstAction.LiteralUnit:
+            sink(literalUnitCompenents.to!string);
+            break;
+        case AstAction.DoubleArgumentOperation:
+            sink(doubleArgumentOperationNodeData.operationVariety.to!string);
+            sink(", ");
+            sink(doubleArgumentOperationNodeData.left.to!string);
+            sink(", ");
+            sink(doubleArgumentOperationNodeData.right.to!string);
+            break;
+        default:
+            break;
         }
         sink("}");
     }
+
+    void tree(size_t tabCount)
+    {
+        import std.stdio;
+        import std.conv;
+
+        foreach (i; 0 .. tabCount)
+            write("|  ");
+
+        switch (action)
+        {
+        case AstAction.Call:
+            writeln(callNodeData.func.to!string ~ ":");
+            callNodeData.args.tree(tabCount + 1);
+            break;
+        case AstAction.DoubleArgumentOperation:
+            writeln(doubleArgumentOperationNodeData.operationVariety.to!string ~ ":");
+            doubleArgumentOperationNodeData.left.tree(tabCount + 1);
+            doubleArgumentOperationNodeData.right.tree(tabCount + 1);
+            break;
+        case AstAction.Expression:
+            writeln("Result of expression with " ~ expressionNodeData.components.length.to!string ~ " components:");
+            foreach (subnode; expressionNodeData.components)
+            {
+                subnode.tree(tabCount + 1);
+            }
+            break;
+        default:
+            writeln(this.to!string);
+            break;
+        }
+    }
 }
 
-struct ScopeParsingMode{
-    bool allowDefiningObjects;
-    bool allowDefiningFunctions;
-    bool allowVariableDefinitions;
-    bool allowInlineVariableAssignments;
-    bool hasProperties;
-    bool isCommaSeperated;
+// struct ScopeParsingMode{
+//     bool allowDefiningObjects;
+//     bool allowDefiningFunctions;
+//     bool allowVariableDefinitions;
+//     bool allowInlineVariableAssignments;
+//     bool hasProperties;
+//     bool isCommaSeperated;
+// }
+import std.container.array;
+
+Nullable!AstNode nextNonWhiteNode(Array!AstNode nodes, ref size_t index)
+{
+    Nullable!AstNode found;
+    while (nodes.length > index)
+    {
+        import parsing.tokenizer.tokens;
+
+        AstNode node = nodes[index++];
+        if (node.action == AstAction.TokenHolder &&
+            (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace
+                || node.tokenBeingHeld.tokenVariety == TokenType.Comment))
+            continue;
+        found = node;
+        break;
+    }
+    return found;
 }

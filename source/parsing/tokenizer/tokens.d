@@ -13,6 +13,7 @@ enum TokenType
     Letter,
     Semicolon,
     Colon,
+    Comma,
     Pipe,
     WhiteSpace,
     Equals,
@@ -69,7 +70,7 @@ bool isSingleLineComment(dchar first, dchar secound)
 {
     static foreach (const dchar[] style; validSingleLineCommentStyles)
     {
-        if (style[0] == first || style[0] == secound)
+        if (style[0] == first && style[0] == secound)
             return true;
     }
     return false;
@@ -115,13 +116,15 @@ TokenType getVarietyOfLetter(dchar symbol)
         return TokenType.Pipe;
     case '.':
         return TokenType.Period;
+    case ',':
+        return TokenType.Comma;
     default:
         break;
     }
 
     if (isDigit(symbol))
         return TokenType.Number;
-    if (isAlpha(symbol))
+    if (isAlpha(symbol) || symbol == '_')
         return TokenType.Letter;
     if (isWhite(symbol))
         return TokenType.WhiteSpace;
@@ -144,14 +147,14 @@ struct Token
     size_t startingIndex;
 }
 
-import tern.typecons.common : Nullable;
+import tern.typecons.common : Nullable, nullable;
 
 Nullable!Token nextToken(Token[] tokens, ref size_t index)
 {
     Nullable!Token found;
-    if (tokens.length >= index)
-        return found;
-    found = tokens[index++];
+    if (tokens.length <= index+1)
+        return nullable!Token(null);
+    found = tokens[++index];
     return found;
 }
 

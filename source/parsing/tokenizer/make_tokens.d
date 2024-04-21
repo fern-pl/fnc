@@ -80,7 +80,22 @@ private Token[] protoTokenize(string input)
 
         }
         TokenType tokenType = getVarietyOfLetter(symbol);
-        tokens ~= Token(tokenType, [symbol], index);
+        Token token = Token(tokenType, [symbol], index);
+        if (tokenType == TokenType.Quotation)
+        {
+            dchar last = symbol;
+            index++;
+            while (index < chars.length)
+            {
+                dchar symbol2 = chars[index];
+                token.value ~= symbol2;
+                if (symbol2 == symbol && last != '\\')
+                    break;
+                last = symbol2;
+                index++;
+            }
+        }
+        tokens ~= token;
     }
     return tokens;
 }
