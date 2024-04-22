@@ -46,7 +46,7 @@ struct DefineFunctionNodeData
     dchar[][] precedingKeywords;
     dchar[][] suffixKeywords;
     NameUnit returnType;
-    AstNode* functionScope;
+    AstNode functionScope;
 }
 
 struct DefineVariableNodeData
@@ -59,7 +59,7 @@ struct DefineVariableNodeData
 struct AssignVariableNodeData
 {
     NameUnit[] name; // Name of variable(s) to assign Ex: x = y = z = 5;
-    AstNode* value;
+    AstNode value;
 }
 
 enum OperationVariety
@@ -247,6 +247,13 @@ class AstNode
             {
                 subnode.tree(tabCount + 1);
             }
+            break;
+        case AstAction.AssignVariable:
+            write("Assigning variable(s): ");
+            foreach (NameUnit name; assignVariableNodeData.name)
+                write(name.names.to!string ~ ", ");
+            writeln(": ");
+            assignVariableNodeData.value.tree(tabCount + 1);
             break;
         default:
             writeln(this.to!string);

@@ -98,3 +98,21 @@ unittest
     assert(nodes[0].doubleArgumentOperationNodeData.operationVariety == OperationVariety.Add);
     // nodes[0].tree(-1);
 }
+
+unittest
+{
+    import parsing.tokenizer.make_tokens;
+    import parsing.treegen.scopeParser;
+
+    size_t index = 0;
+    auto scopeData = new ScopeData;
+    parseLine("partial public module the.fat.rat.r8te.my.foo;".tokenizeText, index, scopeData);
+    assert(scopeData.moduleName.value.names == [
+        "the".makeUnicodeString, 
+        "fat".makeUnicodeString, 
+        "rat".makeUnicodeString, 
+        "r8te".makeUnicodeString, 
+        "my".makeUnicodeString, 
+        "foo".makeUnicodeString
+    ]);
+}
