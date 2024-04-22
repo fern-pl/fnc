@@ -123,12 +123,16 @@ unittest
 {
     
     import parsing.tokenizer.make_tokens;
-    AstNode[] phaseOneNodes =  phaseOne("math.sqrt( 3 *5    +6   *7/ 2    )   *x /   2+ 4   ".tokenizeText);
+    AstNode[] phaseOneNodes =  phaseOne("math.sqrt( 3 *5    +6   *7/ 2    )*x/2+4".tokenizeText);
     
     Array!AstNode nodes;
     nodes~=phaseOneNodes;
     phaseTwo(nodes);
     scanAndMergeOperators(nodes);
+    // nodes[0].writeln;
     nodes[0].tree(0);
+    // foreach(node ; nodes){
+        // node.tree(0);
+    // }
     
 }

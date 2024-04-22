@@ -434,10 +434,10 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
 ];
 import std.container.array;
 
-private void testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, ref size_t startIndex)
+private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, size_t startIndex)
 {
     if (entry.tokens.length > nodes.length)
-        return;
+        return false;
     size_t nodeIndex = startIndex;
     AstNode[] operands;
     
@@ -445,7 +445,7 @@ private void testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
     {
         Nullable!AstNode nodeNullable = nodes.nextNonWhiteNode(nodeIndex);
         if (nodeNullable.ptr == null) 
-            return;
+            return false;
         AstNode node = nodeNullable;
         switch (entry.tokens[index].tokenVariety)
         {
@@ -454,17 +454,17 @@ private void testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
                 
                 if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction
                     .Scope)
-                    return;
+                    return false;
                 operands ~= node;
                 break;
             case TokenType.Operator:
                 if (node.action != AstAction.TokenHolder)
-                    return;
+                    return false;
                 Token token = node.tokenBeingHeld;
                 if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType.Operator)
-                    return;
+                    return false;
                 if (token.value != entry.tokens[index].value)
-                    return;
+                    return false;
                 break;
             default:
                 assert(0);
@@ -492,10 +492,8 @@ private void testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
         );
 
     nodes[startIndex] = oprNode;
-    nodes.linearRemove(nodes[startIndex + 1 .. nodeIndex-1]);
-    startIndex = nodeIndex;
-
-
+    nodes.linearRemove(nodes[startIndex + 1 .. nodeIndex]);
+    return true;
 }
 
 // private void merge(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, size_t startIndex)
@@ -555,19 +553,20 @@ void scanAndMergeOperators(Array!AstNode nodes)
             {
                 foreach (entry; layer.layer)
                 {
-                    entry.testAndJoin(nodes, index);
+                    if (entry.testAndJoin(nodes, index)){index--; continue;}
                         
                 }
 
             }
         }
-        static if (layer.order == OperatorOrder.RightToLeft){
-            for (size_t index = nodes.length; index != -1; index--){
-                foreach (entry; layer.layer)
-                {
-                    entry.testAndJoin(nodes, index, index);
-                }
-            }
-        }
+        // static if (layer.order == OperatorOrder.RightToLeft){
+        //     for (size_t index = nodes.length; index != -1; index--){
+        //         foreach (entry; layer.layer)
+        //         {
+        //             entry.testAndJoin(nodes, index);
+        //         }
+        //     }
+        // }
     }
 }
+
