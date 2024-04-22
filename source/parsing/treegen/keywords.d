@@ -6,18 +6,17 @@ import errors;
 const dchar[][] FUNC_STYLE_KEYWORD = [
     "align".makeUnicodeString
 ];
+const dchar[] PARTIAL_KEYWORD = "partial".makeUnicodeString;
 
 const dchar[][] KEYWORDS = [
     "delete".makeUnicodeString,
-    "import".makeUnicodeString,
     "alias".makeUnicodeString,
-    "module".makeUnicodeString,
     "pure".makeUnicodeString,
     "public".makeUnicodeString,
     "private".makeUnicodeString,
     "static".makeUnicodeString,
     "abstract".makeUnicodeString,
-    "partial".makeUnicodeString,
+    PARTIAL_KEYWORD,
     "unsafe".makeUnicodeString,
     "@tapped".makeUnicodeString,
     "inline".makeUnicodeString,
@@ -26,7 +25,7 @@ const dchar[][] KEYWORDS = [
     "mixin".makeUnicodeString,
 ] ~ FUNC_STYLE_KEYWORD;
 
-private bool scontains(const(dchar[][]) list, const(dchar[]) str)
+bool scontains(const(dchar[][]) list, const(dchar[]) str)
 {
     foreach (const(dchar[]) list_item; list)
     {

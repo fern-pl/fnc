@@ -132,6 +132,12 @@ private Token[] groupTokens(Token[] tokens)
             groupedTokens[$ - 1].value ~= token.value;
             continue;
         }
+        if (groupedTokens[$ - 1].tokenVariety == TokenType.Letter && token.tokenVariety == TokenType
+            .Number)
+        {
+            groupedTokens[$ - 1].value ~= token.value;
+            continue;
+        }
         groupedTokens ~= token;
     }
 

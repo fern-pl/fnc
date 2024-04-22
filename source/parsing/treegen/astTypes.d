@@ -37,6 +37,7 @@ bool isExpressionLike(AstAction action)
 struct KeywordNodeData
 {
     dchar[] keywordName;
+    dchar[][] possibleExtras;
     Token[] keywardArgs;
 }
 

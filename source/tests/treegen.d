@@ -96,5 +96,5 @@ unittest
     assert(nodes.length == 1);
     assert(nodes[0].action == AstAction.DoubleArgumentOperation);
     assert(nodes[0].doubleArgumentOperationNodeData.operationVariety == OperationVariety.Add);
-    nodes[0].tree(-1);
+    // nodes[0].tree(-1);
 }

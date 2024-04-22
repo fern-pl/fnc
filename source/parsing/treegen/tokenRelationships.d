@@ -106,6 +106,46 @@ const TokenGrepPacket[] DeclarationAndAssignment = [
             Token(TokenType.Semicolon, [])
         ])
 ];
+// import foo.bar
+const TokenGrepPacket[] TotalImport = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+        Token(TokenType.Letter, "import".makeUnicodeString)
+    ]),
+    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+        Token(TokenType.Semicolon, [])
+    ])
+];
+// import foo : bar
+const TokenGrepPacket[] SelectiveImport = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+        Token(TokenType.Letter, "import".makeUnicodeString)
+    ]),
+    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+        Token(TokenType.Colon, ":".makeUnicodeString)
+    ]),
+
+    TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
+        TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    ]),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+        Token(TokenType.Semicolon, [])
+    ])
+];
+// module foo.bar;
+const TokenGrepPacket[] ModuleDeclaration = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+        Token(TokenType.Letter, "module".makeUnicodeString)
+    ]),
+    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+        Token(TokenType.Semicolon, [])
+    ])
+];
+
+
 
 bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 {
