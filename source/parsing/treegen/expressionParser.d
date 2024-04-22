@@ -127,6 +127,21 @@ public void phaseTwo(Array!AstNode nodes)
     }
 }
 
+void trimAstNodes(Array!AstNode nodes)
+{
+    // Remove starting whitespace
+    while (nodes.length && nodes[0].action == AstAction.TokenHolder &&
+        (nodes[0].tokenBeingHeld.tokenVariety == TokenType.WhiteSpace
+            || nodes[0].tokenBeingHeld.tokenVariety == TokenType.Comment))
+        nodes.linearRemove(nodes[0 .. 1]);
+
+    // Remove ending whitespace
+    while (nodes.length && nodes[$ - 1].action == AstAction.TokenHolder &&
+        (nodes[$ - 1].tokenBeingHeld.tokenVariety == TokenType.WhiteSpace
+            || nodes[$ - 1].tokenBeingHeld.tokenVariety == TokenType.Comment))
+        nodes.linearRemove(nodes[$ - 1 .. $]);
+}
+
 Array!AstNode expressionNodeFromTokens(Token[] tokens)
 {
     AstNode[] phaseOneNodes = phaseOne(tokens);
@@ -134,5 +149,23 @@ Array!AstNode expressionNodeFromTokens(Token[] tokens)
     nodes ~= phaseOneNodes;
     phaseTwo(nodes);
     scanAndMergeOperators(nodes);
+    nodes.trimAstNodes();
     return nodes;
+}
+
+size_t findNearestSemiColon(Token[] tokens, size_t index)
+{
+    int parCount = 0;
+    while (index < tokens.length)
+    {
+        Token token = tokens[index];
+        if (token.tokenVariety == TokenType.OpenBraces)
+            parCount++;
+        if (token.tokenVariety == TokenType.CloseBraces)
+            parCount--;
+        if (token.tokenVariety == TokenType.Semicolon && parCount == 0)
+            return index;
+        index++;
+    }
+    return -1;
 }

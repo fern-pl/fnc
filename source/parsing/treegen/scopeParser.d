@@ -16,7 +16,9 @@ struct ImportStatement
     NameUnit nameUnit;
     NameUnit[] importSelection; // empty for importing everything
 }
-struct DeclaredVariable{
+
+struct DeclaredVariable
+{
     NameUnit name;
     NameUnit type;
 }
@@ -112,7 +114,7 @@ NameUnit[] commaSeperatedNameUnits(Token[] tokens, ref size_t index)
 
 import std.stdio;
 
-void parseLine(Token[] tokens, ref size_t index, ScopeData parent)
+LineVarietyAndLength parseLine(Token[] tokens, ref size_t index, ScopeData parent)
 {
     dchar[][] keywords = tokens.skipAndExtractKeywords(index);
 
@@ -153,30 +155,47 @@ void parseLine(Token[] tokens, ref size_t index, ScopeData parent)
         break;
     case LineVariety.DeclarationLine:
     case LineVariety.DeclarationAndAssignment:
+        size_t endingIndex = index + lineVariety.length;
+        scope (exit) index = endingIndex;
+
         auto squishedTokens = tokens[index .. index + lineVariety.length];
         NameUnit declarationType = squishedTokens.genNameUnit(index);
         NameUnit[] declarationNames = squishedTokens.commaSeperatedNameUnits(index);
-        
-        foreach(NameUnit name; declarationNames)
+
+        foreach (NameUnit name; declarationNames)
             parent.declaredVariables ~= DeclaredVariable(name, declarationType);
-        
 
         Nullable!Token couldBeEquals = squishedTokens.nextNonWhiteToken(index);
         if (couldBeEquals.ptr == null)
             break;
 
-        if (couldBeEquals.value.tokenVariety != TokenType.Equals) break;
+        if (couldBeEquals.value.tokenVariety != TokenType.Equals)
+            break;
         
-        auto nodes = expressionNodeFromTokens(squishedTokens[index..$-1]);
+        auto nodes = expressionNodeFromTokens(squishedTokens[index .. $ - 1]);
+        // nodes.data.writeln;
         if (nodes.length != 1)
-            throw new SyntaxError("Expression node tree could not be parsed properly (Not reducable into single node)");
+            throw new SyntaxError(
+                "Expression node tree could not be parsed properly (Not reducable into single node)");
         AstNode result = nodes[0];
         AstNode assignment = new AstNode;
         assignment.action = AstAction.AssignVariable;
         assignment.assignVariableNodeData.name = declarationNames;
         assignment.assignVariableNodeData.value = result;
-        assignment.tree(-1);
-        parent.instructions~=assignment;
+
+        parent.instructions ~= assignment;
+        break;
+    case LineVariety.SimpleExpression:
+        size_t expression_end = tokens.findNearestSemiColon(index);
+        if (expression_end == -1)
+            throw new SyntaxError("Semicolon not found!");
+        auto nodes = expressionNodeFromTokens(tokens[index .. expression_end]);
+        // tokens[index .. expression_end].writeln;
+        if (nodes.length != 1)
+            throw new SyntaxError(
+                "Expression node tree could not be parsed properly (Not reducable into single node)");
+        parent.instructions ~= nodes[0];
+        index = expression_end + 1;
         
         break;
     default:
@@ -185,15 +204,43 @@ void parseLine(Token[] tokens, ref size_t index, ScopeData parent)
         assert(0, "Not yet implemented: " ~ lineVariety.lineVariety.to!string);
 
     }
-
+    return lineVariety;
 }
 
-unittest
+ScopeData parseMultilineScope(Token[] tokens, ref size_t index, Nullable!ScopeData parent)
 {
-    import parsing.tokenizer.make_tokens;
-    import parsing.treegen.scopeParser;
+    ScopeData scopeData = new ScopeData;
+    scopeData.parent = parent;
+    parseLine(tokens, index, scopeData).lineVariety.writeln;
+    parseLine(tokens, index, scopeData).lineVariety.writeln;
+    parseLine(tokens, index, scopeData).lineVariety.writeln;
+    parseLine(tokens, index, scopeData).lineVariety.writeln;
+    parseLine(tokens, index, scopeData).lineVariety.writeln;
+    parseLine(tokens, index, scopeData).lineVariety.writeln;
+    // parseLine(tokens, index, scopeData).lineVariety.writeln;
+    // parseLine(tokens, index, scopeData).lineVariety.writeln;
 
-    size_t index = 0;
-    auto scopeData = new ScopeData;
-    parseLine("int x, y,z,p = foo(bar)*8+1-3%5/8; foo(bar)".tokenizeText, index, scopeData);
+    return scopeData;
 }
+
+// unittest
+// {
+//     import parsing.tokenizer.make_tokens;
+//     import parsing.treegen.scopeParser;
+
+//     size_t index = 0;
+//     auto newScope = parseMultilineScope("
+            // int x, y;
+            // x = 5;
+            // y = 1;
+            // x = 3;
+            // int tv = x++ + y;
+            // float floaty = tv / 2;
+            // int xx;
+            // int xxx;
+//         ".tokenizeText(), index, nullable!ScopeData(null));
+//     newScope.declaredVariables.writeln;
+
+//     foreach (x ; newScope.instructions)
+//         x.tree(-1);
+// }
