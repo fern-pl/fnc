@@ -1,7 +1,6 @@
 module tests.tokenizer;
 import parsing.tokenizer.tokens;
 import parsing.tokenizer.make_tokens;
-import std.stdio;
 
 unittest
 {

@@ -10,7 +10,7 @@ import std.stdio;
 import std.container.array;
 
 // Group letters.letters.letters into NamedUnit s
-// Group Parenthesis into AstNode.Expression s to be parsed speratly
+// Group Parenthesis and indexing into AstNode.Expression s to be parsed speratly
 public AstNode[] phaseOne(Token[] tokens)
 {
     AstNode[] ret;
@@ -22,7 +22,10 @@ public AstNode[] phaseOne(Token[] tokens)
         if (token.tokenVariety == TokenType.OpenBraces)
         {
             AstNode newExpression = new AstNode();
-            newExpression.action = AstAction.Expression;
+            if (token.value == "(" || token.value == "{")
+                newExpression.action = AstAction.Expression;
+            else if (token.value == "[")
+                newExpression.action = AstAction.IndexInto;
             newExpression.expressionNodeData = ExpressionNodeData(
                 token.value[0],
                 braceOpenToBraceClose[token.value[0]],
@@ -35,12 +38,12 @@ public AstNode[] phaseOne(Token[] tokens)
         {
 
             if (parenthesisStack.length == 0)
-                throw new SyntaxError("Parenthesis closed but never opened");
+                throw new SyntaxError("Group token("~cast(char)token.value[0]~") closed but never opened");
 
             AstNode node = parenthesisStack[$ - 1];
 
             if (node.expressionNodeData.closer != token.value[0])
-                throw new SyntaxError("Parenthesis not closed with correct token");
+                throw new SyntaxError("Group token("~cast(char)token.value[0]~") not closed with correct token");
 
             parenthesisStack.length--;
 
@@ -89,8 +92,7 @@ public void phaseTwo(Array!AstNode nodes)
     for (size_t index = 0; index < nodes.length; index++)
     {
         AstNode node = nodes[index];
-        if (node.action == AstAction.NamedUnit && index + 1 < nodes.length && nodes[index + 1].action == AstAction
-            .Expression)
+        if (node.action == AstAction.NamedUnit && index + 1 < nodes.length && nodes[index + 1].action.isExpressionLike)
         {
             AstNode functionCall = new AstNode();
             AstNode args = nodes[index + 1];
@@ -110,7 +112,7 @@ public void phaseTwo(Array!AstNode nodes)
             nodes[index] = functionCall;
             nodes.linearRemove(nodes[index + 1 .. index + 2]);
         }
-        else if (node.action == AstAction.Expression)
+        else if (node.action.isExpressionLike)
         {
             Array!AstNode components;
             components ~= node.expressionNodeData.components;

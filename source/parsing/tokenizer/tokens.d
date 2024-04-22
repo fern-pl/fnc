@@ -57,7 +57,6 @@ dchar[] makeUnicodeString(in string input)
 
 const(dchar[]) testMultiLineStyle(dchar first, dchar secound)
 {
-    // validMultiLineCommentStyles.writeln;
     foreach (const(dchar[][]) style; validMultiLineCommentStyles)
     {
         if (style[0][0] == first && style[0][1] == secound)
@@ -153,13 +152,8 @@ Nullable!Token nextToken(Token[] tokens, ref size_t index)
 {
     Nullable!Token found = null;
     if (tokens.length <= index + 1)
-    {
-        import std.stdio;
-
-        "boinc".writeln;
-        found.ptr.writeln;
         return found;
-    }
+    
 
     found = tokens[++index];
     return found;

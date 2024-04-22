@@ -14,6 +14,7 @@ enum AstAction
     DefineFunction,
     DefineVariable, // Ex: int x;
     AssignVariable, // Ex: x = 5;
+    IndexInto, // X[...]
 
     SingleArgumentOperation, // Ex: x++, ++x, |x|, ||x||, -8
     DoubleArgumentOperation, // Ex: 9+10 
@@ -25,6 +26,12 @@ enum AstAction
     LiteralUnit, // Ex: 6, 6L, "Hello world"
 
     TokenHolder // A temporary Node that is yet to be parsed 
+}
+
+bool isExpressionLike(AstAction action)
+{
+    return action == AstAction.Expression
+        || action == AstAction.IndexInto;
 }
 
 struct KeywordNodeData
@@ -60,8 +67,8 @@ enum OperationVariety
     PostIncrement,
     PreDecrement,
     PostDecrement,
-    AbsuluteValue,
-    Magnitude,
+    // AbsuluteValue,
+    // Magnitude,
 
     Add,
     Substract,
@@ -92,6 +99,11 @@ enum OperationVariety
     BitshiftRightSigned,
     BitshiftLeftUnSigned,
     BitshiftRightUnSigned,
+
+    BitshiftLeftSignedEq,
+    BitshiftRightSignedEq,
+    BitshiftLeftUnSignedEq,
+    BitshiftRightUnSignedEq,
 
     LogicalOr,
     LogicalAnd,
@@ -198,8 +210,12 @@ class AstNode
         import std.stdio;
         import std.conv;
 
-        foreach (i; 0 .. tabCount)
-            write("|  ");
+        if (tabCount != -1)
+        {
+            foreach (i; 0 .. tabCount)
+                write("|  ");
+            write("┼ ");
+        }
 
         switch (action)
         {
@@ -211,6 +227,17 @@ class AstNode
             writeln(doubleArgumentOperationNodeData.operationVariety.to!string ~ ":");
             doubleArgumentOperationNodeData.left.tree(tabCount + 1);
             doubleArgumentOperationNodeData.right.tree(tabCount + 1);
+            break;
+        case AstAction.SingleArgumentOperation:
+            writeln(singleArgumentOperationNodeData.operationVariety.to!string ~ ":");
+            singleArgumentOperationNodeData.value.tree(tabCount + 1);
+            break;
+        case AstAction.IndexInto:
+            writeln("Indexing into with result of:");
+            foreach (subnode; expressionNodeData.components)
+            {
+                subnode.tree(tabCount + 1);
+            }
             break;
         case AstAction.Expression:
             writeln(

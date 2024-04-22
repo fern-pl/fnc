@@ -8,7 +8,6 @@ import tern.typecons.common : Nullable, nullable;
 
 import parsing.tokenizer.tokens;
 
-import std.stdio;
 
 dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index)
 {
