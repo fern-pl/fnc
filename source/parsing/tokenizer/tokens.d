@@ -151,9 +151,14 @@ import tern.typecons.common : Nullable, nullable;
 
 Nullable!Token nextToken(Token[] tokens, ref size_t index)
 {
-    Nullable!Token found;
-    if (tokens.length <= index+1)
-        return nullable!Token(null);
+    Nullable!Token found = null;
+    if (tokens.length <= index+1){
+        import std.stdio;
+        "boinc".writeln;
+        found.ptr.writeln;
+        return found;
+    }
+    
     found = tokens[++index];
     return found;
 }

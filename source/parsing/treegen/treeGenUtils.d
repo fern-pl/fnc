@@ -8,12 +8,13 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
 {
     NameUnit ret;
     Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
-    index--;
+    
     Token token;
 
     // An attempt to generate a name at an EOF
     if (tokenNullable.ptr == null)
         return ret;
+    index--;
     token = tokenNullable;
 
     while (token.tokenVariety == TokenType.Letter || token.tokenVariety == TokenType.Number || token.tokenVariety == TokenType.Period)
@@ -22,14 +23,15 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
         if (token.tokenVariety != TokenType.Period)
             ret.names ~= token.value;
         
-        tokenNullable = tokens.nextToken(index);
-
+        Nullable!Token tokenNullable2 = tokens.nextToken(index);
+    
         // We hit an EOF
-        if (tokenNullable.ptr == null)
+        if (!tokenNullable2.ptr)
             return ret;
+        token = tokenNullable2;
+        
 
-        token = tokenNullable;
-
+        
     }
     return ret;
 

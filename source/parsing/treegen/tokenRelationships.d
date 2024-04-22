@@ -434,78 +434,114 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
 ];
 import std.container.array;
 
-private bool testAstEntry(const(OperationPrecedenceEntry) entry, AstNode[] nodes)
+private void testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, ref size_t startIndex)
 {
     if (entry.tokens.length > nodes.length)
-        return false;
+        return;
+    size_t nodeIndex = startIndex;
+    AstNode[] operands;
+    
     for (size_t index = 0; index < entry.tokens.length; index++)
     {
+        Nullable!AstNode nodeNullable = nodes.nextNonWhiteNode(nodeIndex);
+        if (nodeNullable.ptr == null) 
+            return;
+        AstNode node = nodeNullable;
         switch (entry.tokens[index].tokenVariety)
         {
-        case TokenType.Filler:
-            AstNode node = nodes[index];
-            if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction
-                .Scope)
-                return false;
-            break;
-        case TokenType.Operator:
-            AstNode node = nodes[index];
-            if (node.action != AstAction.TokenHolder)
-                return false;
-            Token token = node.tokenBeingHeld;
-            if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType.Operator)
-                return false;
-            if (token.value != entry.tokens[index].value)
-                return false;
-            break;
-        default:
-            // entry.tokens[index].writeln;
-            assert(0);
+            
+            case TokenType.Filler:
+                
+                if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction
+                    .Scope)
+                    return;
+                operands ~= node;
+                break;
+            case TokenType.Operator:
+                if (node.action != AstAction.TokenHolder)
+                    return;
+                Token token = node.tokenBeingHeld;
+                if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType.Operator)
+                    return;
+                if (token.value != entry.tokens[index].value)
+                    return;
+                break;
+            default:
+                assert(0);
 
         }
     }
-    return true;
-}
-
-private void merge(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, size_t startIndex)
-{
-    AstNode[] nodeData;
-    for (size_t index = 0; index < entry.tokens.length; index++)
-    {
-        switch (entry.tokens[index].tokenVariety)
-        {
-        case TokenType.Filler:
-            nodeData ~= nodes[startIndex + index];
-            break;
-        case TokenType.Operator:
-            break;
-        default:
-            assert(0);
-        }
-    }
+    
     AstNode oprNode = new AstNode();
     oprNode.action = AstAction.DoubleArgumentOperation;
-    if (nodeData.length == 0)
+    if (operands.length == 0)
         assert(0);
-    if (nodeData.length == 1)
+    if (operands.length == 1)
     {
         oprNode.action = AstAction.SingleArgumentOperation;
         oprNode.singleArgumentOperationNodeData = SingleArgumentOperationNodeData(
             entry.operation,
-            nodeData[0],
+            operands[0],
         );
     }
-    if (nodeData.length == 2)
+    if (operands.length == 2)
         oprNode.doubleArgumentOperationNodeData = DoubleArgumentOperationNodeData(
             entry.operation,
-            nodeData[0],
-            nodeData[1]
+            operands[0],
+            operands[1]
         );
 
     nodes[startIndex] = oprNode;
-    nodes.linearRemove(nodes[startIndex + 1 .. startIndex + entry.tokens.length]);
+    nodes.linearRemove(nodes[startIndex + 1 .. nodeIndex-1]);
+    startIndex = nodeIndex;
+
 
 }
+
+// private void merge(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, size_t startIndex)
+// {
+//     AstNode[] nodeData;
+//     size_t nodeIndex = startIndex-1;
+//     for (size_t index = 0; index < entry.tokens.length; index++)
+//     {
+//         Nullable!AstNode nodeNullable = nodes.nextNonWhiteNode(nodeIndex);
+//         if (nodeNullable.ptr == null) 
+//             assert(0, "Unexpected end of array in AST merge");
+//         AstNode node = nodeNullable;
+//         switch (entry.tokens[index].tokenVariety)
+//         {
+//             case TokenType.Filler:
+//                 nodeData ~= node;
+//                 break;
+//             case TokenType.Operator:
+//                 break;
+//             default:
+//                 assert(0);
+//         }
+//     }
+//     AstNode oprNode = new AstNode();
+//     oprNode.action = AstAction.DoubleArgumentOperation;
+//     if (nodeData.length == 0)
+//         assert(0);
+//     if (nodeData.length == 1)
+//     {
+//         oprNode.action = AstAction.SingleArgumentOperation;
+//         oprNode.singleArgumentOperationNodeData = SingleArgumentOperationNodeData(
+//             entry.operation,
+//             nodeData[0],
+//         );
+//     }
+//     if (nodeData.length == 2)
+//         oprNode.doubleArgumentOperationNodeData = DoubleArgumentOperationNodeData(
+//             entry.operation,
+//             nodeData[0],
+//             nodeData[1]
+//         );
+
+//     nodes[startIndex] = oprNode;
+//     nodes.linearRemove(nodes[startIndex + 1 .. nodeIndex-1]);
+
+// }
 
 void scanAndMergeOperators(Array!AstNode nodes)
 {
@@ -519,8 +555,8 @@ void scanAndMergeOperators(Array!AstNode nodes)
             {
                 foreach (entry; layer.layer)
                 {
-                    if (entry.testAstEntry(data[index .. $]))
-                        entry.merge(nodes, index);
+                    entry.testAndJoin(nodes, index);
+                        
                 }
 
             }
@@ -529,8 +565,7 @@ void scanAndMergeOperators(Array!AstNode nodes)
             for (size_t index = nodes.length; index != -1; index--){
                 foreach (entry; layer.layer)
                 {
-                    if (entry.testAstEntry(data[index .. $]))
-                        entry.merge(nodes, index);
+                    entry.testAndJoin(nodes, index, index);
                 }
             }
         }

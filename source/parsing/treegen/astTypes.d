@@ -253,3 +253,20 @@ Nullable!AstNode nextNonWhiteNode(Array!AstNode nodes, ref size_t index)
     }
     return found;
 }
+Nullable!AstNode nextNonWhiteNode(AstNode[] nodes, ref size_t index)
+{
+    Nullable!AstNode found;
+    while (nodes.length > index)
+    {
+        import parsing.tokenizer.tokens;
+
+        AstNode node = nodes[index++];
+        if (node.action == AstAction.TokenHolder &&
+            (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace
+                || node.tokenBeingHeld.tokenVariety == TokenType.Comment))
+            continue;
+        found = node;
+        break;
+    }
+    return found;
+}

@@ -52,8 +52,9 @@ private AstNode[] phaseOne(Token[] tokens)
         AstNode tokenToBeParsedLater = new AstNode();
         if (token.tokenVariety == TokenType.Letter){
             tokenToBeParsedLater.action = AstAction.NamedUnit;
+            size_t old_index = index;
             tokenToBeParsedLater.namedUnit = tokens.genNameUnit(index);
-            index--;
+            if (old_index != index) index--;
         }else if(token.tokenVariety == TokenType.Number){
             tokenToBeParsedLater.action = AstAction.LiteralUnit;
             tokenToBeParsedLater.literalUnitCompenents = [token];
@@ -122,7 +123,7 @@ unittest
 {
     
     import parsing.tokenizer.make_tokens;
-    AstNode[] phaseOneNodes =  phaseOne("math.sqrt(3*5+6*7/2)*3".tokenizeText);
+    AstNode[] phaseOneNodes =  phaseOne("math.sqrt( 3 *5    +6   *7/ 2    )   *x /   2+ 4   ".tokenizeText);
     
     Array!AstNode nodes;
     nodes~=phaseOneNodes;
