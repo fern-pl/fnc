@@ -251,9 +251,6 @@ private Token OPR(dchar o)
 // of each layer they are read left to right, or right to left.
 
 const OperatorPrecedenceLayer[] operatorPrecedence = [
-    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-    //         // TODO: Unary
-    //     ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.PreIncrement, [
                     OPR('+'), OPR('+'), Token(TokenType.Filler)

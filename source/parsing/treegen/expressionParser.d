@@ -38,12 +38,14 @@ public AstNode[] phaseOne(Token[] tokens)
         {
 
             if (parenthesisStack.length == 0)
-                throw new SyntaxError("Group token("~cast(char)token.value[0]~") closed but never opened");
+                throw new SyntaxError("Group token(" ~ cast(
+                        char) token.value[0] ~ ") closed but never opened");
 
             AstNode node = parenthesisStack[$ - 1];
 
             if (node.expressionNodeData.closer != token.value[0])
-                throw new SyntaxError("Group token("~cast(char)token.value[0]~") not closed with correct token");
+                throw new SyntaxError("Group token(" ~ cast(
+                        char) token.value[0] ~ ") not closed with correct token");
 
             parenthesisStack.length--;
 
@@ -92,7 +94,8 @@ public void phaseTwo(Array!AstNode nodes)
     for (size_t index = 0; index < nodes.length; index++)
     {
         AstNode node = nodes[index];
-        if (node.action == AstAction.NamedUnit && index + 1 < nodes.length && nodes[index + 1].action.isExpressionLike)
+        if (node.action == AstAction.NamedUnit && index + 1 < nodes.length && nodes[index + 1]
+            .action.isExpressionLike)
         {
             AstNode functionCall = new AstNode();
             AstNode args = nodes[index + 1];

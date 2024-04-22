@@ -153,7 +153,6 @@ Nullable!Token nextToken(Token[] tokens, ref size_t index)
     Nullable!Token found = null;
     if (tokens.length <= index + 1)
         return found;
-    
 
     found = tokens[++index];
     return found;
