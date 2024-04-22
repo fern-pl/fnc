@@ -213,7 +213,8 @@ class AstNode
             doubleArgumentOperationNodeData.right.tree(tabCount + 1);
             break;
         case AstAction.Expression:
-            writeln("Result of expression with " ~ expressionNodeData.components.length.to!string ~ " components:");
+            writeln(
+                "Result of expression with " ~ expressionNodeData.components.length.to!string ~ " components:");
             foreach (subnode; expressionNodeData.components)
             {
                 subnode.tree(tabCount + 1);
@@ -253,6 +254,7 @@ Nullable!AstNode nextNonWhiteNode(Array!AstNode nodes, ref size_t index)
     }
     return found;
 }
+
 Nullable!AstNode nextNonWhiteNode(AstNode[] nodes, ref size_t index)
 {
     Nullable!AstNode found;

@@ -218,7 +218,6 @@ bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t inde
     return true;
 }
 
-
 enum OperatorOrder
 {
     LeftToRight,
@@ -412,38 +411,38 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
         return false;
     size_t nodeIndex = startIndex;
     AstNode[] operands;
-    
+
     for (size_t index = 0; index < entry.tokens.length; index++)
     {
         Nullable!AstNode nodeNullable = nodes.nextNonWhiteNode(nodeIndex);
-        if (nodeNullable.ptr == null) 
+        if (nodeNullable.ptr == null)
             return false;
         AstNode node = nodeNullable;
         switch (entry.tokens[index].tokenVariety)
         {
-            
-            case TokenType.Filler:
-                
-                if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction
-                    .Scope)
-                    return false;
-                operands ~= node;
-                break;
-            case TokenType.Operator:
-                if (node.action != AstAction.TokenHolder)
-                    return false;
-                Token token = node.tokenBeingHeld;
-                if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType.Operator)
-                    return false;
-                if (token.value != entry.tokens[index].value)
-                    return false;
-                break;
-            default:
-                assert(0);
+
+        case TokenType.Filler:
+
+            if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction
+                .Scope)
+                return false;
+            operands ~= node;
+            break;
+        case TokenType.Operator:
+            if (node.action != AstAction.TokenHolder)
+                return false;
+            Token token = node.tokenBeingHeld;
+            if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType.Operator)
+                return false;
+            if (token.value != entry.tokens[index].value)
+                return false;
+            break;
+        default:
+            assert(0);
 
         }
     }
-    
+
     AstNode oprNode = new AstNode();
     oprNode.action = AstAction.DoubleArgumentOperation;
     if (operands.length == 0)
@@ -525,8 +524,12 @@ void scanAndMergeOperators(Array!AstNode nodes)
             {
                 foreach (entry; layer.layer)
                 {
-                    if (entry.testAndJoin(nodes, index)){index--; continue;}
-                        
+                    if (entry.testAndJoin(nodes, index))
+                    {
+                        index--;
+                        continue;
+                    }
+
                 }
 
             }
@@ -541,4 +544,3 @@ void scanAndMergeOperators(Array!AstNode nodes)
         // }
     }
 }
-

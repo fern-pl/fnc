@@ -1,6 +1,5 @@
 module tests.parser;
 
-
 import std.container.array;
 import parsing.tokenizer.tokens;
 import parsing.treegen.astTypes;
@@ -8,33 +7,42 @@ import parsing.treegen.expressionParser;
 import parsing.treegen.treeGenUtils;
 
 import parsing.treegen.tokenRelationships;
+
 unittest
 {
     import parsing.tokenizer.make_tokens;
-    AstNode[] phaseOneNodes =  phaseOne("math.sqrt(3 * 5 + 6 * 7 / 2)*(x+3)/2+4".tokenizeText);   
+
+    AstNode[] phaseOneNodes = phaseOne("math.sqrt(3 * 5 + 6 * 7 / 2)*(x+3)/2+4".tokenizeText);
     Array!AstNode nodes;
-    nodes~=phaseOneNodes;
+    nodes ~= phaseOneNodes;
     phaseTwo(nodes);
     scanAndMergeOperators(nodes);
     assert(nodes.length == 1);
     assert(nodes[0].action == AstAction.DoubleArgumentOperation);
-    assert(nodes[0].doubleArgumentOperationNodeData.operationVariety == OperationVariety.Add );
+    assert(nodes[0].doubleArgumentOperationNodeData.operationVariety == OperationVariety.Add);
     assert(nodes[0].doubleArgumentOperationNodeData.right.action == AstAction.LiteralUnit);
-    assert(nodes[0].doubleArgumentOperationNodeData.right.literalUnitCompenents == [Token(TokenType.Number, ['4'], 37)]);
+    assert(nodes[0].doubleArgumentOperationNodeData.right.literalUnitCompenents == [
+            Token(TokenType.Number, ['4'], 37)
+        ]);
 
 }
+
 unittest
 {
     import parsing.tokenizer.make_tokens;
 
     size_t s = 0;
-    assert("int x = 4;".tokenizeText.genNameUnit(s).names == ["int".makeUnicodeString]);
-    s = 0;
-    assert("std.int x = 4;".tokenizeText.genNameUnit(s).names == [
-        "std".makeUnicodeString,
-        "int".makeUnicodeString
+    assert("int x = 4;".tokenizeText.genNameUnit(s).names == [
+            "int".makeUnicodeString
         ]);
+    s = 0;
+    assert("std.int x = 4;".tokenizeText.genNameUnit(s)
+            .names == [
+                "std".makeUnicodeString,
+                "int".makeUnicodeString
+            ]);
 }
+
 unittest
 {
     import parsing.tokenizer.make_tokens;
@@ -63,6 +71,7 @@ unittest
         DeclarationAndAssignment.matchesToken(tokenizeText("int x = 4;"))
     );
 }
+
 unittest
 {
     import parsing.tokenizer.make_tokens;
@@ -73,8 +82,8 @@ unittest
     size_t index = 0;
     assert(
         [
-            "align(an invalid alignment)".makeUnicodeString,
-            "abstract".makeUnicodeString, "pure".makeUnicodeString
-        ] == skipAndExtractKeywords(tokens, index));
+        "align(an invalid alignment)".makeUnicodeString,
+        "abstract".makeUnicodeString, "pure".makeUnicodeString
+    ] == skipAndExtractKeywords(tokens, index));
     assert(tokens[index].value == "int".makeUnicodeString);
 }

@@ -75,4 +75,3 @@ dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
     }
     return keywords;
 }
-

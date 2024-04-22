@@ -6,8 +6,6 @@ import std.stdio;
 
 import tern.typecons.common : Nullable, nullable;
 
-
-
 void generateGlobalScopeForCompilationUnit(Token[] tokens)
 {
     size_t index = 0;

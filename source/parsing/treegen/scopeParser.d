@@ -42,9 +42,10 @@ LineVarietyAndLength getLineVarietyAndLength(Token[] tokens, size_t index)
 
     return LineVarietyAndLength(LineVariety.SimpleExpression, -1);
 }
+
 import std.stdio;
+
 void parseLine(Token[] tokens, ref size_t index)
 {
     LineVarietyAndLength lineVariety = tokens.getLineVarietyAndLength(index);
 }
-
