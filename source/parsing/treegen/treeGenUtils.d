@@ -36,16 +36,3 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
     return ret;
 
 }
-
-unittest
-{
-    import parsing.tokenizer.make_tokens;
-
-    size_t s = 0;
-    assert("int x = 4;".tokenizeText.genNameUnit(s).names == ["int".makeUnicodeString]);
-    s = 0;
-    assert("std.int x = 4;".tokenizeText.genNameUnit(s).names == [
-        "std".makeUnicodeString,
-        "int".makeUnicodeString
-        ]);
-}

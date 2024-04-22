@@ -4,13 +4,14 @@ import tern.typecons.common : Nullable, nullable;
 import parsing.treegen.astTypes;
 import parsing.tokenizer.tokens;
 import parsing.treegen.tokenRelationships;
+import parsing.treegen.treeGenUtils;
 import errors;
 import std.stdio;
 import std.container.array;
 
 // Group letters.letters.letters into NamedUnit s
 // Group Parenthesis into AstNode.Expression s to be parsed speratly
-private AstNode[] phaseOne(Token[] tokens)
+public AstNode[] phaseOne(Token[] tokens)
 {
     AstNode[] ret;
     AstNode[] parenthesisStack;
@@ -76,13 +77,9 @@ private AstNode[] phaseOne(Token[] tokens)
     return ret;
 }
 
-private void operatorPairingPhase(Array!AstNode nodes){
-
-}
-
 
 // Handle function calls and operators
-private void phaseTwo(Array!AstNode nodes){
+public void phaseTwo(Array!AstNode nodes){
     for (size_t index = 0; index < nodes.length; index++){
         AstNode node = nodes[index];
         if (node.action == AstAction.NamedUnit && index+1 < nodes.length && nodes[index+1].action == AstAction.Expression){
@@ -114,25 +111,4 @@ private void phaseTwo(Array!AstNode nodes){
             node.expressionNodeData.components[0..$] = components.data[0..$];
         }
     }
-}
-
-import parsing.treegen.treeGenUtils;
-
-import parsing.treegen.tokenRelationships;
-unittest
-{
-    
-    import parsing.tokenizer.make_tokens;
-    AstNode[] phaseOneNodes =  phaseOne("math.sqrt( 3 *5    +6   *7/ 2    )*x/2+4".tokenizeText);
-    
-    Array!AstNode nodes;
-    nodes~=phaseOneNodes;
-    phaseTwo(nodes);
-    scanAndMergeOperators(nodes);
-    // nodes[0].writeln;
-    nodes[0].tree(0);
-    // foreach(node ; nodes){
-        // node.tree(0);
-    // }
-    
 }

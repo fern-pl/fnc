@@ -48,16 +48,3 @@ void parseLine(Token[] tokens, ref size_t index)
     LineVarietyAndLength lineVariety = tokens.getLineVarietyAndLength(index);
 }
 
-unittest
-{
-    import std.stdio;
-    import parsing.tokenizer.make_tokens;
-
-    // assert(LineVariety.IfStatementWithoutScope == getLineVariety("if (hello) world;".tokenizeText));
-    // assert(LineVariety.IfStatementWithScope == getLineVariety("if (hello) {wo\n rl\nd};".tokenizeText));
-    size_t i = 0;
-    // getLineVarietyAndLength("int x = 4;".tokenizeText, 0).writeln;
-    // parseLine("int x = 4;".tokenizeText, i);
-    // DeclarationLine.matchesToken()
-
-}

@@ -76,17 +76,3 @@ dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
     return keywords;
 }
 
-unittest
-{
-    import parsing.tokenizer.make_tokens;
-
-    Token[] tokens = tokenizeText("align(an invalid alignment) abstract pure int x();");
-
-    size_t index = 0;
-    assert(
-        [
-            "align(an invalid alignment)".makeUnicodeString,
-            "abstract".makeUnicodeString, "pure".makeUnicodeString
-        ] == skipAndExtractKeywords(tokens, index));
-    assert(tokens[index].value == "int".makeUnicodeString);
-}
