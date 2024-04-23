@@ -48,13 +48,14 @@ enum LineVariety
     DeclarationAndAssignment,
 }
 
-struct LineVarietyAndLength
+struct LineVarietyTestResult
 {
     LineVariety lineVariety;
     size_t length;
+    TokenGrepResult[] tokenMatches;
 }
 
-LineVarietyAndLength getLineVarietyAndLength(Token[] tokens, size_t index)
+LineVarietyTestResult getLineVarietyTestResult(Token[] tokens, size_t index)
 {
     size_t temp_index = index;
 
@@ -68,23 +69,24 @@ LineVarietyAndLength getLineVarietyAndLength(Token[] tokens, size_t index)
             DeclarationLine,
             DeclarationAndAssignment
         ])
-    {
-        // if (func.matchesToken(tokens, temp_index))
-        //     return LineVarietyAndLength(
-        //         [
-        //         LineVariety.TotalImport,
-        //         LineVariety.SelectiveImport,
-        //         LineVariety.ModuleDeclaration,
-        //         LineVariety.IfStatementWithScope,
-        //         LineVariety.IfStatementWithoutScope,
-        //         LineVariety.DeclarationLine,
-        //         LineVariety.DeclarationAndAssignment
-        //     ][i], temp_index - index
-        //     );
-        // temp_index = index;
-    }
+    {{
+        Nullable!(TokenGrepResult[]) grepResults = func.matchesToken(tokens, temp_index);
+        if (null != grepResults)
+            return LineVarietyTestResult(
+                [
+                LineVariety.TotalImport,
+                LineVariety.SelectiveImport,
+                LineVariety.ModuleDeclaration,
+                LineVariety.IfStatementWithScope,
+                LineVariety.IfStatementWithoutScope,
+                LineVariety.DeclarationLine,
+                LineVariety.DeclarationAndAssignment
+            ][i], temp_index - index, grepResults.value
+            );
+        temp_index = index;
+    }}
 
-    return LineVarietyAndLength(LineVariety.SimpleExpression, -1);
+    return LineVarietyTestResult(LineVariety.SimpleExpression, -1);
 }
 
 NameUnit[] commaSeperatedNameUnits(Token[] tokens, ref size_t index)
@@ -114,11 +116,11 @@ NameUnit[] commaSeperatedNameUnits(Token[] tokens, ref size_t index)
 
 import std.stdio;
 
-LineVarietyAndLength parseLine(Token[] tokens, ref size_t index, ScopeData parent)
+LineVarietyTestResult parseLine(Token[] tokens, ref size_t index, ScopeData parent)
 {
     dchar[][] keywords = tokens.skipAndExtractKeywords(index);
 
-    LineVarietyAndLength lineVariety = tokens.getLineVarietyAndLength(index);
+    LineVarietyTestResult lineVariety = tokens.getLineVarietyTestResult(index);
     switch (lineVariety.lineVariety)
     {
     case LineVariety.ModuleDeclaration:
@@ -140,17 +142,19 @@ LineVarietyAndLength parseLine(Token[] tokens, ref size_t index, ScopeData paren
         tokens.nextNonWhiteToken(index); // Skip semicolon
         break;
     case LineVariety.SelectiveImport:
-        tokens.nextNonWhiteToken(index); // Skip 'import' keyword
+        size_t endingIndex = index + lineVariety.length;
+        scope (exit) index = endingIndex;
 
         auto statement = ImportStatement(
             keywords,
-            tokens.genNameUnit(index),
+            lineVariety.tokenMatches[IMPORT_PACKAGE_NAME].name,
             []
         );
 
-        Token shouldBeAColon = tokens.nextNonWhiteToken(index);
-        assert(shouldBeAColon.tokenVariety == TokenType.Colon);
-        statement.importSelection ~= tokens.commaSeperatedNameUnits(index);
+        statement.importSelection ~= lineVariety.tokenMatches[SELECTIVE_IMPORT_SELECTIONS]
+                                                .commaSeperated
+                                                .collectNameUnits();
+
         parent.imports ~= statement;
         break;
     case LineVariety.DeclarationLine:
@@ -158,21 +162,16 @@ LineVarietyAndLength parseLine(Token[] tokens, ref size_t index, ScopeData paren
         size_t endingIndex = index + lineVariety.length;
         scope (exit) index = endingIndex;
 
-        auto squishedTokens = tokens[index .. index + lineVariety.length];
-        NameUnit declarationType = squishedTokens.genNameUnit(index);
-        NameUnit[] declarationNames = squishedTokens.commaSeperatedNameUnits(index);
-
+        NameUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].name;
+        NameUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS].commaSeperated.collectNameUnits();
+        
         foreach (NameUnit name; declarationNames)
             parent.declaredVariables ~= DeclaredVariable(name, declarationType);
-
-        Nullable!Token couldBeEquals = squishedTokens.nextNonWhiteToken(index);
-        if (couldBeEquals.ptr == null)
-            break;
-
-        if (couldBeEquals.value.tokenVariety != TokenType.Equals)
-            break;
         
-        auto nodes = expressionNodeFromTokens(squishedTokens[index .. $ - 1]);
+        if (lineVariety.lineVariety == LineVariety.DeclarationLine) break;
+        
+        auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION].tokens.expressionNodeFromTokens();
+        
         // nodes.data.writeln;
         if (nodes.length != 1)
             throw new SyntaxError(
@@ -182,8 +181,9 @@ LineVarietyAndLength parseLine(Token[] tokens, ref size_t index, ScopeData paren
         assignment.action = AstAction.AssignVariable;
         assignment.assignVariableNodeData.name = declarationNames;
         assignment.assignVariableNodeData.value = result;
-
+        
         parent.instructions ~= assignment;
+        
         break;
     case LineVariety.SimpleExpression:
         size_t expression_end = tokens.findNearestSemiColon(index);

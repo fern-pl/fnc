@@ -6,14 +6,15 @@ import tern.typecons.common : Nullable, nullable;
 
 NameUnit genNameUnit(Token[] tokens, ref size_t index)
 {
-    NameUnit ret;
+    dchar[][] nameData = new dchar[][0];
+    // NameUnit ret = NameUnit(new dchar[][]);
     Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
 
     Token token;
 
     // An attempt to generate a name at an EOF
     if (tokenNullable.ptr == null)
-        return ret;
+        return NameUnit(nameData);
     index--;
     token = tokenNullable;
 
@@ -22,16 +23,16 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
     {
 
         if (token.tokenVariety != TokenType.Period)
-            ret.names ~= token.value;
+            nameData ~= token.value;
 
         Nullable!Token tokenNullable2 = tokens.nextToken(index);
 
         // We hit an EOF
         if (!tokenNullable2.ptr)
-            return ret;
+            return NameUnit(nameData);
         token = tokenNullable2;
 
     }
-    return ret;
+    return NameUnit(nameData);
 
 }

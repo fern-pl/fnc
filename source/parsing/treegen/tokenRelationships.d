@@ -90,6 +90,16 @@ const TokenGrepPacket[] IfStatementWithScope = [
         ]),
 ];
 
+// The following are definitions of different type of
+// structures found throughout the language. They are defined
+// in a modular way, and it is surprisingly efficient.
+// This is all unmantainable as FUCK, and confusing to read.
+// But this works, and is quite convinent. 
+
+// TODO: Refactor ALL of this:
+
+const size_t DECLARATION_TYPE = 0;
+const size_t DECLARATION_VARS = 1;
 // int x, y, z;
 const TokenGrepPacket[] DeclarationLine = [
     TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
@@ -102,6 +112,8 @@ const TokenGrepPacket[] DeclarationLine = [
             Token(TokenType.Semicolon, [])
         ])
 ];
+const size_t DECLARATION_EXPRESSION = 3;
+
 // int x, y, z = [1, 2, 3];
 const TokenGrepPacket[] DeclarationAndAssignment = [
     TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
@@ -118,6 +130,8 @@ const TokenGrepPacket[] DeclarationAndAssignment = [
             Token(TokenType.Semicolon, [])
         ])
 ];
+
+const size_t IMPORT_PACKAGE_NAME = 0;
 // import foo.bar
 const TokenGrepPacket[] TotalImport = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
@@ -128,7 +142,10 @@ const TokenGrepPacket[] TotalImport = [
             Token(TokenType.Semicolon, [])
         ])
 ];
+
 // import foo : bar
+
+const size_t SELECTIVE_IMPORT_SELECTIONS = 1;
 const TokenGrepPacket[] SelectiveImport = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Letter, "import".makeUnicodeString)
@@ -296,6 +313,15 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
     return tokenGrepBox(returnVal);
 }
+
+NameUnit[] collectNameUnits(TokenGrepResult[] greps){
+    NameUnit[] ret;
+    foreach (TokenGrepResult grepResult ; greps){
+        ret ~= grepResult.name;
+    }
+    return ret;
+}
+
 
 enum OperatorOrder
 {

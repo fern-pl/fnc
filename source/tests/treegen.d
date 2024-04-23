@@ -100,20 +100,34 @@ unittest
     // nodes[0].tree(-1);
 }
 
-// unittest
-// {
-//     import parsing.tokenizer.make_tokens;
-//     import parsing.treegen.scopeParser;
+unittest
+{
+    import parsing.tokenizer.make_tokens;
+    import parsing.treegen.scopeParser;
 
-//     size_t index = 0;
-//     auto scopeData = new ScopeData;
-//     parseLine("partial public module the.fat.rat.r8te.my.foo;".tokenizeText, index, scopeData);
-//     assert(scopeData.moduleName.value.names == [
-//         "the".makeUnicodeString, 
-//         "fat".makeUnicodeString, 
-//         "rat".makeUnicodeString, 
-//         "r8te".makeUnicodeString, 
-//         "my".makeUnicodeString, 
-//         "foo".makeUnicodeString
-//     ]);
-// }
+    size_t index = 0;
+    auto scopeData = new ScopeData;
+    parseLine("partial public module the.fat.rat.r8te.my.foo;".tokenizeText, index, scopeData);
+    assert(scopeData.moduleName.value.names == [
+        "the".makeUnicodeString, 
+        "fat".makeUnicodeString, 
+        "rat".makeUnicodeString, 
+        "r8te".makeUnicodeString, 
+        "my".makeUnicodeString, 
+        "foo".makeUnicodeString
+    ]);
+}
+
+unittest
+{
+    import parsing.tokenizer.make_tokens;
+    import parsing.treegen.scopeParser;
+    import std.stdio;
+
+    size_t index = 0;
+    auto scopeData = new ScopeData;
+    parseLine("int x, y, z = 4*5+2;".tokenizeText, index, scopeData);
+    // scopeData.declaredVariables.writeln;
+    scopeData.declaredVariables[0].name.names[0].writeln;
+}
+
