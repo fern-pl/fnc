@@ -32,8 +32,7 @@ void main()
     parseLine("int x, y, z = 4*5+2;".tokenizeText, index, scopeData);
     
     "PTR:".writeln;
-    (cast(size_t)scopeData.declaredVariables[0].name.names[0].ptr).writeln;
-
-                                                          // THIS IS A dchar[] !!!!! WTF
-    (cast(size_t)scopeData.declaredVariables[0].name.names[0].ptr == 1).writeln;
+    dchar[] name = scopeData.declaredVariables[0].name.names[0];
+    (cast(size_t)name.ptr).writeln;
+    (cast(size_t)name.ptr == 1).writeln;
 }
