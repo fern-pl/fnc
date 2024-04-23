@@ -127,7 +127,7 @@ unittest
     size_t index = 0;
     auto scopeData = new ScopeData;
     parseLine("int x, y, z = 4*5+2;".tokenizeText, index, scopeData);
-    // scopeData.declaredVariables.writeln;
+    scopeData.declaredVariables[0].name.names.length.writeln;
     scopeData.declaredVariables[0].name.names[0].writeln;
 }
 
