@@ -2,7 +2,7 @@ module parsing.treegen.tokenRelationships;
 import parsing.tokenizer.tokens;
 import parsing.treegen.astTypes;
 import parsing.treegen.treeGenUtils;
-import tern.typecons.common : Nullable;
+import tern.typecons.common : Nullable, nullable;
 
 enum TokenGrepMethod
 {
@@ -11,9 +11,9 @@ enum TokenGrepMethod
     MatchesTokens,
     MatchesTokenType,
     Scope,
-    ConditionWithCertainReturnType,
     NameUnit,
-    PossibleCommaSeperated
+    PossibleCommaSeperated,
+    Letter
 }
 
 struct TokenGrepPacket
@@ -23,6 +23,18 @@ struct TokenGrepPacket
     {
         Token[] tokens;
         TokenGrepPacket[] packets;
+    }
+}
+
+struct TokenGrepResult
+{
+    TokenGrepMethod method;
+    union
+    {
+        TokenGrepResult[] commaSeperated;
+        Token[] tokens; // Glob
+        NameUnit name;
+
     }
 }
 
@@ -109,92 +121,102 @@ const TokenGrepPacket[] DeclarationAndAssignment = [
 // import foo.bar
 const TokenGrepPacket[] TotalImport = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-        Token(TokenType.Letter, "import".makeUnicodeString)
-    ]),
+            Token(TokenType.Letter, "import".makeUnicodeString)
+        ]),
     TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
-        Token(TokenType.Semicolon, [])
-    ])
+            Token(TokenType.Semicolon, [])
+        ])
 ];
 // import foo : bar
 const TokenGrepPacket[] SelectiveImport = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-        Token(TokenType.Letter, "import".makeUnicodeString)
-    ]),
+            Token(TokenType.Letter, "import".makeUnicodeString)
+        ]),
     TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
 
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-        Token(TokenType.Colon, ":".makeUnicodeString)
-    ]),
+            Token(TokenType.Colon, ":".makeUnicodeString)
+        ]),
 
     TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
-        TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
-    ]),
+            TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+        ]),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
-        Token(TokenType.Semicolon, [])
-    ])
+            Token(TokenType.Semicolon, [])
+        ])
 ];
 // module foo.bar;
 const TokenGrepPacket[] ModuleDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-        Token(TokenType.Letter, "module".makeUnicodeString)
-    ]),
+            Token(TokenType.Letter, "module".makeUnicodeString)
+        ]),
     TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
-        Token(TokenType.Semicolon, [])
-    ])
+            Token(TokenType.Semicolon, [])
+        ])
 ];
 
-
-
-bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
+Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 {
     size_t index = 0;
     return matchesToken(testWith, tokens, index);
 }
-
-bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index)
+alias tokenGrepBox = Nullable!(TokenGrepResult[]);
+Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index)
 {
+    TokenGrepResult[] returnVal;
     foreach (testIndex, packet; testWith)
     {
         switch (packet.method)
         {
         case TokenGrepMethod.NameUnit:
             if (index >= tokens.length)
-                return false;
+                return tokenGrepBox(null);
             NameUnit name = genNameUnit(tokens, index);
             if (name.names.length == 0)
-                return false;
+                return tokenGrepBox(null);
+            TokenGrepResult result;
+            result.method = TokenGrepMethod.NameUnit;
+            result.name = name;
+            returnVal ~= result;
             break;
         case TokenGrepMethod.MatchesTokenType:
             Nullable!Token potential = tokens.nextNonWhiteToken(index);
             if (potential.ptr == null)
-                return false;
+                return tokenGrepBox(null);
             Token token = potential;
             bool doRet = true;
+            Token[] found;
 
             foreach (const(Token) potentialMatch; packet.tokens)
             {
                 if (potentialMatch.tokenVariety == token.tokenVariety)
                     doRet = false;
+                found ~= token;
             }
+            TokenGrepResult res;
+            res.method = TokenGrepMethod.Letter;
+            res.tokens = found;
+            returnVal ~= res;
             if (doRet)
-                return false;
+                return tokenGrepBox(null);
             break;
         case TokenGrepMethod.MatchesTokens:
             foreach (const(Token) testToken; packet.tokens)
             {
                 Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
                 if (tokenNullable.ptr == null)
-                    return false;
+                    return tokenGrepBox(null);
                 Token token = tokenNullable;
                 if (token.tokenVariety != testToken.tokenVariety || token.value != testToken.value)
-                    return false;
+                    return tokenGrepBox(null);
             }
             break;
         case TokenGrepMethod.PossibleCommaSeperated:
             if (index >= tokens.length)
-                return false;
+                return tokenGrepBox(null);
+
             Token[][] tstack;
             Token[] currentGroup;
             size_t maxComma = 0;
@@ -211,27 +233,42 @@ bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t inde
             }
             size_t searchExtent;
             tstack ~= currentGroup;
+            TokenGrepResult commaSeperatedGroup;
+            commaSeperatedGroup.method = TokenGrepMethod.PossibleCommaSeperated;
+            commaSeperatedGroup.commaSeperated = new TokenGrepResult[0];
             foreach (Token[] tokenGroup; tstack)
             {
                 searchExtent = 0;
-
-                if (!matchesToken(packet.packets, tokenGroup, searchExtent))
-                    return false;
+                auto res = matchesToken(packet.packets, tokenGroup, searchExtent);
+                if (!res.ptr)
+                    return tokenGrepBox(null);
+                commaSeperatedGroup.commaSeperated ~= res.value;
             }
+            returnVal ~= commaSeperatedGroup;
             index += maxComma + searchExtent;
-
             break;
 
         case TokenGrepMethod.Glob:
-            if (testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $]))
-                return true;
+            auto firstGlob = testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $]);
+            TokenGrepResult globResult;
+            globResult.method = TokenGrepMethod.Glob;
+            globResult.tokens = [];
+            
+            if (firstGlob.ptr)
+                return  tokenGrepBox(returnVal ~ globResult ~ firstGlob.value);
+            
+            
             int braceDeph = 0;
+            size_t startingIndex = index;
+            auto grepMatchGroup = testWith[testIndex + 1 .. $];
             while (true)
             {
                 Nullable!Token tokenNullable = tokens.nextToken(index);
                 if (tokenNullable.ptr == null)
-                    return false;
+                    return tokenGrepBox(null);
                 Token token = tokenNullable;
+                globResult.tokens ~= token;
+            
                 if (token.tokenVariety == TokenType.OpenBraces)
                     braceDeph += 1;
                 else if (token.tokenVariety == TokenType.CloseBraces && braceDeph != 0)
@@ -239,10 +276,14 @@ bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t inde
                 else if (braceDeph == 0)
                 {
                     size_t index_inc;
-                    if (testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $], index_inc))
+                    auto res = grepMatchGroup.matchesToken(tokens[index .. $], index_inc);
+                    if (res.ptr)
                     {
+ 
+                        globResult.tokens = tokens[startingIndex .. index];
+                        
                         index += index_inc;
-                        return true;
+                        return tokenGrepBox(returnVal ~ globResult ~ res.value);
                     }
                 }
             }
@@ -253,7 +294,7 @@ bool matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t inde
         }
     }
 
-    return true;
+    return tokenGrepBox(returnVal);
 }
 
 enum OperatorOrder

@@ -69,19 +69,19 @@ LineVarietyAndLength getLineVarietyAndLength(Token[] tokens, size_t index)
             DeclarationAndAssignment
         ])
     {
-        if (func.matchesToken(tokens, temp_index))
-            return LineVarietyAndLength(
-                [
-                LineVariety.TotalImport,
-                LineVariety.SelectiveImport,
-                LineVariety.ModuleDeclaration,
-                LineVariety.IfStatementWithScope,
-                LineVariety.IfStatementWithoutScope,
-                LineVariety.DeclarationLine,
-                LineVariety.DeclarationAndAssignment
-            ][i], temp_index - index
-            );
-        temp_index = index;
+        // if (func.matchesToken(tokens, temp_index))
+        //     return LineVarietyAndLength(
+        //         [
+        //         LineVariety.TotalImport,
+        //         LineVariety.SelectiveImport,
+        //         LineVariety.ModuleDeclaration,
+        //         LineVariety.IfStatementWithScope,
+        //         LineVariety.IfStatementWithoutScope,
+        //         LineVariety.DeclarationLine,
+        //         LineVariety.DeclarationAndAssignment
+        //     ][i], temp_index - index
+        //     );
+        // temp_index = index;
     }
 
     return LineVarietyAndLength(LineVariety.SimpleExpression, -1);
