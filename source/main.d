@@ -5,22 +5,35 @@ import parsing.tokenizer.make_tokens;
 
 void main()
 {
-    Token[] tokens = tokenizeText("
-    int x, y;
-    x = 5;
-    y = 1;
-    x = 3;
-    void x, y;
-    int tv = x++ + y;
-    float floaty = tv / 2;
-    int xx;
-    int xxx;
-		");
-    import tern.typecons.common : Nullable, nullable;
+    // Token[] tokens = tokenizeText("
+    // int x, y;
+    // x = 5;
+    // y = 1;
+    // x = 3;
+    // void x, y;
+    // int tv = x++ + y;
+    // float floaty = tv / 2;
+    // int xx;
+    // int xxx;
+		// ");
+    // import tern.typecons.common : Nullable, nullable;
+    // import parsing.treegen.scopeParser;
+    // import parsing.tokenizer.make_tokens;
+    // size_t index = 0;
+    // auto scope_ = tokens.parseMultilineScope(index, nullable!ScopeData(null));
+    // import std.stdio;
+    // scope_.declaredVariables.writeln;
+        import parsing.tokenizer.make_tokens;
     import parsing.treegen.scopeParser;
-    import parsing.tokenizer.make_tokens;
-    size_t index = 0;
-    auto scope_ = tokens.parseMultilineScope(index, nullable!ScopeData(null));
     import std.stdio;
-    scope_.declaredVariables.writeln;
+
+    size_t index = 0;
+    auto scopeData = new ScopeData;
+    parseLine("int x, y, z = 4*5+2;".tokenizeText, index, scopeData);
+    
+    "PTR:".writeln;
+    (cast(size_t)scopeData.declaredVariables[0].name.names[0].ptr).writeln;
+
+                                                          // THIS IS A dchar[] !!!!! WTF
+    (cast(size_t)scopeData.declaredVariables[0].name.names[0].ptr == 1).writeln;
 }

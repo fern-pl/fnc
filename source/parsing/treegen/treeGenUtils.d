@@ -22,8 +22,14 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
         .Period)
     {
 
-        if (token.tokenVariety != TokenType.Period)
+        if (token.tokenVariety != TokenType.Period){
+            // dchar[] dataCopy = new dchar[token.value.length];
+            // dataCopy[0..$] = token.value;
+            // import std.stdio;
+            // token.value.writeln;
+            // dataCopy.ptr.writeln;
             nameData ~= token.value;
+        }
 
         Nullable!Token tokenNullable2 = tokens.nextToken(index);
 
