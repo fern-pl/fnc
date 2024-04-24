@@ -104,9 +104,7 @@ const size_t DECLARATION_VARS = 1;
 const TokenGrepPacket[] DeclarationLine = [
     TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
     TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
-            TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
-                    Token(TokenType.Letter, [])
-                ])
+            TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
         ]),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
             Token(TokenType.Semicolon, [])
@@ -118,9 +116,7 @@ const size_t DECLARATION_EXPRESSION = 3;
 const TokenGrepPacket[] DeclarationAndAssignment = [
     TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
     TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
-            TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
-                    Token(TokenType.Letter, [])
-                ])
+            TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
         ]),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
             Token(TokenType.Equals, [])
@@ -317,6 +313,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 NameUnit[] collectNameUnits(TokenGrepResult[] greps){
     NameUnit[] ret;
     foreach (TokenGrepResult grepResult ; greps){
+        assert(grepResult.method == TokenGrepMethod.NameUnit);
         ret ~= grepResult.name;
     }
     return ret;

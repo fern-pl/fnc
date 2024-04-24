@@ -164,7 +164,7 @@ LineVarietyTestResult parseLine(Token[] tokens, ref size_t index, ScopeData pare
 
         NameUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].name;
         NameUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS].commaSeperated.collectNameUnits();
-        
+        lineVariety.tokenMatches[1].commaSeperated.writeln;
         foreach (NameUnit name; declarationNames)
             parent.declaredVariables ~= DeclaredVariable(name, declarationType);
         

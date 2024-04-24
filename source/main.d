@@ -31,8 +31,7 @@ void main()
     auto scopeData = new ScopeData;
     parseLine("int x, y, z = 4*5+2;".tokenizeText, index, scopeData);
     
-    "PTR:".writeln;
-    dchar[] name = scopeData.declaredVariables[0].name.names[0];
-    (cast(size_t)name.ptr).writeln;
-    (cast(size_t)name.ptr == 1).writeln;
+    "Vars: ".write;
+    scopeData.declaredVariables.writeln;
+    scopeData.instructions[0].tree(-1);
 }
