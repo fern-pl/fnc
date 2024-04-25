@@ -203,7 +203,8 @@ class AstNode
         }
         sink("}");
     }
-
+    void tree() => tree(-1);
+    
     void tree(size_t tabCount)
     {
         import std.stdio;
