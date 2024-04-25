@@ -11,8 +11,6 @@ enum AstAction
 {
     Keyword, // Standalong keywords Ex: import std.std.io;
     Scope,
-    DefineFunction,
-    DefineVariable, // Ex: int x;
     AssignVariable, // Ex: x = 5;
     IndexInto, // X[...]
 
@@ -41,20 +39,7 @@ struct KeywordNodeData
     Token[] keywardArgs;
 }
 
-struct DefineFunctionNodeData
-{
-    dchar[][] precedingKeywords;
-    dchar[][] suffixKeywords;
-    NameUnit returnType;
-    AstNode functionScope;
-}
 
-struct DefineVariableNodeData
-{
-    dchar[][] precedingKeywords;
-    NameUnit returnType;
-    AstNode[] functionScope;
-}
 
 struct AssignVariableNodeData
 {
@@ -150,7 +135,6 @@ class AstNode
     union
     {
         KeywordNodeData keywordNodeData; // Keyword
-        DefineVariableNodeData defineVariableNodeData; // DefineVariable
         AssignVariableNodeData assignVariableNodeData; // AssignVariable
 
         SingleArgumentOperationNodeData singleArgumentOperationNodeData; // SingleArgumentOperation

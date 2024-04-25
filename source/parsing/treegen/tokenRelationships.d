@@ -43,6 +43,11 @@ struct TokenGrepResult
         NameUnit name;
 
     }
+    pragma(always_inline)
+    TokenGrepResult assertAs(TokenGrepMethod test){
+        debug assert(this.method == test);
+        return this;
+    }
 }
 
 TokenGrepPacket TokenGrepPacketToken(TokenGrepMethod method, Token[] list)
@@ -102,8 +107,6 @@ const TokenGrepPacket[] IfStatementWithScope = [
 // in a modular way, and it is surprisingly efficient.
 // This is all unmantainable as FUCK, and confusing to read.
 // But this works, and is quite convinent. 
-
-// TODO: Refactor ALL of this:
 
 const size_t DECLARATION_TYPE = 0;
 const size_t DECLARATION_VARS = 1;
@@ -176,11 +179,62 @@ const TokenGrepPacket[] ModuleDeclaration = [
             Token(TokenType.Semicolon, [])
         ])
 ];
+
+const FUNCTION_RETURN_TYPE = 0;
+const FUNCTION_NAME = 1;
+const FUNCTION_ARGS = 2;
+const FUNCTION_SCOPE = 3;
+
+// void main();
+const TokenGrepPacket[] AbstractFunctionDeclaration = [
+    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.OpenBraces, ['('])
+        ]),
+    // Parameters
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.CloseBraces, [')'])
+        ]),
+    // Prepended attributes
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+        Token(TokenType.Semicolon, [])
+    ])
+];
+const TokenGrepPacket[] FunctionDeclaration = [
+    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.OpenBraces, ['('])
+        ]),
+    // Parameters
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.CloseBraces, [')'])
+        ]),
+    // Body
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.OpenBraces, ['{'])
+        ]),
+    // Parameters
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.CloseBraces, ['}'])
+        ]),
+];
+
+
+
 enum LineVariety
 {
     TotalImport,
     SelectiveImport,
     ModuleDeclaration,
+    FunctionDeclaration,
 
     SimpleExpression,
     IfStatementWithScope,
@@ -202,7 +256,8 @@ const VarietyTestPair[] ABSTRACT_SCOPE_PARSE = [
     VarietyTestPair(LineVariety.DeclarationAndAssignment, DeclarationAndAssignment),
 ];
 const VarietyTestPair[] GLOBAL_SCOPE_PARSE = [
-    VarietyTestPair(LineVariety.ModuleDeclaration, ModuleDeclaration)
+    VarietyTestPair(LineVariety.ModuleDeclaration, ModuleDeclaration),
+    VarietyTestPair(LineVariety.FunctionDeclaration, FunctionDeclaration)
 ] ~ ABSTRACT_SCOPE_PARSE;
 
 const VarietyTestPair[] FUNCTION_SCOPE_PARSE = [
@@ -304,13 +359,16 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
             break;
 
         case TokenGrepMethod.Glob:
-            auto firstGlob = testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $]);
+            size_t temp_index;
+            auto firstGlob = testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $], temp_index);
+            
             TokenGrepResult globResult;
             globResult.method = TokenGrepMethod.Glob;
             globResult.tokens = [];
-
-            if (firstGlob.ptr)
+            if (firstGlob.ptr){
+                index+=temp_index;
                 return tokenGrepBox(returnVal ~ globResult ~ firstGlob.value);
+            }
 
             int braceDeph = 0;
             size_t startingIndex = index;
@@ -325,17 +383,18 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                 if (token.tokenVariety == TokenType.OpenBraces)
                     braceDeph += 1;
-                else if (token.tokenVariety == TokenType.CloseBraces && braceDeph != 0)
+                else if (token.tokenVariety == TokenType.CloseBraces){
                     braceDeph -= 1;
-                else if (braceDeph == 0)
+                    if (braceDeph == -1)
+                        return tokenGrepBox(null);
+                }else if (braceDeph == 0)
                 {
-                    size_t index_inc;
+                    size_t index_inc = 0;
                     auto res = grepMatchGroup.matchesToken(tokens[index .. $], index_inc);
                     if (res.ptr)
                     {
 
                         globResult.tokens = tokens[startingIndex .. index];
-
                         index += index_inc;
                         return tokenGrepBox(returnVal ~ globResult ~ res.value);
                     }

@@ -11,20 +11,19 @@ void main()
 {
     size_t index = 0;
 
-    auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "
-
-
-
-            string axolotl, frog = `Hello world` * 2  + 1;
-            int constant = 69  /* nice!!! */ ; 
-        ".tokenizeText(), index, nullable!ScopeData(null));
-      foreach (instruction; newScope.instructions)
-      {
-          instruction.tree;
-      }
-      "\n\nDeclared variables: ".writeln;
-      foreach (var; newScope.declaredVariables)
-      {
-          var.writeln;
-      }
+    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
+         int main(){
+          int x = 4;
+         }
+        ".tokenizeText, index, nullable!ScopeData(null));
+    newScope.writeln;
+//       foreach (instruction; newScope.instructions)
+//       {
+//           instruction.tree;
+//       }
+//       "\n\nDeclared variables: ".writeln;
+//       foreach (var; newScope.declaredVariables)
+//       {
+//           var.writeln;
+//       }
 }

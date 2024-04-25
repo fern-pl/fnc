@@ -16,7 +16,15 @@ struct ImportStatement
     NameUnit nameUnit;
     NameUnit[] importSelection; // empty for importing everything
 }
-
+struct DeclaredFunction
+{
+    dchar[][] precedingKeywords;
+    dchar[][] suffixKeywords;
+    NameUnit returnType;
+    NameUnit name;
+    // TODO: Args
+    ScopeData functionScope;
+}
 struct DeclaredVariable
 {
     NameUnit name;
@@ -31,6 +39,7 @@ class ScopeData
     Nullable!NameUnit moduleName;
     ImportStatement[] imports;
 
+    DeclaredFunction[] declaredFunctions;
     DeclaredVariable[] declaredVariables;
     Array!AstNode instructions;
 }
@@ -50,10 +59,11 @@ LineVarietyTestResult getLineVarietyTestResult(
     foreach (method; scopeParseMethod)
     {
         Nullable!(TokenGrepResult[]) grepResults = method.test.matchesToken(tokens, temp_index);
-        if (null != grepResults)
+        if (null != grepResults){
             return LineVarietyTestResult(
                 method.variety, temp_index - index, grepResults.value
             );
+        }
         temp_index = index;
     }
 
@@ -119,12 +129,13 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
 
         auto statement = ImportStatement(
             keywords,
-            lineVariety.tokenMatches[IMPORT_PACKAGE_NAME].name,
+            lineVariety.tokenMatches[IMPORT_PACKAGE_NAME].assertAs(TokenGrepMethod.NameUnit).name,
             []
         );
 
         statement.importSelection ~= lineVariety
             .tokenMatches[SELECTIVE_IMPORT_SELECTIONS]
+            .assertAs(TokenGrepMethod.PossibleCommaSeperated)
             .commaSeperated
             .collectNameUnits();
 
@@ -136,8 +147,10 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         scope (exit)
             index = endingIndex;
 
-        NameUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].name;
-        NameUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS].commaSeperated.collectNameUnits();
+        NameUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].assertAs(TokenGrepMethod.NameUnit).name;
+        NameUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS]
+                                                .assertAs(TokenGrepMethod.PossibleCommaSeperated)
+                                                .commaSeperated.collectNameUnits();
         AstNode[] nameNodes;
         foreach (NameUnit name; declarationNames)
         {
@@ -151,7 +164,9 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         if (lineVariety.lineVariety == LineVariety.DeclarationLine)
             break;
 
-        auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION].tokens.expressionNodeFromTokens();
+        auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION]
+                                                    .assertAs(TokenGrepMethod.Glob)
+                                                    .tokens.expressionNodeFromTokens();
 
         if (nodes.length != 1)
             throw new SyntaxError(
@@ -164,6 +179,26 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
 
         parent.instructions ~= assignment;
 
+        break;
+    case LineVariety.FunctionDeclaration:
+        size_t endingIndex = index + lineVariety.length;
+        scope (exit)
+            index = endingIndex;
+        size_t temp;
+        parent.declaredFunctions ~= DeclaredFunction(
+            keywords,
+            [],
+            lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NameUnit).name,
+            lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.NameUnit).name,
+            parseMultilineScope(
+                FUNCTION_SCOPE_PARSE,
+                lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob).tokens,
+                temp,
+                nullable!ScopeData(parent)
+                )
+        );
+
+        // assert(0);
         break;
     case LineVariety.SimpleExpression:
         size_t expression_end = tokens.findNearestSemiColon(index);
