@@ -57,7 +57,7 @@ public enum OpCode : ubyte
     INT,
     JMP,
     LEA,
-    LOCK,
+    // LOCK,
     LZCNT,
     TZCNT,
     MOV,
