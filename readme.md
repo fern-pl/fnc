@@ -6,18 +6,18 @@ Examples [exist](examples) but are small tidbits meant to facilitate parser test
 
 ## Notable Features
 
-1. [Hybrid Memory Management](model.md#memory-management)
+1. [Hybrid Memory Management](spec/model.md#memory-management)
 
-2. [Symbol-First Casting and Conversion](model.md#casts-and-conversions)
-3. [UFCS (Uniform Function Call Syntax)](model.md#ufcs)
-4. [CTFE (Compile-Time Function Execution)](model.md#ctfe)
-5. [Symbols and Aliases](grammar.md#symbols-and-aliases)
-6. [Granular Attributes](grammar.md#attributes)
-7. [Variable-Based Return](grammar.md#functions)
+2. [Symbol-First Casting and Conversion](spec/model.md#casts-and-conversions)
+3. [UFCS (Uniform Function Call Syntax)](spec/model.md#ufcs)
+4. [CTFE (Compile-Time Function Execution)](spec/model.md#ctfe)
+5. [Symbols and Aliases](spec/grammar.md#symbols-and-aliases)
+6. [Granular Attributes](spec/grammar.md#attributes)
+7. [Variable-Based Return](spec/grammar.md#functions)
 
 ## Specification
 
-1. [Model](model.md)
+1. [Model](spec/model.md)
 
-2. [Grammar](grammar.md)
-3. [Lexical](lexical.md)
+2. [Grammar](spec/grammar.md)
+3. [Lexical](spec/lexical.md)
