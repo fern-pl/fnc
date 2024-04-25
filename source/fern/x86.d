@@ -179,7 +179,8 @@ public enum OpCode : ubyte
     FSUBR,
     FSUBRP,
     FISUBR,
-    FCMOV
+    FCMOV,
+    SBB,
 }
 
 public enum Detail
@@ -363,10 +364,6 @@ final:
         {
             case ADD:
             case SUB:
-            case MUL:
-            case DIV:
-            case IMUL:
-            case IDIV:
             case ROL:
             case ROR:
             case SHL:
@@ -383,6 +380,12 @@ final:
             case BTS:
             case TEST:
                 detail = Detail.READ1 | Detail.READ2;
+                break;
+            case MUL:
+            case DIV:
+            case IMUL:
+            case IDIV:
+                detail = Detail.READ1 | Detail.READ2 | POLLUTE_AX | POLLUTE_DX;
                 break;
             case NOT:
             case NEG:
@@ -407,6 +410,10 @@ final:
             case BSR:
             case LEA:
                 detail = Detail.WRITE1 | Detail.READ2;
+                break;
+            case CPUID:
+                // Reads from EAX, which I'm considering pollution.
+                detail = POLLUTE_AX;
                 break;
             default:
                 break;
