@@ -107,7 +107,7 @@ unittest
 
     size_t index = 0;
     auto scopeData = new ScopeData;
-    parseLine("partial public module the.fat.rat.r8te.my.foo;".tokenizeText, index, scopeData);
+    parseLine(GLOBAL_SCOPE_PARSE, "partial public module the.fat.rat.r8te.my.foo;".tokenizeText, index, scopeData);
     assert(scopeData.moduleName.value.names == [
         "the".makeUnicodeString, 
         "fat".makeUnicodeString, 
@@ -126,6 +126,6 @@ unittest
 
     size_t index = 0;
     auto scopeData = new ScopeData;
-    parseLine("int x, y, z = 4*5+2;".tokenizeText, index, scopeData);
+    parseLine(GLOBAL_SCOPE_PARSE, "int x, y, z = 4*5+2;".tokenizeText, index, scopeData);
 }
 

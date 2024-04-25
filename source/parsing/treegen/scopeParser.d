@@ -35,19 +35,6 @@ class ScopeData
     Array!AstNode instructions;
 }
 
-enum LineVariety
-{
-    TotalImport,
-    SelectiveImport,
-    ModuleDeclaration,
-
-    SimpleExpression,
-    IfStatementWithScope,
-    IfStatementWithoutScope,
-    DeclarationLine,
-    DeclarationAndAssignment,
-}
-
 struct LineVarietyTestResult
 {
     LineVariety lineVariety;
@@ -55,37 +42,19 @@ struct LineVarietyTestResult
     TokenGrepResult[] tokenMatches;
 }
 
-LineVarietyTestResult getLineVarietyTestResult(Token[] tokens, size_t index)
+LineVarietyTestResult getLineVarietyTestResult(
+    const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, size_t index)
 {
     size_t temp_index = index;
 
-    static foreach (i, func; [
-            TotalImport,
-            SelectiveImport,
-            ModuleDeclaration,
-
-            IfStatementWithScope,
-            IfStatementWithoutScope,
-            DeclarationLine,
-            DeclarationAndAssignment
-        ])
+    foreach (method; scopeParseMethod)
     {
-        {
-            Nullable!(TokenGrepResult[]) grepResults = func.matchesToken(tokens, temp_index);
-            if (null != grepResults)
-                return LineVarietyTestResult(
-                    [
-                    LineVariety.TotalImport,
-                    LineVariety.SelectiveImport,
-                    LineVariety.ModuleDeclaration,
-                    LineVariety.IfStatementWithScope,
-                    LineVariety.IfStatementWithoutScope,
-                    LineVariety.DeclarationLine,
-                    LineVariety.DeclarationAndAssignment
-                ][i], temp_index - index, grepResults.value
-                );
-            temp_index = index;
-        }
+        Nullable!(TokenGrepResult[]) grepResults = method.test.matchesToken(tokens, temp_index);
+        if (null != grepResults)
+            return LineVarietyTestResult(
+                method.variety, temp_index - index, grepResults.value
+            );
+        temp_index = index;
     }
 
     return LineVarietyTestResult(LineVariety.SimpleExpression, -1);
@@ -118,11 +87,11 @@ NameUnit[] commaSeperatedNameUnits(Token[] tokens, ref size_t index)
 
 import std.stdio;
 
-LineVarietyTestResult parseLine(Token[] tokens, ref size_t index, ScopeData parent)
+LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, ref size_t index, ScopeData parent)
 {
     dchar[][] keywords = tokens.skipAndExtractKeywords(index);
 
-    LineVarietyTestResult lineVariety = tokens.getLineVarietyTestResult(index);
+    LineVarietyTestResult lineVariety = getLineVarietyTestResult(scopeParseMethod, tokens, index);
     switch (lineVariety.lineVariety)
     {
     case LineVariety.ModuleDeclaration:
@@ -169,8 +138,15 @@ LineVarietyTestResult parseLine(Token[] tokens, ref size_t index, ScopeData pare
 
         NameUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].name;
         NameUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS].commaSeperated.collectNameUnits();
+        AstNode[] nameNodes;
         foreach (NameUnit name; declarationNames)
+        {
             parent.declaredVariables ~= DeclaredVariable(name, declarationType);
+            AstNode nameNode = new AstNode();
+            nameNode.action = AstAction.NamedUnit;
+            nameNode.namedUnit = name;
+            nameNodes ~= nameNode;
+        }
 
         if (lineVariety.lineVariety == LineVariety.DeclarationLine)
             break;
@@ -183,7 +159,7 @@ LineVarietyTestResult parseLine(Token[] tokens, ref size_t index, ScopeData pare
         AstNode result = nodes[0];
         AstNode assignment = new AstNode;
         assignment.action = AstAction.AssignVariable;
-        assignment.assignVariableNodeData.name = declarationNames;
+        assignment.assignVariableNodeData.name = nameNodes;
         assignment.assignVariableNodeData.value = result;
 
         parent.instructions ~= assignment;
@@ -210,13 +186,13 @@ LineVarietyTestResult parseLine(Token[] tokens, ref size_t index, ScopeData pare
     return lineVariety;
 }
 
-ScopeData parseMultilineScope(Token[] tokens, ref size_t index, Nullable!ScopeData parent)
+ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, ref size_t index, Nullable!ScopeData parent)
 {
     ScopeData scopeData = new ScopeData;
     scopeData.parent = parent;
     while (index < tokens.length)
     {
-        LineVarietyTestResult lineData = parseLine(tokens, index, scopeData);
+        LineVarietyTestResult lineData = parseLine(scopeParseMethod, tokens, index, scopeData);
         Nullable!Token testToken = tokens.nextNonWhiteToken(index);
         if (testToken == null)
             break;
@@ -233,16 +209,65 @@ unittest
     import parsing.treegen.scopeParser;
 
     size_t index = 0;
-    auto newScope = parseMultilineScope("
+    auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "
             int x, y;
             x = 5;
             y = 1;
             x = 3;
+            string axolotl = `Hello world`;
             int tv = x++ + y;
             float floaty = tv / 2;
         ".tokenizeText(), index, nullable!ScopeData(null));
-    newScope.declaredVariables.writeln;
+    assert(
+        newScope.declaredVariables
+            ==
+            [
+                DeclaredVariable(NameUnit(["x".makeUnicodeString]), NameUnit([
+                        "int".makeUnicodeString
+                    ])),
+                DeclaredVariable(NameUnit(["y".makeUnicodeString]), NameUnit([
+                        "int".makeUnicodeString
+                    ])),
+                DeclaredVariable(NameUnit(["axolotl".makeUnicodeString]), NameUnit(
+                    ["string".makeUnicodeString])),
+                DeclaredVariable(NameUnit(["tv".makeUnicodeString]), NameUnit([
+                        "int".makeUnicodeString
+                    ])),
+                DeclaredVariable(NameUnit(["floaty".makeUnicodeString]), NameUnit(
+                    ["float".makeUnicodeString]))
+            ]
+    );
+    assert(newScope.instructions[0].action == AstAction.AssignVariable);
+    assert(newScope.instructions[1].action == AstAction.AssignVariable);
+    assert(newScope.instructions[2].action == AstAction.AssignVariable);
+    assert(newScope.instructions[3].action == AstAction.AssignVariable);
 
-    foreach (x; newScope.instructions)
-        x.tree(-1);
+    assert(newScope.instructions[0].assignVariableNodeData.name.length == 1);
+    assert(
+        newScope.instructions[0].assignVariableNodeData.name[0].namedUnit.names == [
+            [cast(dchar) 'x']
+        ]);
+    assert(
+        newScope.instructions[1].assignVariableNodeData.name[0].namedUnit.names == [
+            [cast(dchar) 'y']
+        ]);
+    assert(
+        newScope.instructions[2].assignVariableNodeData.name[0].namedUnit.names == [
+            [cast(dchar) 'x']
+        ]);
+    assert(newScope.instructions[3].assignVariableNodeData.name[0].namedUnit.names == [
+            "axolotl".makeUnicodeString
+        ]);
+    assert(newScope.instructions[3].assignVariableNodeData.value.action == AstAction.TokenHolder);
+    assert(newScope.instructions[3].assignVariableNodeData.value.tokenBeingHeld == Token(
+            TokenType.Quotation, "`Hello world`".makeUnicodeString, 109));
+
+    assert(
+        newScope.instructions[4].assignVariableNodeData.name[0].namedUnit.names == [
+            "tv".makeUnicodeString
+        ]);
+    assert(newScope.instructions[5].assignVariableNodeData.name[0].namedUnit.names == [
+            "floaty".makeUnicodeString
+        ]);
 }
+

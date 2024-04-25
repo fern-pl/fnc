@@ -58,7 +58,7 @@ struct DefineVariableNodeData
 
 struct AssignVariableNodeData
 {
-    NameUnit[] name; // Name of variable(s) to assign Ex: x = y = z = 5;
+    AstNode[] name; // Name of variable(s) to assign Ex: x = y = z = 5;
     AstNode value;
 }
 
@@ -150,8 +150,6 @@ class AstNode
     union
     {
         KeywordNodeData keywordNodeData; // Keyword
-        AstNode[] scopeContents; // Scope
-        DefineFunctionNodeData defineFunctionNodeData; // DefineFunction
         DefineVariableNodeData defineVariableNodeData; // DefineVariable
         AssignVariableNodeData assignVariableNodeData; // AssignVariable
 
@@ -225,6 +223,7 @@ class AstNode
             callNodeData.args.tree(tabCount + 1);
             break;
         case AstAction.DoubleArgumentOperation:
+            write("opr ");
             writeln(doubleArgumentOperationNodeData.operationVariety.to!string ~ ":");
             doubleArgumentOperationNodeData.left.tree(tabCount + 1);
             doubleArgumentOperationNodeData.right.tree(tabCount + 1);
@@ -250,8 +249,8 @@ class AstNode
             break;
         case AstAction.AssignVariable:
             write("Assigning variable(s): ");
-            foreach (NameUnit name; assignVariableNodeData.name)
-                write(name.names.to!string ~ ", ");
+            foreach (AstNode nameNode; assignVariableNodeData.name)
+                write(nameNode.namedUnit.names.to!string ~ ", ");
             writeln(": ");
             assignVariableNodeData.value.tree(tabCount + 1);
             break;

@@ -4,6 +4,13 @@ import parsing.treegen.astTypes;
 import parsing.treegen.treeGenUtils;
 import tern.typecons.common : Nullable, nullable;
 
+/+
+    This file contains a couple of things:
+        1. The "Token Grep" system, a dogshit version of regex of parsing tokenized code
+        2. The order of operation used for grouping
++/
+
+
 enum TokenGrepMethod
 {
     Glob,
@@ -169,6 +176,40 @@ const TokenGrepPacket[] ModuleDeclaration = [
             Token(TokenType.Semicolon, [])
         ])
 ];
+enum LineVariety
+{
+    TotalImport,
+    SelectiveImport,
+    ModuleDeclaration,
+
+    SimpleExpression,
+    IfStatementWithScope,
+    IfStatementWithoutScope,
+    DeclarationLine,
+    DeclarationAndAssignment,
+}
+
+struct VarietyTestPair
+{
+    LineVariety variety;
+    const(TokenGrepPacket[]) test;
+}
+// Defines what you are allowed to do in what types of scope
+const VarietyTestPair[] ABSTRACT_SCOPE_PARSE = [
+    VarietyTestPair(LineVariety.TotalImport, TotalImport),
+    VarietyTestPair(LineVariety.SelectiveImport, SelectiveImport),
+    VarietyTestPair(LineVariety.DeclarationLine, DeclarationLine),
+    VarietyTestPair(LineVariety.DeclarationAndAssignment, DeclarationAndAssignment),
+];
+const VarietyTestPair[] GLOBAL_SCOPE_PARSE = [
+    VarietyTestPair(LineVariety.ModuleDeclaration, ModuleDeclaration)
+] ~ ABSTRACT_SCOPE_PARSE;
+
+const VarietyTestPair[] FUNCTION_SCOPE_PARSE = [
+    VarietyTestPair(LineVariety.IfStatementWithoutScope, IfStatementWithoutScope),
+    VarietyTestPair(LineVariety.IfStatementWithScope, IfStatementWithScope),
+] ~ ABSTRACT_SCOPE_PARSE;
+
 
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 {
@@ -575,6 +616,15 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
     }
 
     AstNode oprNode = new AstNode();
+    if (entry.operation == OperationVariety.Assignment){
+        oprNode.action = AstAction.AssignVariable;
+        oprNode.assignVariableNodeData = AssignVariableNodeData(
+            [operands[0]],
+            operands[1]
+        );
+        goto trim;
+    }
+
     oprNode.action = AstAction.DoubleArgumentOperation;
     if (operands.length == 0)
         assert(0);
@@ -592,7 +642,8 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
             operands[0],
             operands[1]
         );
-
+    
+    trim:
     nodes[startIndex] = oprNode;
     nodes.linearRemove(nodes[startIndex + 1 .. nodeIndex]);
     return true;
