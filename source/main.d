@@ -12,6 +12,7 @@ void main()
     size_t index = 0;
 
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
+         int x = 693;
          int main(){
           int x = 4;
          }
