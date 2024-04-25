@@ -301,6 +301,11 @@ unittest
                     ["float".makeUnicodeString]))
             ]
     );
+    foreach (i; newScope.instructions)
+    {
+            i.tree(-1);
+    }
+    
     assert(newScope.instructions[0].action == AstAction.AssignVariable);
     assert(newScope.instructions[1].action == AstAction.AssignVariable);
     assert(newScope.instructions[2].action == AstAction.AssignVariable);
@@ -322,8 +327,8 @@ unittest
     assert(newScope.instructions[3].assignVariableNodeData.name[0].namedUnit.names == [
             "axolotl".makeUnicodeString
         ]);
-    assert(newScope.instructions[3].assignVariableNodeData.value.action == AstAction.TokenHolder);
-    assert(newScope.instructions[3].assignVariableNodeData.value.tokenBeingHeld == Token(
+    assert(newScope.instructions[3].assignVariableNodeData.value.action == AstAction.LiteralUnit);
+    assert(newScope.instructions[3].assignVariableNodeData.value.literalUnitCompenents[0] == Token(
             TokenType.Quotation, "`Hello world`".makeUnicodeString, 109));
 
     assert(
