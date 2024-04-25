@@ -16,6 +16,7 @@ struct ImportStatement
     NameUnit nameUnit;
     NameUnit[] importSelection; // empty for importing everything
 }
+
 struct DeclaredFunction
 {
     dchar[][] precedingKeywords;
@@ -25,6 +26,7 @@ struct DeclaredFunction
     // TODO: Args
     ScopeData functionScope;
 }
+
 struct DeclaredVariable
 {
     NameUnit name;
@@ -42,6 +44,27 @@ class ScopeData
     DeclaredFunction[] declaredFunctions;
     DeclaredVariable[] declaredVariables;
     Array!AstNode instructions;
+
+    void toString(scope void delegate(const(char)[]) sink) const {
+        import std.conv;
+        sink("ScopeData{isPartialModule = ");
+        sink(isPartialModule.to!string);
+        sink(", moduleName = ");
+        if (moduleName == null)
+            sink("null");
+        else
+            sink(moduleName.value.to!string);
+        sink(", imports = ");
+        sink(imports.to!string);
+        sink(", declaredVariables = ");
+        sink(declaredVariables.to!string);
+
+        sink(", declaredFunctions = ");
+        sink(declaredFunctions.to!string);
+        sink(", instructions = ");
+        sink(instructions.to!string);
+        sink("}");
+    }
 }
 
 struct LineVarietyTestResult
@@ -59,7 +82,8 @@ LineVarietyTestResult getLineVarietyTestResult(
     foreach (method; scopeParseMethod)
     {
         Nullable!(TokenGrepResult[]) grepResults = method.test.matchesToken(tokens, temp_index);
-        if (null != grepResults){
+        if (null != grepResults)
+        {
             return LineVarietyTestResult(
                 method.variety, temp_index - index, grepResults.value
             );
@@ -129,8 +153,9 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
 
         auto statement = ImportStatement(
             keywords,
-            lineVariety.tokenMatches[IMPORT_PACKAGE_NAME].assertAs(TokenGrepMethod.NameUnit).name,
-            []
+            lineVariety.tokenMatches[IMPORT_PACKAGE_NAME].assertAs(TokenGrepMethod.NameUnit)
+                .name,
+                []
         );
 
         statement.importSelection ~= lineVariety
@@ -147,10 +172,11 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         scope (exit)
             index = endingIndex;
 
-        NameUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].assertAs(TokenGrepMethod.NameUnit).name;
+        NameUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].assertAs(
+            TokenGrepMethod.NameUnit).name;
         NameUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS]
-                                                .assertAs(TokenGrepMethod.PossibleCommaSeperated)
-                                                .commaSeperated.collectNameUnits();
+            .assertAs(TokenGrepMethod.PossibleCommaSeperated)
+            .commaSeperated.collectNameUnits();
         AstNode[] nameNodes;
         foreach (NameUnit name; declarationNames)
         {
@@ -165,8 +191,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             break;
 
         auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION]
-                                                    .assertAs(TokenGrepMethod.Glob)
-                                                    .tokens.expressionNodeFromTokens();
+            .assertAs(TokenGrepMethod.Glob)
+            .tokens.expressionNodeFromTokens();
 
         if (nodes.length != 1)
             throw new SyntaxError(
@@ -188,13 +214,16 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         parent.declaredFunctions ~= DeclaredFunction(
             keywords,
             [],
-            lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NameUnit).name,
-            lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.NameUnit).name,
-            parseMultilineScope(
-                FUNCTION_SCOPE_PARSE,
-                lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob).tokens,
-                temp,
-                nullable!ScopeData(parent)
+            lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NameUnit)
+                .name,
+                lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.NameUnit)
+                .name,
+                parseMultilineScope(
+                    FUNCTION_SCOPE_PARSE,
+                    lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob)
+                    .tokens,
+                    temp,
+                    nullable!ScopeData(parent)
                 )
         );
 
@@ -305,4 +334,3 @@ unittest
             "floaty".makeUnicodeString
         ]);
 }
-
