@@ -23,7 +23,7 @@ void main()
     // auto scope_ = tokens.parseMultilineScope(index, nullable!ScopeData(null));
     // import std.stdio;
     // scope_.declaredVariables.writeln;
-        import parsing.tokenizer.make_tokens;
+    import parsing.tokenizer.make_tokens;
     import parsing.treegen.scopeParser;
     import std.stdio;
 
