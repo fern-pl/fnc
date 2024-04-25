@@ -23,15 +23,4 @@ void main()
     // auto scope_ = tokens.parseMultilineScope(index, nullable!ScopeData(null));
     // import std.stdio;
     // scope_.declaredVariables.writeln;
-    import parsing.tokenizer.make_tokens;
-    import parsing.treegen.scopeParser;
-    import std.stdio;
-
-    size_t index = 0;
-    auto scopeData = new ScopeData;
-    parseLine("int x, y, z = 4*5+2;".tokenizeText, index, scopeData);
-    
-    "Vars: ".write;
-    scopeData.declaredVariables.writeln;
-    scopeData.instructions[0].tree(-1);
 }

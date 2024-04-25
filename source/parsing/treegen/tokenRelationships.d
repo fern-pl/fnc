@@ -175,6 +175,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
     size_t index = 0;
     return matchesToken(testWith, tokens, index);
 }
+
 alias tokenGrepBox = Nullable!(TokenGrepResult[]);
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index)
 {
@@ -266,11 +267,10 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
             TokenGrepResult globResult;
             globResult.method = TokenGrepMethod.Glob;
             globResult.tokens = [];
-            
+
             if (firstGlob.ptr)
-                return  tokenGrepBox(returnVal ~ globResult ~ firstGlob.value);
-            
-            
+                return tokenGrepBox(returnVal ~ globResult ~ firstGlob.value);
+
             int braceDeph = 0;
             size_t startingIndex = index;
             auto grepMatchGroup = testWith[testIndex + 1 .. $];
@@ -281,7 +281,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     return tokenGrepBox(null);
                 Token token = tokenNullable;
                 globResult.tokens ~= token;
-            
+
                 if (token.tokenVariety == TokenType.OpenBraces)
                     braceDeph += 1;
                 else if (token.tokenVariety == TokenType.CloseBraces && braceDeph != 0)
@@ -292,9 +292,9 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     auto res = grepMatchGroup.matchesToken(tokens[index .. $], index_inc);
                     if (res.ptr)
                     {
- 
+
                         globResult.tokens = tokens[startingIndex .. index];
-                        
+
                         index += index_inc;
                         return tokenGrepBox(returnVal ~ globResult ~ res.value);
                     }
@@ -310,15 +310,16 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
     return tokenGrepBox(returnVal);
 }
 
-NameUnit[] collectNameUnits(TokenGrepResult[] greps){
+NameUnit[] collectNameUnits(TokenGrepResult[] greps)
+{
     NameUnit[] ret;
-    foreach (TokenGrepResult grepResult ; greps){
+    foreach (TokenGrepResult grepResult; greps)
+    {
         assert(grepResult.method == TokenGrepMethod.NameUnit);
         ret ~= grepResult.name;
     }
     return ret;
 }
-
 
 enum OperatorOrder
 {

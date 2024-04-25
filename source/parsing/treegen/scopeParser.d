@@ -69,22 +69,24 @@ LineVarietyTestResult getLineVarietyTestResult(Token[] tokens, size_t index)
             DeclarationLine,
             DeclarationAndAssignment
         ])
-    {{
-        Nullable!(TokenGrepResult[]) grepResults = func.matchesToken(tokens, temp_index);
-        if (null != grepResults)
-            return LineVarietyTestResult(
-                [
-                LineVariety.TotalImport,
-                LineVariety.SelectiveImport,
-                LineVariety.ModuleDeclaration,
-                LineVariety.IfStatementWithScope,
-                LineVariety.IfStatementWithoutScope,
-                LineVariety.DeclarationLine,
-                LineVariety.DeclarationAndAssignment
-            ][i], temp_index - index, grepResults.value
-            );
-        temp_index = index;
-    }}
+    {
+        {
+            Nullable!(TokenGrepResult[]) grepResults = func.matchesToken(tokens, temp_index);
+            if (null != grepResults)
+                return LineVarietyTestResult(
+                    [
+                    LineVariety.TotalImport,
+                    LineVariety.SelectiveImport,
+                    LineVariety.ModuleDeclaration,
+                    LineVariety.IfStatementWithScope,
+                    LineVariety.IfStatementWithoutScope,
+                    LineVariety.DeclarationLine,
+                    LineVariety.DeclarationAndAssignment
+                ][i], temp_index - index, grepResults.value
+                );
+            temp_index = index;
+        }
+    }
 
     return LineVarietyTestResult(LineVariety.SimpleExpression, -1);
 }
@@ -143,7 +145,8 @@ LineVarietyTestResult parseLine(Token[] tokens, ref size_t index, ScopeData pare
         break;
     case LineVariety.SelectiveImport:
         size_t endingIndex = index + lineVariety.length;
-        scope (exit) index = endingIndex;
+        scope (exit)
+            index = endingIndex;
 
         auto statement = ImportStatement(
             keywords,
@@ -151,28 +154,29 @@ LineVarietyTestResult parseLine(Token[] tokens, ref size_t index, ScopeData pare
             []
         );
 
-        statement.importSelection ~= lineVariety.tokenMatches[SELECTIVE_IMPORT_SELECTIONS]
-                                                .commaSeperated
-                                                .collectNameUnits();
+        statement.importSelection ~= lineVariety
+            .tokenMatches[SELECTIVE_IMPORT_SELECTIONS]
+            .commaSeperated
+            .collectNameUnits();
 
         parent.imports ~= statement;
         break;
     case LineVariety.DeclarationLine:
     case LineVariety.DeclarationAndAssignment:
         size_t endingIndex = index + lineVariety.length;
-        scope (exit) index = endingIndex;
+        scope (exit)
+            index = endingIndex;
 
         NameUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].name;
         NameUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS].commaSeperated.collectNameUnits();
-        lineVariety.tokenMatches[1].commaSeperated.writeln;
         foreach (NameUnit name; declarationNames)
             parent.declaredVariables ~= DeclaredVariable(name, declarationType);
-        
-        if (lineVariety.lineVariety == LineVariety.DeclarationLine) break;
-        
+
+        if (lineVariety.lineVariety == LineVariety.DeclarationLine)
+            break;
+
         auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION].tokens.expressionNodeFromTokens();
-        
-        // nodes.data.writeln;
+
         if (nodes.length != 1)
             throw new SyntaxError(
                 "Expression node tree could not be parsed properly (Not reducable into single node)");
@@ -181,22 +185,21 @@ LineVarietyTestResult parseLine(Token[] tokens, ref size_t index, ScopeData pare
         assignment.action = AstAction.AssignVariable;
         assignment.assignVariableNodeData.name = declarationNames;
         assignment.assignVariableNodeData.value = result;
-        
+
         parent.instructions ~= assignment;
-        
+
         break;
     case LineVariety.SimpleExpression:
         size_t expression_end = tokens.findNearestSemiColon(index);
         if (expression_end == -1)
             throw new SyntaxError("Semicolon not found!");
         auto nodes = expressionNodeFromTokens(tokens[index .. expression_end]);
-        // tokens[index .. expression_end].writeln;
         if (nodes.length != 1)
             throw new SyntaxError(
                 "Expression node tree could not be parsed properly (Not reducable into single node)");
         parent.instructions ~= nodes[0];
         index = expression_end + 1;
-        
+
         break;
     default:
         import std.conv;
@@ -211,36 +214,35 @@ ScopeData parseMultilineScope(Token[] tokens, ref size_t index, Nullable!ScopeDa
 {
     ScopeData scopeData = new ScopeData;
     scopeData.parent = parent;
-    parseLine(tokens, index, scopeData).lineVariety.writeln;
-    parseLine(tokens, index, scopeData).lineVariety.writeln;
-    parseLine(tokens, index, scopeData).lineVariety.writeln;
-    parseLine(tokens, index, scopeData).lineVariety.writeln;
-    parseLine(tokens, index, scopeData).lineVariety.writeln;
-    parseLine(tokens, index, scopeData).lineVariety.writeln;
-    // parseLine(tokens, index, scopeData).lineVariety.writeln;
-    // parseLine(tokens, index, scopeData).lineVariety.writeln;
+    while (index < tokens.length)
+    {
+        LineVarietyTestResult lineData = parseLine(tokens, index, scopeData);
+        Nullable!Token testToken = tokens.nextNonWhiteToken(index);
+        if (testToken == null)
+            break;
+        index--;
+
+    }
 
     return scopeData;
 }
 
-// unittest
-// {
-//     import parsing.tokenizer.make_tokens;
-//     import parsing.treegen.scopeParser;
+unittest
+{
+    import parsing.tokenizer.make_tokens;
+    import parsing.treegen.scopeParser;
 
-//     size_t index = 0;
-//     auto newScope = parseMultilineScope("
-            // int x, y;
-            // x = 5;
-            // y = 1;
-            // x = 3;
-            // int tv = x++ + y;
-            // float floaty = tv / 2;
-            // int xx;
-            // int xxx;
-//         ".tokenizeText(), index, nullable!ScopeData(null));
-//     newScope.declaredVariables.writeln;
+    size_t index = 0;
+    auto newScope = parseMultilineScope("
+            int x, y;
+            x = 5;
+            y = 1;
+            x = 3;
+            int tv = x++ + y;
+            float floaty = tv / 2;
+        ".tokenizeText(), index, nullable!ScopeData(null));
+    newScope.declaredVariables.writeln;
 
-//     foreach (x ; newScope.instructions)
-//         x.tree(-1);
-// }
+    foreach (x; newScope.instructions)
+        x.tree(-1);
+}
