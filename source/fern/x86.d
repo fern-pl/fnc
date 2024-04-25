@@ -85,6 +85,64 @@ public enum OpCode : ubyte
     SHR,
     SET,
     XOR,
+    RDSEED,
+    RDRAND,
+    XACQUIRE,
+    XACQUIRE_LOCK,
+    LOCK,
+    XRELEASE,
+    POPCNT,
+    FABS,
+    FCHS,
+    FCLEX,
+    FNCLEX,
+    FADD,
+    FADDP,
+    FIADD,
+    FBLD,
+    FBSTP,
+    FCOM,
+    FCOMP,
+    FCOMPP,
+    FCOMI,
+    FCOMIP,
+    FUCOMI,
+    FUCOMIP,
+    FICOM,
+    FICOMP,
+    FUCOM,
+    FUCOMP,
+    FUCOMPP,
+    FTST,
+    F2XM1,
+    FYL2X,
+    FYL2XP1,
+    FCOS,
+    FSIN,
+    FSINCOS,
+    FSQRT,
+    FPTAN,
+    FPATAN,
+    FPREM,
+    FPREM1,
+    FDECSTP,
+    FINCSTP,
+    FILD,
+    FIST,
+    FISTP,
+    FISTTP,
+    FLDCW,
+    FSTCW,
+    FNSTCW,
+    FLDENV,
+    FSTENV,
+    FNSTENV,
+    FSTSW,
+    FNSTSW,
+    FLD,
+    FLD1,
+    FLDL2T,
+    FLDL2E,
 }
 
 public enum Detail
@@ -137,9 +195,9 @@ final:
 
     void prepare()
     {
-        foreach (i, instr; instructions)
+        foreach (i, ref instr; instructions)
         {
-            foreach (j, operand; instr.operands)
+            foreach (j, ref operand; instr.operands)
             {
                 if ((variables[operand].type.modifiers & Modifiers.MASK) == 0 ||
                     variables[operand].visited)
@@ -153,8 +211,47 @@ final:
                     instructions = Instruction(OpCode.XOR, operand, operand)~instructions;
 
                 variables[operand].visited = true;
+
+                if (variables[operand].type.size <= 1 && bytes.length >= 1)
+                {
+                    variables[operand].markers ~= 100 | bytes[0].index;
+
+                    if (bytes.length > 1)
+                        bytes = bytes[1..$];
+                    else
+                        bytes = null;
+                }
+                else if (variables[operand].type.size <= 2 && words.length >= 1)
+                {
+                    variables[operand].markers ~= 100 | words[0].index;
+
+                    if (words.length > 1)
+                        words = words[1..$];
+                    else
+                        words = null;
+                }
+                else if (variables[operand].type.size <= 4 && dwords.length >= 1)
+                {
+                    variables[operand].markers ~= 100 | dwords[0].index;
+
+                    if (dwords.length > 1)
+                        dwords = dwords[1..$];
+                    else
+                        dwords = null;
+                }
+                else if (variables[operand].type.size <= 8 && qwords.length >= 1)
+                {
+                    variables[operand].markers ~= 100 | qwords[0].index;
+
+                    if (qwords.length > 1)
+                        qwords = qwords[1..$];
+                    else
+                        qwords = null;
+                }
             }
         }
+        import std.stdio;
+        debug writeln(instructions);
     }
 }
 
