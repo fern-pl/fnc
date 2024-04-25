@@ -308,7 +308,7 @@ final:
         debug writeln(variables);
     }
 
-    Block!true compile()
+    /* Block!true compile()
     {
         Block!true ret;
         // each variable is an operand
@@ -317,20 +317,12 @@ final:
         foreach (instr; instructions)
         with (ret)
         {
-            void _compile(string opcode)()
-            {
-                if (instr.operands.length > 1)
-                {
-                    
-                }
-            }
-
             with (OpCode) switch (instr.opcode)
             {
                 case XOR:
             }
         }
-    }
+    } */
 }
 
 unittest
