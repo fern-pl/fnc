@@ -1,6 +1,8 @@
 module fern.x86;
 
 import gallinule.x86;
+import std.algorithm.sorting;
+import std.array;
 
 public enum OpCode : ubyte
 {
@@ -57,7 +59,6 @@ public enum OpCode : ubyte
     INT,
     JMP,
     LEA,
-    // LOCK,
     LZCNT,
     TZCNT,
     MOV,
@@ -191,6 +192,11 @@ public enum Detail
     WRITE2 = 1 << 4,
     WRITE3 = 1 << 5,
 
+    POLLUTE_AX = 1 << 6,
+    POLLUTE_BX = 1 << 7,
+    POLLUTE_CX = 1 << 8,
+    POLLUTE_DX = 1 << 9,
+
     // These are not opcode defined
     GREATER = 255,
     GREATEREQ = 254,
@@ -211,12 +217,14 @@ public enum Modifiers : ubyte
     FLOAT = 1 << 0,
     POINTER = 1 << 1,
     ARRAY = 1 << 2,
-    // 1 << 3
+    // Specially defined because vectors and strings get register priority regardless of usage :-)
+    VECTOR = 1 << 3,
     BYTE = 1 << 4,
     WORD = 1 << 5,
     DWORD = 1 << 6,
     QWORD = 1 << 7,
 
+    STRING = VECTOR | ARRAY,
     MASK = 0b11100000
 }
 
@@ -235,8 +243,7 @@ final:
         {
             foreach (j, ref operand; instr.operands)
             {
-                if ((variables[operand].type.modifiers & Modifiers.MASK) == 0 ||
-                    variables[operand].visited)
+                if (operand.name == null || variables[operand.name].score != 0)
                     continue;
                 
                 if ((instr.detail & Detail.READ1) != 0 && j == 0)
@@ -246,49 +253,96 @@ final:
                 else if ((instr.detail & Detail.READ3) != 0 && j == 2)
                     instructions = Instruction(OpCode.XOR, operand, operand)~instructions;
 
-                variables[operand].visited = true;
+                if ((variables[operand.name].type.modifiers & Modifiers.STRING) != 0)
+                    variables[operand.name].score = int.max - 1;
+                else if ((variables[operand.name].type.modifiers & Modifiers.VECTOR) != 0)
+                    variables[operand.name].score = int.max;
+                else
+                    variables[operand.name].score++;
+            }
+        }
 
-                if (variables[operand].type.size <= 1 && bytes.length >= 1)
-                {
-                    variables[operand].markers ~= 100 | bytes[0].index;
+        foreach (var; variables.byValue.array.sort!("a.score > b.score"))
+        {
+            if (var.type.size <= 1 && bytes.length >= 1)
+            {
+                variables[var.name].markers ~= 100 | bytes[0].index;
 
-                    if (bytes.length > 1)
-                        bytes = bytes[1..$];
-                    else
-                        bytes = null;
-                }
-                else if (variables[operand].type.size <= 2 && words.length >= 1)
-                {
-                    variables[operand].markers ~= 100 | words[0].index;
+                if (bytes.length > 1)
+                    bytes = bytes[1..$];
+                else
+                    bytes = null;
+            }
+            else if (var.type.size <= 2 && words.length >= 1)
+            {
+                variables[var.name].markers ~= 120 | words[0].index;
 
-                    if (words.length > 1)
-                        words = words[1..$];
-                    else
-                        words = null;
-                }
-                else if (variables[operand].type.size <= 4 && dwords.length >= 1)
-                {
-                    variables[operand].markers ~= 100 | dwords[0].index;
+                if (words.length > 1)
+                    words = words[1..$];
+                else
+                    words = null;
+            }
+            else if (var.type.size <= 4 && dwords.length >= 1)
+            {
+                variables[var.name].markers ~= 140 | dwords[0].index;
 
-                    if (dwords.length > 1)
-                        dwords = dwords[1..$];
-                    else
-                        dwords = null;
-                }
-                else if (variables[operand].type.size <= 8 && qwords.length >= 1)
-                {
-                    variables[operand].markers ~= 100 | qwords[0].index;
+                if (dwords.length > 1)
+                    dwords = dwords[1..$];
+                else
+                    dwords = null;
+            }
+            else if (var.type.size <= 8 && qwords.length >= 1)
+            {
+                variables[var.name].markers ~= 160 | qwords[0].index;
 
-                    if (qwords.length > 1)
-                        qwords = qwords[1..$];
-                    else
-                        qwords = null;
-                }
+                if (qwords.length > 1)
+                    qwords = qwords[1..$];
+                else
+                    qwords = null;
             }
         }
         import std.stdio;
-        debug writeln(instructions);
+        import std.algorithm;
+        debug writeln(variables.byValue.map!(x => x.markers));
+        debug writeln(variables);
     }
+
+    Block!true compile()
+    {
+        Block!true ret;
+        // each variable is an operand
+        // order: stack, markers in order
+        // literals ignore de la mumbo de jumbo
+        foreach (instr; instructions)
+        with (ret)
+        {
+            void _compile(string opcode)()
+            {
+                if (instr.operands.length > 1)
+                {
+                    
+                }
+            }
+
+            with (OpCode) switch (instr.opcode)
+            {
+                case XOR:
+            }
+        }
+    }
+}
+
+unittest
+{
+    Function fn;
+    Type ta = Type(4, Modifiers.DWORD);
+    Type tb = Type(4, Modifiers.DWORD);
+    fn.variables["a"] = Variable("a", ta);
+    fn.variables["b"] = Variable("b", tb);
+    fn.instructions ~= Instruction(OpCode.MOV, Variable("a"), Variable(3));
+    fn.instructions ~= Instruction(OpCode.ADD, Variable("b"), Variable("a"));
+    fn.instructions ~= Instruction(OpCode.RET);
+    fn.prepare();
 }
 
 public struct Instruction
@@ -296,11 +350,11 @@ public struct Instruction
 public:
 final:
     OpCode opcode;
-    string[] operands;
+    Variable[] operands;
     Detail detail;
-    byte score;
+    int score;
 
-    this(OpCode opcode, string[] operands...)
+    this(OpCode opcode, Variable[] operands...)
     {
         this.opcode = opcode;
         this.operands = operands;
@@ -387,7 +441,7 @@ final:
     }
     string name;
     Type type;
-    bool visited;
+    int score;
 
     this(T)(T val)
     {
@@ -411,7 +465,11 @@ final:
             type = Type(0, Modifiers.DWORD);
             d = cast(uint)val;
         }
-        else
+        else static if (is(T == string))
+        {
+            name = val;
+        }
+        else static if (T.sizeof == 8)
         {
             type = Type(0, Modifiers.QWORD);
             q = cast(ulong)val;
