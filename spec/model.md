@@ -10,6 +10,21 @@ Versioning may be done by using `static if` to influence code generation alongsi
 
 ## Memory Management
 
+Fern uses hybrid LRC and GC memory management. This means Fern will default to linear reference counting, counting the references to variables in the current hierarchy until references reach zero and free is inserted into the code to release the variable.
+
+Upon failure a garbage collector will be defaulted to, incrementing an internal counter which will indicate the number of living GC-controlled objects, the garbage collector will periodically run (deterministic but this is not to be exposed) and will not do any collections or marking unless the counter of living objects is above zero.
+
+Information on LRC is highly implementation dependent, but expected behavior can be found in [phases](fnc.md#phases).
+
+The garbage collector is also implementation dependent, but expected behavior is as follows:
+> All allocations add comptime metadata about the types being allocated and any pointers they contain at what offsets.
+1. A living objects counter is incremented in the GC.
+2. GC checkpoint is inserted in the last function call of a function which allocated a GC object, this will result in the GC running at the start of said function.
+3. The GC will run if the living objects counter is greater than zero, which will start by halting all threads.
+4. While all threads are halted the stack will be scanned checking for all pointers of any kind, all found pointers are added to a list, and then threads are resumed.
+5. The heap is scanned, checking all pointer offsets in allocated regions, all found pointers are added to a list.
+6. Any region not pointed to by any pointer in the list are freed and the living objects counter is decremented by the number of freed regions and set to a minimum of 0.
+
 ## Inheritance
 
 `name [: [^]inherits..]`
