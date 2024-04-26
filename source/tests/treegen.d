@@ -60,15 +60,14 @@ unittest
     ));
     assert(null == DeclarationAndAssignment.matchesToken(tokenizeText("someFunc();")));
     assert(null == DeclarationLine.matchesToken(tokenizeText("someFunc();")));
-    // TODO: FUCK
-    // assert(null != IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) testText;")));
-    // assert(null !=IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) v = ()=>print(1235);")));
-    // assert(null !=IfStatementWithScope.matchesToken(tokenizeText("if (hello){}")));
-    // assert(null !=IfStatementWithScope.matchesToken(tokenizeText("if (hello world){}")));
-    // assert(null !=IfStatementWithScope.matchesToken(
-    //         tokenizeText(
-    //         "if (hello world){\n\n\r if(Some possible nested code) still works;}")
-    // ));
+    assert(null != IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) testText;")));
+    assert(null !=IfStatementWithoutScope.matchesToken(tokenizeText("if (hello) v = ()=>print(1235);")));
+    assert(null !=IfStatementWithScope.matchesToken(tokenizeText("if (hello){}")));
+    assert(null !=IfStatementWithScope.matchesToken(tokenizeText("if (hello world){}")));
+    assert(null !=IfStatementWithScope.matchesToken(
+            tokenizeText(
+            "if (hello world){\n\n\r if(Some possible nested code) still works;}")
+    ));
     assert( null !=
         DeclarationAndAssignment.matchesToken(tokenizeText("int x = 4;"))
     );

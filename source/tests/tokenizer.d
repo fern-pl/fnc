@@ -22,6 +22,7 @@ unittest
         dchar[] output = handleMultilineCommentsAtIndex(stringWithComment, index);
 
         assert(output == commentFromString);
+        import std.stdio;
         assert(stringWithComment[index .. $] == afterComment);
 
     }

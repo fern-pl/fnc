@@ -66,6 +66,7 @@ private Token[] protoTokenize(string input)
             dchar[] comment = handleMultilineCommentsAtIndex(chars, index);
             if (comment.length != 0)
             {
+                index--;
                 tokens ~= Token(TokenType.Comment, comment, startingIndex);
                 continue;
             }

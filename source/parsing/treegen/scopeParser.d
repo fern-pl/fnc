@@ -301,10 +301,6 @@ unittest
                     ["float".makeUnicodeString]))
             ]
     );
-    foreach (i; newScope.instructions)
-    {
-            i.tree(-1);
-    }
     
     assert(newScope.instructions[0].action == AstAction.AssignVariable);
     assert(newScope.instructions[1].action == AstAction.AssignVariable);
@@ -338,4 +334,13 @@ unittest
     assert(newScope.instructions[5].assignVariableNodeData.name[0].namedUnit.names == [
             "floaty".makeUnicodeString
         ]);
+}
+unittest
+{
+    import parsing.tokenizer.make_tokens;
+    
+    size_t index;
+    auto t = "let x = 4/*asdadasd*/;".tokenizeText;
+    auto r = getLineVarietyTestResult(FUNCTION_SCOPE_PARSE, t, index);
+    assert(r.lineVariety == LineVariety.DeclarationAndAssignment);
 }

@@ -383,17 +383,14 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                 if (token.tokenVariety == TokenType.OpenBraces)
                     braceDeph += 1;
-                else if (token.tokenVariety == TokenType.CloseBraces){
+                else if (token.tokenVariety == TokenType.CloseBraces && braceDeph != 0)
                     braceDeph -= 1;
-                    if (braceDeph == -1)
-                        return tokenGrepBox(null);
-                }else if (braceDeph == 0)
+                else if (braceDeph == 0)
                 {
                     size_t index_inc = 0;
                     auto res = grepMatchGroup.matchesToken(tokens[index .. $], index_inc);
                     if (res.ptr)
                     {
-
                         globResult.tokens = tokens[startingIndex .. index];
                         index += index_inc;
                         return tokenGrepBox(returnVal ~ globResult ~ res.value);

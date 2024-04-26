@@ -11,20 +11,9 @@ void main()
 {
     size_t index = 0;
 
-    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-         int x = 693;
-         int main(){
-          int x = 4;
-         }
-        ".tokenizeText, index, nullable!ScopeData(null));
-    newScope.writeln;
-//       foreach (instruction; newScope.instructions)
-//       {
-//           instruction.tree;
-//       }
-//       "\n\nDeclared variables: ".writeln;
-//       foreach (var; newScope.declaredVariables)
-//       {
-//           var.writeln;
-//       }
+        import parsing.tokenizer.make_tokens;
+    
+    auto t = "if (222) x.writeln;".tokenizeText;
+    auto r = IfStatementWithoutScope.matchesToken(t);
+    r.ptr.writeln;
 }
