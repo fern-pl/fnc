@@ -3,6 +3,7 @@ module fern.x86;
 import gallinule.x86;
 import std.algorithm.sorting;
 import std.array;
+import tern.state;
 
 public enum OpCode : ubyte
 {
@@ -267,7 +268,7 @@ final:
         {
             if (var.type.size <= 1 && bytes.length >= 1)
             {
-                variables[var.name].markers ~= 100 | bytes[0].index;
+                variables[var.name].marker = 100 | bytes[0].index;
 
                 if (bytes.length > 1)
                     bytes = bytes[1..$];
@@ -276,7 +277,7 @@ final:
             }
             else if (var.type.size <= 2 && words.length >= 1)
             {
-                variables[var.name].markers ~= 120 | words[0].index;
+                variables[var.name].marker = 120 | words[0].index;
 
                 if (words.length > 1)
                     words = words[1..$];
@@ -285,7 +286,7 @@ final:
             }
             else if (var.type.size <= 4 && dwords.length >= 1)
             {
-                variables[var.name].markers ~= 140 | dwords[0].index;
+                variables[var.name].marker = 140 | dwords[0].index;
 
                 if (dwords.length > 1)
                     dwords = dwords[1..$];
@@ -294,7 +295,7 @@ final:
             }
             else if (var.type.size <= 8 && qwords.length >= 1)
             {
-                variables[var.name].markers ~= 160 | qwords[0].index;
+                variables[var.name].marker = 160 | qwords[0].index;
 
                 if (qwords.length > 1)
                     qwords = qwords[1..$];
@@ -304,25 +305,44 @@ final:
         }
         import std.stdio;
         import std.algorithm;
-        debug writeln(variables.byValue.map!(x => x.markers));
+        debug writeln(variables.byValue.map!(x => x.marker));
         debug writeln(variables);
     }
 
-    /* Block!true compile()
+    Block!true compile()
     {
-        Block!true ret;
+        Block!true block;
         // each variable is an operand
         // order: stack, markers in order
         // literals ignore de la mumbo de jumbo
         foreach (instr; instructions)
-        with (ret)
+        with (block)
         {
-            with (OpCode) switch (instr.opcode)
+            with (OpCode) switch(instr.opcode)
             {
                 case XOR:
+                    //if (instr.operands.length == 1 && instr.operands[0].type.modifiers)
+                        
+                case RET:
+                    if (instr.operands.length > 0)
+                        ret(instr.operands[0].w);
+                    else
+                        ret();
+                    break;
+                case INT:
+                    if (instr.operands[0].b == 1)
+                        int1();
+                    else if (instr.operands[0].b == 3)
+                        int3();
+                    else
+                        _int(instr.operands[0].b);
+                    break;
+                default:
+                    assert(0);
             }
         }
-    } */
+        return block;
+    }
 }
 
 unittest
@@ -377,7 +397,7 @@ final:
             case DIV:
             case IMUL:
             case IDIV:
-                detail = Detail.READ1 | Detail.READ2 | POLLUTE_AX | POLLUTE_DX;
+                detail = Detail.READ1 | Detail.READ2 | Detail.POLLUTE_AX | Detail.POLLUTE_DX;
                 break;
             case NOT:
             case NEG:
@@ -405,7 +425,7 @@ final:
                 break;
             case CPUID:
                 // Reads from EAX, which I'm considering pollution.
-                detail = POLLUTE_AX;
+                detail = Detail.POLLUTE_AX;
                 break;
             default:
                 break;
@@ -435,7 +455,7 @@ final:
         uint d;
         ulong q;
 
-        ushort[] markers;
+        ushort marker;
         size_t offset;
     }
     string name;
