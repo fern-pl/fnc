@@ -3,9 +3,9 @@ module foo.bar.baz.sugar;
 (bool, [int, bool]) bar((int, string) a)
 {
     if (a is string)
-        return [a.length, a == "Hello World!"];
+        return => [a.length, a == "Hello World!"];
     else if (a is int)
-        return a == 2;
+        return => a == 2;
 }
 
 void foo()
