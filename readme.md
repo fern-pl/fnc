@@ -1,4 +1,15 @@
 # Fern
+<p align = "center">
+  <a href="https://github.com/cetio/fern/actions/workflows/d.yml"> <img src="https://github.com/cetio/fern/actions/workflows/d.yml/badge.svg"> </a>
+  <a href="https://raw.githubusercontent.com/cetio/fern/main/LICENSE.txt"> <img src="https://img.shields.io/github/license/cetio/fern.svg" alt="GitHub repo license"/> </a>
+  <a href="https://github.com/cetio/fern"><img src="https://img.shields.io/github/repo-size/cetio/fern.svg" alt="GitHub repo size"/></a>
+  <a href="https://github.com/cetio/fern"><img src="https://img.shields.io/github/languages/code-size/cetio/fern.svg" alt="GitHub code size"/></a>
+  <a href="https://github.com/cetio/fern"><img src="https://img.shields.io/github/commit-activity/t/cetio/fern.svg" alt="GitHub commits"/></a>
+  
+  
+</center>
+
+
 
 Fern is a natively compiled, highly versatile language intended to bring together metaprogramming, performance, and ease-of-use to a happy medium.
 
