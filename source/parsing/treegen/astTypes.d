@@ -11,10 +11,17 @@ enum AstAction
 {
     Keyword, // Standalong keywords Ex: import std.std.io;
     Scope,
+
+    IfStatement,
+    ElseIfStatement,
+    ElseStatement,
+
+    WhileLoop,
+
     AssignVariable, // Ex: x = 5;
     IndexInto, // X[...]
 
-    SingleArgumentOperation, // Ex: x++, ++x, |x|, ||x||, -8
+    SingleArgumentOperation, // Ex: x++, ++x
     DoubleArgumentOperation, // Ex: 9+10 
 
     Call, // Ex: foo(bar);
@@ -38,8 +45,6 @@ struct KeywordNodeData
     dchar[][] possibleExtras;
     Token[] keywardArgs;
 }
-
-
 
 struct AssignVariableNodeData
 {
@@ -102,6 +107,13 @@ enum OperationVariety
     EqualTo,
     NotEqualTo
 }
+import parsing.treegen.scopeParser : ScopeData;
+struct ConditionNodeData
+{
+    dchar[][] precedingKeywords;
+    AstNode condition;
+    ScopeData conditionScope;
+}
 
 struct SingleArgumentOperationNodeData
 {
@@ -136,6 +148,8 @@ class AstNode
     {
         KeywordNodeData keywordNodeData; // Keyword
         AssignVariableNodeData assignVariableNodeData; // AssignVariable
+
+        ConditionNodeData conditionNodeData;
 
         SingleArgumentOperationNodeData singleArgumentOperationNodeData; // SingleArgumentOperation
         DoubleArgumentOperationNodeData doubleArgumentOperationNodeData; // DoubleArgumentOperation
@@ -187,8 +201,9 @@ class AstNode
         }
         sink("}");
     }
+
     void tree() => tree(-1);
-    
+
     void tree(size_t tabCount)
     {
         import std.stdio;

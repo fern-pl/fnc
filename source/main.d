@@ -10,10 +10,12 @@ import std.stdio;
 void main()
 {
     size_t index = 0;
-
-        import parsing.tokenizer.make_tokens;
-    
-    auto t = "if (222) x.writeln;".tokenizeText;
-    auto r = IfStatementWithoutScope.matchesToken(t);
-    r.ptr.writeln;
+    auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "
+         int x = 5;
+         int y = x++ - 5;
+         if (x > y){
+            writeln(`hello world`);
+         }
+        ".tokenizeText, index, nullable!ScopeData(null));
+    newScope.writeln;
 }

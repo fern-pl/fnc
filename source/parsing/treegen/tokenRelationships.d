@@ -261,8 +261,8 @@ const VarietyTestPair[] GLOBAL_SCOPE_PARSE = [
 ] ~ ABSTRACT_SCOPE_PARSE;
 
 const VarietyTestPair[] FUNCTION_SCOPE_PARSE = [
-    VarietyTestPair(LineVariety.IfStatementWithoutScope, IfStatementWithoutScope),
     VarietyTestPair(LineVariety.IfStatementWithScope, IfStatementWithScope),
+    VarietyTestPair(LineVariety.IfStatementWithoutScope, IfStatementWithoutScope),
 ] ~ ABSTRACT_SCOPE_PARSE;
 
 
