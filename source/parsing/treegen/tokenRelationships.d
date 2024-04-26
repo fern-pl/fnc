@@ -66,6 +66,15 @@ TokenGrepPacket TokenGrepPacketRec(TokenGrepMethod method, TokenGrepPacket[] lis
     return ret;
 }
 
+const TokenGrepPacket[] ReturnStatement = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.Letter, "return".makeUnicodeString)
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.Semicolon, [';'])
+        ]),
+];
 const TokenGrepPacket[] IfStatementWithoutScope = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Letter, "if".makeUnicodeString)
@@ -235,6 +244,7 @@ enum LineVariety
     SelectiveImport,
     ModuleDeclaration,
     FunctionDeclaration,
+    ReturnStatement,
 
     SimpleExpression,
     IfStatementWithScope,
@@ -263,6 +273,7 @@ const VarietyTestPair[] GLOBAL_SCOPE_PARSE = [
 const VarietyTestPair[] FUNCTION_SCOPE_PARSE = [
     VarietyTestPair(LineVariety.IfStatementWithScope, IfStatementWithScope),
     VarietyTestPair(LineVariety.IfStatementWithoutScope, IfStatementWithoutScope),
+    VarietyTestPair(LineVariety.ReturnStatement, ReturnStatement),
 ] ~ ABSTRACT_SCOPE_PARSE;
 
 

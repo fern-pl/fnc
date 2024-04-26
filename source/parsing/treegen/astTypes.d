@@ -15,6 +15,7 @@ enum AstAction
     IfStatement,
     ElseIfStatement,
     ElseStatement,
+    ReturnStatement,
 
     WhileLoop,
 
@@ -165,6 +166,8 @@ class AstNode
         NameUnit namedUnit; // NamedUnit
         Token[] literalUnitCompenents; // LiteralUnit
         Token tokenBeingHeld; // TokenHolder
+
+        AstNode nodeToReturn; // ReturnStatement
     }
 
     void toString(scope void delegate(const(char)[]) sink) const
@@ -256,6 +259,10 @@ class AstNode
             {
                 subnode.tree(tabCount + 1);
             }
+            break;
+        case AstAction.ReturnStatement:
+            writeln(action);
+            nodeToReturn.tree(tabCount + 1);
             break;
         case AstAction.AssignVariable:
             write("Assigning variable(s): ");

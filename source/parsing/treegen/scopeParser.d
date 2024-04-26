@@ -231,6 +231,20 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
 
         // assert(0);
         break;
+    case LineVariety.ReturnStatement:
+        size_t endingIndex = index + lineVariety.length;
+        scope (exit)
+            index = endingIndex;
+        auto returnNodes = expressionNodeFromTokens(
+            lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
+        );
+        if (returnNodes.length != 1) throw new SyntaxError("Return statement invalid");
+
+        AstNode returnNode = new AstNode;
+        returnNode.action = AstAction.ReturnStatement;
+        returnNode.nodeToReturn = returnNodes[0];
+        parent.instructions ~= returnNode;
+        break;
     case LineVariety.IfStatementWithScope:
     case LineVariety.IfStatementWithoutScope:
         size_t endingIndex = index + lineVariety.length;
