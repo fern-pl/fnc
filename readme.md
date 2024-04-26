@@ -18,6 +18,7 @@ Examples [exist](examples) but are small tidbits meant to facilitate parser test
 ## Notable Features
 
 1. [Hybrid Memory Management](spec/model.md#memory-management)
+    - Linear Reference Counting
 
 2. [Symbol-First Casting and Conversion](spec/model.md#casts-and-conversions)
 3. [UFCS (Uniform Function Call Syntax)](spec/model.md#ufcs)

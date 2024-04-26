@@ -227,7 +227,7 @@ public enum Modifiers : ubyte
     QWORD = 1 << 7,
 
     STRING = VECTOR | ARRAY,
-    MASK = 0b11100000
+    INTEGRAL_MASK = 0b00001111
 }
 
 public struct Function
@@ -309,7 +309,7 @@ final:
         debug writeln(variables);
     }
 
-    Block!true compile()
+    ubyte[] compile()
     {
         Block!true block;
         // each variable is an operand
@@ -321,8 +321,15 @@ final:
             with (OpCode) switch(instr.opcode)
             {
                 case XOR:
-                    //if (instr.operands.length == 1 && instr.operands[0].type.modifiers)
-                        
+                    if (instr.operands.length == 1 && instr.operands[0].type.modifiers.hasFlag(Modifiers.BYTE))
+                        xor(instr.operands[0].b);
+                    else if (instr.operands.length == 1 && instr.operands[0].type.modifiers.hasFlag(Modifiers.WORD))
+                        xor(instr.operands[0].w);
+                    else if (instr.operands.length == 1 && instr.operands[0].type.modifiers.hasFlag(Modifiers.DWORD))
+                        xor(instr.operands[0].d);
+                    else if (instr.operands.length == 1 && instr.operands[0].type.modifiers.hasFlag(Modifiers.QWORD))
+                        xor(instr.operands[0].q);
+                    break;
                 case RET:
                     if (instr.operands.length > 0)
                         ret(instr.operands[0].w);
@@ -341,7 +348,7 @@ final:
                     assert(0);
             }
         }
-        return block;
+        return block.finalize();
     }
 }
 
@@ -356,6 +363,7 @@ unittest
     fn.instructions ~= Instruction(OpCode.ADD, Variable("b"), Variable("a"));
     fn.instructions ~= Instruction(OpCode.RET);
     fn.prepare();
+    fn.compile();
 }
 
 public struct Instruction
