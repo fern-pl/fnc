@@ -1,0 +1,23 @@
+module comptime;
+
+alias afoo = 1 + 2;
+alias[] abar = [afoo];
+
+void foo([bool, bool] a = [true, true])()
+{
+    abar ~= int;
+    abar ~= long;
+    writeln(a, " ", abar[0..2]);
+}
+
+void bar()
+{
+    foo!([false, true])(); [false, true], 3, int
+    foo(); // [true, true], 3, int
+    (int, string) a = "abc";
+    assert(a is string);
+    assert(a == "abc");
+    afoo = a;
+    assert(afoo == "abc");
+    assert(abar[0] == 3);
+}

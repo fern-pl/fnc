@@ -1,0 +1,19 @@
+module foo.bar.baz.sugar;
+
+(bool, [int, bool]) bar((int, string) a)
+{
+    if (a is string)
+        return [a.length, a == "Hello World!"];
+    else if (a is int)
+        return a == 2;
+}
+
+void foo()
+{
+    // a = [11, true];
+    auto a = bar("Hello World!");
+    // b = true
+    auto b = bar(2);
+    // Error! a and b are different types and cant implicitly cast!
+    a = b;
+}
