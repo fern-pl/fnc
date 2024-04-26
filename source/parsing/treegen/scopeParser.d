@@ -21,8 +21,8 @@ struct DeclaredFunction
 {
     dchar[][] precedingKeywords;
     dchar[][] suffixKeywords;
-    NameUnit returnType;
     NameUnit name;
+    NameUnit returnType;
     // TODO: Args
     ScopeData functionScope;
 }
@@ -45,8 +45,10 @@ class ScopeData
     DeclaredVariable[] declaredVariables;
     Array!AstNode instructions;
 
-    void toString(scope void delegate(const(char)[]) sink) const {
+    void toString(scope void delegate(const(char)[]) sink) const
+    {
         import std.conv;
+
         sink("ScopeData{isPartialModule = ");
         sink(isPartialModule.to!string);
         sink(", moduleName = ");
@@ -220,7 +222,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                 .name,
                 parseMultilineScope(
                     FUNCTION_SCOPE_PARSE,
-                    lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob).tokens,
+                    lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob)
+                    .tokens,
                     temp,
                     nullable!ScopeData(parent)
                 )
@@ -229,9 +232,11 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         // assert(0);
         break;
     case LineVariety.IfStatementWithScope:
+    case LineVariety.IfStatementWithoutScope:
         size_t endingIndex = index + lineVariety.length;
-        scope (exit) index = endingIndex;
-        
+        scope (exit)
+            index = endingIndex;
+
         size_t temp;
 
         auto conditionNodes = expressionNodeFromTokens(
@@ -240,22 +245,40 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         if (conditionNodes.length != 1)
             throw new SyntaxError(
                 "Expression node tree could not be parsed properly (Not reducable into single node within if statement condition)");
-        
+
         ConditionNodeData conditionNodeData;
         conditionNodeData.precedingKeywords = keywords;
         conditionNodeData.condition = conditionNodes[0];
-        conditionNodeData.conditionScope 
-            =  parseMultilineScope(
+        if (lineVariety.lineVariety == LineVariety.IfStatementWithScope)
+        {
+            conditionNodeData.isScope = true;
+            conditionNodeData.conditionScope
+                = parseMultilineScope(
                     FUNCTION_SCOPE_PARSE,
-                    lineVariety.tokenMatches[1].assertAs(TokenGrepMethod.Glob).tokens,
-                    temp,
-                    nullable!ScopeData(parent)
+                    lineVariety.tokenMatches[1].assertAs(TokenGrepMethod.Glob)
+                        .tokens,
+                        temp,
+                        nullable!ScopeData(parent)
                 );
+        }
+        else
+        {
+            conditionNodeData.isScope = false;
+            auto conditionLineNode = expressionNodeFromTokens(
+                lineVariety.tokenMatches[1].assertAs(TokenGrepMethod.Glob).tokens
+            );
+            if (conditionLineNode.length != 1)
+                throw new SyntaxError(
+                    "Expression node tree could not be parsed properly (if without scope)");
+            conditionNodeData.conditionResultNode = conditionLineNode[0];
+
+        }
         AstNode node = new AstNode();
         node.action = AstAction.IfStatement;
         node.conditionNodeData = conditionNodeData;
         parent.instructions ~= node;
         break;
+
     case LineVariety.SimpleExpression:
         size_t expression_end = tokens.findNearestSemiColon(index);
         if (expression_end == -1)
@@ -294,6 +317,69 @@ ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, Token[]
     return scopeData;
 }
 
+void tree(ScopeData scopeData) => tree(scopeData, 0);
+void tree(ScopeData scopeData, size_t tabCount)
+{
+    import std.conv;
+
+    alias printTabs() = {
+        foreach (_; 0 .. tabCount)
+            write("|  ");
+    };
+    alias printTabsV() = { printTabs(); write("┼ "); };
+
+    printTabsV();
+    write("Scope: ");
+    write("isPartialModule = ");
+    writeln(scopeData.isPartialModule);
+    tabCount++;
+
+    printTabs();
+    write("Variables: ");
+    foreach (var; scopeData.declaredVariables)
+    {
+        write(var.name.to!string ~ " as " ~ var.type.to!string);
+        write(", ");
+    }
+    write("\n");
+    printTabs();
+    write("Imports: ");
+    foreach (imported; scopeData.imports)
+    {
+        write(imported.nameUnit);
+        write(": (");
+        foreach (selection; imported.importSelection)
+        {
+            selection.write;
+            write(", ");
+        }
+        write("), ");
+    }
+    write("\n");
+    printTabs();
+    writeln("Functions: ");
+    tabCount++;
+    foreach (func; scopeData.declaredFunctions)
+    {
+        printTabs();
+        write(func.precedingKeywords);
+        write(" ");
+        write(func.returnType);
+        write(" ");
+        write(func.name);
+        write("\n");
+        func.functionScope.tree(tabCount);
+    }
+    tabCount--;
+    printTabs();
+    writeln("AST nodes("~scopeData.instructions.length.to!string~"):");
+    foreach (AstNode node; scopeData.instructions)
+    {
+        node.tree(tabCount);
+    }
+
+}
+
 unittest
 {
     import parsing.tokenizer.make_tokens;
@@ -328,7 +414,7 @@ unittest
                     ["float".makeUnicodeString]))
             ]
     );
-    
+
     assert(newScope.instructions[0].action == AstAction.AssignVariable);
     assert(newScope.instructions[1].action == AstAction.AssignVariable);
     assert(newScope.instructions[2].action == AstAction.AssignVariable);
@@ -362,10 +448,11 @@ unittest
             "floaty".makeUnicodeString
         ]);
 }
+
 unittest
 {
     import parsing.tokenizer.make_tokens;
-    
+
     size_t index;
     auto t = "let x = 4/*asdadasd*/;".tokenizeText;
     auto r = getLineVarietyTestResult(FUNCTION_SCOPE_PARSE, t, index);

@@ -107,12 +107,19 @@ enum OperationVariety
     EqualTo,
     NotEqualTo
 }
+
 import parsing.treegen.scopeParser : ScopeData;
+
 struct ConditionNodeData
 {
     dchar[][] precedingKeywords;
+    bool isScope;
     AstNode condition;
-    ScopeData conditionScope;
+    union
+    {
+        ScopeData conditionScope;
+        AstNode conditionResultNode;
+    }
 }
 
 struct SingleArgumentOperationNodeData
@@ -209,17 +216,20 @@ class AstNode
         import std.stdio;
         import std.conv;
 
-        if (tabCount != -1)
-        {
-            foreach (i; 0 .. tabCount)
-                write("|  ");
-            write("┼ ");
-        }
+        alias printTabs() = {
+            if (tabCount != -1)
+            {
+                foreach (i; 0 .. tabCount)
+                    write("|  ");
+                write("┼ ");
+            }
+        };
+        printTabs();
 
         switch (action)
         {
         case AstAction.Call:
-            writeln(callNodeData.func.to!string ~ ":");
+            writeln("Call " ~ callNodeData.func.to!string ~ ":");
             callNodeData.args.tree(tabCount + 1);
             break;
         case AstAction.DoubleArgumentOperation:
@@ -254,6 +264,20 @@ class AstNode
             writeln(": ");
             assignVariableNodeData.value.tree(tabCount + 1);
             break;
+        case AstAction.IfStatement:
+            write(action);
+            writeln(" hasScope = " ~ conditionNodeData.isScope.to!string ~ " keywords = " ~ conditionNodeData
+                    .precedingKeywords.to!string);
+            conditionNodeData.condition.tree(tabCount + 1);
+            if (conditionNodeData.isScope){
+                import parsing.treegen.scopeParser : tree;
+                conditionNodeData.conditionScope.tree(tabCount + 1);
+            }else{
+                conditionNodeData.conditionResultNode.tree(tabCount + 1);
+            }
+            // printTabs();
+            break;
+
         default:
             writeln(this.to!string);
             break;
