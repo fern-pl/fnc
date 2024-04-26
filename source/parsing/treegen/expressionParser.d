@@ -64,7 +64,8 @@ public AstNode[] phaseOne(Token[] tokens)
             if (old_index != index)
                 index--;
         }
-        else if (token.tokenVariety == TokenType.Number || token.tokenVariety == TokenType.Quotation)
+        else if (token.tokenVariety == TokenType.Number || token.tokenVariety == TokenType
+            .Quotation)
         {
             tokenToBeParsedLater.action = AstAction.LiteralUnit;
             tokenToBeParsedLater.literalUnitCompenents = [token];

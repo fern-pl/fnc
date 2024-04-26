@@ -10,7 +10,6 @@ import tern.typecons.common : Nullable, nullable;
         2. The order of operation used for grouping
 +/
 
-
 enum TokenGrepMethod
 {
     Glob,
@@ -43,8 +42,10 @@ struct TokenGrepResult
         NameUnit name;
 
     }
+
     pragma(always_inline)
-    TokenGrepResult assertAs(TokenGrepMethod test){
+    TokenGrepResult assertAs(TokenGrepMethod test)
+    {
         debug assert(this.method == test);
         return this;
     }
@@ -210,8 +211,8 @@ const TokenGrepPacket[] AbstractFunctionDeclaration = [
     // Prepended attributes
     TokenGrepPacketToken(TokenGrepMethod.Glob, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
-        Token(TokenType.Semicolon, [])
-    ])
+            Token(TokenType.Semicolon, [])
+        ])
 ];
 const TokenGrepPacket[] FunctionDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
@@ -235,8 +236,6 @@ const TokenGrepPacket[] FunctionDeclaration = [
             Token(TokenType.CloseBraces, ['}'])
         ]),
 ];
-
-
 
 enum LineVariety
 {
@@ -275,7 +274,6 @@ const VarietyTestPair[] FUNCTION_SCOPE_PARSE = [
     VarietyTestPair(LineVariety.IfStatementWithoutScope, IfStatementWithoutScope),
     VarietyTestPair(LineVariety.ReturnStatement, ReturnStatement),
 ] ~ ABSTRACT_SCOPE_PARSE;
-
 
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 {
@@ -372,12 +370,13 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
         case TokenGrepMethod.Glob:
             size_t temp_index;
             auto firstGlob = testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $], temp_index);
-            
+
             TokenGrepResult globResult;
             globResult.method = TokenGrepMethod.Glob;
             globResult.tokens = [];
-            if (firstGlob.ptr){
-                index+=temp_index;
+            if (firstGlob.ptr)
+            {
+                index += temp_index;
                 return tokenGrepBox(returnVal ~ globResult ~ firstGlob.value);
             }
 
@@ -683,7 +682,8 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
     }
 
     AstNode oprNode = new AstNode();
-    if (entry.operation == OperationVariety.Assignment){
+    if (entry.operation == OperationVariety.Assignment)
+    {
         oprNode.action = AstAction.AssignVariable;
         oprNode.assignVariableNodeData = AssignVariableNodeData(
             [operands[0]],
@@ -709,8 +709,8 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
             operands[0],
             operands[1]
         );
-    
-    trim:
+
+trim:
     nodes[startIndex] = oprNode;
     nodes.linearRemove(nodes[startIndex + 1 .. nodeIndex]);
     return true;

@@ -238,7 +238,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         auto returnNodes = expressionNodeFromTokens(
             lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
         );
-        if (returnNodes.length != 1) throw new SyntaxError("Return statement invalid");
+        if (returnNodes.length != 1)
+            throw new SyntaxError("Return statement invalid");
 
         AstNode returnNode = new AstNode;
         returnNode.action = AstAction.ReturnStatement;
@@ -386,7 +387,7 @@ void tree(ScopeData scopeData, size_t tabCount)
     }
     tabCount--;
     printTabs();
-    writeln("AST nodes("~scopeData.instructions.length.to!string~"):");
+    writeln("AST nodes(" ~ scopeData.instructions.length.to!string ~ "):");
     foreach (AstNode node; scopeData.instructions)
     {
         node.tree(tabCount);

@@ -276,10 +276,14 @@ class AstNode
             writeln(" hasScope = " ~ conditionNodeData.isScope.to!string ~ " keywords = " ~ conditionNodeData
                     .precedingKeywords.to!string);
             conditionNodeData.condition.tree(tabCount + 1);
-            if (conditionNodeData.isScope){
+            if (conditionNodeData.isScope)
+            {
                 import parsing.treegen.scopeParser : tree;
+
                 conditionNodeData.conditionScope.tree(tabCount + 1);
-            }else{
+            }
+            else
+            {
                 conditionNodeData.conditionResultNode.tree(tabCount + 1);
             }
             // printTabs();
