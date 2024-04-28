@@ -39,13 +39,13 @@ public AstNode[] phaseOne(Token[] tokens)
 
             if (parenthesisStack.length == 0)
                 throw new SyntaxError("Group token(" ~ cast(
-                        char) token.value[0] ~ ") closed but never opened");
+                        char) token.value[0] ~ ") closed but never opened", token);
 
             AstNode node = parenthesisStack[$ - 1];
 
             if (node.expressionNodeData.closer != token.value[0])
                 throw new SyntaxError("Group token(" ~ cast(
-                        char) token.value[0] ~ ") not closed with correct token");
+                        char) token.value[0] ~ ") not closed with correct token", token);
 
             parenthesisStack.length--;
 

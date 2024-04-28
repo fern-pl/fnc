@@ -577,7 +577,7 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
     OperatorPrecedenceLayer(OperatorOrder.RightToLeft, [
             OperationPrecedenceEntry(OperationVariety.Assignment, [
                     Token(TokenType.Filler), OPR('='), Token(TokenType.Filler)
-                ]), // asignment
+                ]), 
             OperationPrecedenceEntry(OperationVariety.AddEq, [
                     Token(TokenType.Filler), OPR('+'), OPR('='),
                     Token(TokenType.Filler)
@@ -624,17 +624,11 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                     Token(TokenType.Filler)
                 ]),
             OperationPrecedenceEntry(OperationVariety.BitshiftLeftUnSignedEq, [
-                    Token(TokenType.Filler), OPR('<'), OPR('<'), OPR('<'),
-                    OPR('='),
+                    Token(TokenType.Filler), OPR('<'), OPR('<'), OPR('<'), OPR('='),
                     Token(TokenType.Filler)
                 ]),
             OperationPrecedenceEntry(OperationVariety.BitshiftRightUnSignedEq, [
-                    Token(TokenType.Filler), OPR('>'), OPR('>'), OPR('<'),
-                    OPR('='),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.Assignment, [
-                    Token(TokenType.Filler), OPR('='),
+                    Token(TokenType.Filler), OPR('>'), OPR('>'), OPR('>'), OPR('='),
                     Token(TokenType.Filler)
                 ])
         ])

@@ -198,7 +198,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
 
         if (nodes.length != 1)
             throw new SyntaxError(
-                "Expression node tree could not be parsed properly (Not reducable into single node)");
+                "Expression node tree could not be parsed properly (Not reducable into single node)", 
+                lineVariety.tokenMatches[DECLARATION_EXPRESSION].tokens[0]);
         AstNode result = nodes[0];
         AstNode assignment = new AstNode;
         assignment.action = AstAction.AssignVariable;
@@ -239,7 +240,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
         );
         if (returnNodes.length != 1)
-            throw new SyntaxError("Return statement invalid");
+            throw new SyntaxError("Return statement invalid", lineVariety.tokenMatches[0].tokens[0]);
 
         AstNode returnNode = new AstNode;
         returnNode.action = AstAction.ReturnStatement;
@@ -259,7 +260,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         );
         if (conditionNodes.length != 1)
             throw new SyntaxError(
-                "Expression node tree could not be parsed properly (Not reducable into single node within if statement condition)");
+                "Expression node tree could not be parsed properly (Not reducable into single node within if statement condition)",
+                lineVariety.tokenMatches[0].tokens[0]);
 
         ConditionNodeData conditionNodeData;
         conditionNodeData.precedingKeywords = keywords;
@@ -284,7 +286,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             );
             if (conditionLineNode.length != 1)
                 throw new SyntaxError(
-                    "Expression node tree could not be parsed properly (if without scope)");
+                    "Expression node tree could not be parsed properly (if without scope)",
+                    lineVariety.tokenMatches[1].tokens[0]);
             conditionNodeData.conditionResultNode = conditionLineNode[0];
 
         }
@@ -297,11 +300,11 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
     case LineVariety.SimpleExpression:
         size_t expression_end = tokens.findNearestSemiColon(index);
         if (expression_end == -1)
-            throw new SyntaxError("Semicolon not found!");
+            throw new SyntaxError("Semicolon not found!", tokens[index]);
         auto nodes = expressionNodeFromTokens(tokens[index .. expression_end]);
         if (nodes.length != 1)
             throw new SyntaxError(
-                "Expression node tree could not be parsed properly (Not reducable into single node)");
+                "Expression node tree could not be parsed properly (Not reducable into single node)", tokens[index]);
         parent.instructions ~= nodes[0];
         index = expression_end + 1;
 
@@ -330,6 +333,17 @@ ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, Token[]
     }
 
     return scopeData;
+}
+ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, string data){
+    import parsing.tokenizer.make_tokens;
+    size_t index;
+    GLOBAL_ERROR_STATE = data;
+    return parseMultilineScope(
+        scopeParseMethod,
+        data.tokenizeText,
+        index,
+        nullable!ScopeData(null)
+    );
 }
 
 void tree(ScopeData scopeData) => tree(scopeData, 0);

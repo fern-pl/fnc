@@ -56,7 +56,7 @@ dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
 
             if (index + 1 >= tokens.length || tokens[index + 1].tokenVariety != TokenType
                 .OpenBraces)
-                throw new SyntaxError("Keyword must have arguments");
+                throw new SyntaxError("Keyword must have arguments", tokens[index]);
 
             dchar[] keyword = new dchar[data.length];
             keyword[0 .. $] = data;
@@ -65,7 +65,7 @@ dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
                 keyword ~= tokens[index].value;
             }
             if (index >= tokens.length)
-                throw new SyntaxError("Keyword apears to have open parenthesis");
+                throw new SyntaxError("Keyword apears to have open parenthesis", tokens[index]);
             keyword ~= tokens[index].value;
             keywords ~= keyword;
         }

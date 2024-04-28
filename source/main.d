@@ -19,8 +19,8 @@ void main()
             int y = x++ - 5;
             if (x > y)
                 writeln(`hello world`);
-            int yy = y * y;
+            int yy = y + y;
             return yy;
-         }".tokenizeText, index, nullable!ScopeData(null));
+         }");
     newScope.tree();
 }
