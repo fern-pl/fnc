@@ -11,6 +11,7 @@ void main()
 {
     size_t index = 0;
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
+        module test.math;
         import std.stdio : writeln, write;
         import std.math;
 
