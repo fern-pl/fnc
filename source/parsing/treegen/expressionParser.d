@@ -25,7 +25,7 @@ public AstNode[] phaseOne(Token[] tokens)
             if (token.value == "(" || token.value == "{")
                 newExpression.action = AstAction.Expression;
             else if (token.value == "[")
-                newExpression.action = AstAction.IndexInto;
+                newExpression.action = AstAction.ArrayGrouping;
             newExpression.expressionNodeData = ExpressionNodeData(
                 token.value[0],
                 braceOpenToBraceClose[token.value[0]],

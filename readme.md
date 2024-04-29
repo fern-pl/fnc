@@ -7,7 +7,7 @@
   <a href="https://github.com/cetio/fern"><img src="https://img.shields.io/github/commit-activity/t/cetio/fern.svg" alt="GitHub commits"/></a>
   
   
-</center>
+</p>
 
 [![Gallinule](https://img.shields.io/badge/Gallinule-2ea44f?style=for-the-badge&logo=github)](https://github.com/cetio/gallinule)
 

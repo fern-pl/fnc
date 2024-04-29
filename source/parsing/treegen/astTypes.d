@@ -9,6 +9,8 @@ struct NameUnit
 
 enum AstAction
 {
+    // Typical code actions:
+
     Keyword, // Standalong keywords Ex: import std.std.io;
     Scope,
 
@@ -20,24 +22,35 @@ enum AstAction
     WhileLoop,
 
     AssignVariable, // Ex: x = 5;
-    IndexInto, // X[...]
+    ArrayGrouping, // X[...]
 
     SingleArgumentOperation, // Ex: x++, ++x
     DoubleArgumentOperation, // Ex: 9+10 
 
     Call, // Ex: foo(bar);
 
+    // Misc tokens: 
+
     Expression, // Ex: (4+5*9)
     NamedUnit, // Ex: std.io
     LiteralUnit, // Ex: 6, 6L, "Hello world"
 
-    TokenHolder // A temporary Node that is yet to be parsed 
+    TokenHolder, // A temporary Node that is yet to be parsed 
+
+    // Type tokens
+    TypeTuple,  // [int, float]
+    TypeArray,  // int[3] OR int[]
+    TypeCall,   // const(int) Note: const is ALSO a keyword
+    TypePointer, // *int
+    TypeReference, // &int
+    TypeGeneric,    // Result!(int, string)
+
 }
 
 bool isExpressionLike(AstAction action)
 {
     return action == AstAction.Expression
-        || action == AstAction.IndexInto;
+        || action == AstAction.ArrayGrouping;
 }
 
 struct KeywordNodeData
@@ -148,6 +161,11 @@ struct CallNodeData
     NameUnit func;
     AstNode args;
 }
+struct TypeGenericNodeData
+{
+    AstNode left;
+    AstNode right;
+}
 
 class AstNode
 {
@@ -168,6 +186,11 @@ class AstNode
         Token tokenBeingHeld; // TokenHolder
 
         AstNode nodeToReturn; // ReturnStatement
+        struct{
+            AstNode firstNodeOperand; // This might be the thing being indexed
+            AstNode[][] commaSeperatedNodes; // Declaring arrays, array types, typles, etc
+        }
+        TypeGenericNodeData typeGenericNodeData; // TypeGeneric
     }
 
     void toString(scope void delegate(const(char)[]) sink) const
@@ -231,6 +254,46 @@ class AstNode
 
         switch (action)
         {
+        case AstAction.TypeGeneric:
+            write(action);
+            writeln(":");
+            typeGenericNodeData.left.tree(tabCount + 1);
+            typeGenericNodeData.right.tree(tabCount + 1);
+            break;
+        case AstAction.TypePointer:
+        case AstAction.TypeReference:
+            write(action);
+            writeln(":");
+            foreach (subnode; expressionNodeData.components)
+            {
+                subnode.tree(tabCount + 1);
+            }
+            break;
+        case AstAction.TypeArray:
+            bool hasFirstOperand = (cast(void*)firstNodeOperand) != null;
+            if (hasFirstOperand && commaSeperatedNodes.length)
+                writeln("List of N indexed with X");
+            else
+                writeln("List of X");
+            if (firstNodeOperand)
+            firstNodeOperand.tree(tabCount + 1);
+            foreach (AstNode[] possibleReducedNodes; commaSeperatedNodes)
+            {
+                if(possibleReducedNodes.length > 0)
+                    possibleReducedNodes[0].tree(tabCount + 1);
+
+            }
+            break;
+        case AstAction.TypeTuple:
+            write(action);
+            writeln(":");
+            foreach (AstNode[] possibleReducedNodes; commaSeperatedNodes)
+            {
+                if(possibleReducedNodes.length > 0)
+                    possibleReducedNodes[0].tree(tabCount + 1);
+
+            }
+            break;
         case AstAction.Call:
             writeln("Call " ~ callNodeData.func.to!string ~ ":");
             callNodeData.args.tree(tabCount + 1);
@@ -245,7 +308,7 @@ class AstNode
             writeln(singleArgumentOperationNodeData.operationVariety.to!string ~ ":");
             singleArgumentOperationNodeData.value.tree(tabCount + 1);
             break;
-        case AstAction.IndexInto:
+        case AstAction.ArrayGrouping:
             writeln("Indexing into with result of:");
             foreach (subnode; expressionNodeData.components)
             {
