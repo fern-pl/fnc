@@ -9,7 +9,7 @@
   
 </center>
 
-
+[![Gallinule](https://img.shields.io/badge/Gallinule-2ea44f?style=for-the-badge&logo=github)](https://github.com/cetio/gallinule)
 
 Fern is a natively compiled, highly versatile language intended to bring together metaprogramming, performance, and ease-of-use to a happy medium.
 
@@ -33,3 +33,5 @@ Examples [exist](examples) but are small tidbits meant to facilitate parser test
 
 2. [Grammar](spec/grammar.md)
 3. [Lexical](spec/lexical.md)
+
+Fern is planned to be able to, as well as natively compile, compile into CIL which may be interpreted directly as if Fern were C# and the standard library is likely to incorporate a more fully fleshed out rendition of [Godwit](https://github.com/cetio/godwit) to enable full seamless integration and interop with .NET languages.
