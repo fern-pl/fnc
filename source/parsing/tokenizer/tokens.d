@@ -34,7 +34,7 @@ const dchar[dchar] braceOpenToBraceClose = [
     '[': ']'
 ];
 
-const dchar[] validOperators = ['<', '>', '+', '-', '*', '/', '%', '~'];
+const dchar[] validOperators = ['<', '>', '+', '-', '*', '/', '%', '~', '&'];
 const dchar[] validQuotation = ['\'', '"', '`'];
 
 const dchar[][][] validMultiLineCommentStyles = [

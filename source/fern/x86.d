@@ -345,7 +345,8 @@ final:
                         _int(instr.operands[0].b);
                     break;
                 default:
-                    assert(0);
+                    // assert(0);
+                    break;
             }
         }
         return block.finalize();
