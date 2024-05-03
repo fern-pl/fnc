@@ -41,8 +41,13 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
             : AstAction.TypeArray;
         newNode.commaSeperatedNodes = new AstNode[][0];
         newNode.firstNodeOperand = null;
-        foreach (subArray; splitNodesAtCommas(node.expressionNodeData.components))
+        newNode.isIntegerLiteral = false;
+        foreach (i, subArray; splitNodesAtCommas(node.expressionNodeData.components)){
             newNode.commaSeperatedNodes ~= genTypeTree(subArray);
+            if (i != 0) newNode.isIntegerLiteral = false;
+            else if(i == 0 && newNode.commaSeperatedNodes[0][0].action == AstAction.LiteralUnit)
+                newNode.isIntegerLiteral = true;
+        }
         return nullable!AstNode(newNode);
     case AstAction.TokenHolder:
         if (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace)

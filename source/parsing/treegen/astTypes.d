@@ -186,8 +186,10 @@ class AstNode
         Token tokenBeingHeld; // TokenHolder
 
         AstNode nodeToReturn; // ReturnStatement
-        struct{
+        
+        struct{ // TypeArray
             AstNode firstNodeOperand; // This might be the thing being indexed
+            bool isIntegerLiteral;
             AstNode[][] commaSeperatedNodes; // Declaring arrays, array types, typles, etc
         }
         TypeGenericNodeData typeGenericNodeData; // TypeGeneric
@@ -228,6 +230,23 @@ class AstNode
             sink(doubleArgumentOperationNodeData.left.to!string);
             sink(", ");
             sink(doubleArgumentOperationNodeData.right.to!string);
+            break;
+        case AstAction.TypeArray:
+            bool hasFirstOperand = (cast(void*)firstNodeOperand) != null;
+            if (hasFirstOperand){
+                sink("Array of: ");
+                sink(firstNodeOperand.to!string);
+                sink(" ");
+            }
+            if (isIntegerLiteral){
+                sink("with ");
+                sink(commaSeperatedNodes[0][0].to!string);
+                sink(" elements");
+            }else
+                foreach (const(AstNode[]) containingReductions ; commaSeperatedNodes){
+                    sink(commaSeperatedNodes.to!string);
+                }
+            
             break;
         default:
             break;

@@ -22,7 +22,7 @@ struct DeclaredFunction
     dchar[][] precedingKeywords;
     dchar[][] suffixKeywords;
     NamedUnit name;
-    NamedUnit returnType;
+    AstNode returnType;
     // TODO: Args
     ScopeData functionScope;
 }
@@ -30,7 +30,7 @@ struct DeclaredFunction
 struct DeclaredVariable
 {
     NamedUnit name;
-    NamedUnit type;
+    AstNode type;
 }
 
 class ScopeData
@@ -174,8 +174,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         scope (exit)
             index = endingIndex;
 
-        NamedUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].assertAs(
-            TokenGrepMethod.NamedUnit).name;
+        AstNode declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].assertAs(
+            TokenGrepMethod.Type).type;
         NamedUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS]
             .assertAs(TokenGrepMethod.PossibleCommaSeperated)
             .commaSeperated.collectNamedUnits();
@@ -219,8 +219,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             [],
             lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NamedUnit)
                 .name,
-                lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.NamedUnit)
-                .name,
+                lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.Type)
+                .type,
                 parseMultilineScope(
                     FUNCTION_SCOPE_PARSE,
                     lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob)

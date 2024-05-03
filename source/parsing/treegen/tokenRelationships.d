@@ -2,6 +2,7 @@ module parsing.treegen.tokenRelationships;
 import parsing.tokenizer.tokens;
 import parsing.treegen.astTypes;
 import parsing.treegen.treeGenUtils;
+import parsing.treegen.typeParser;
 import tern.typecons.common : Nullable, nullable;
 
 /+
@@ -18,6 +19,7 @@ enum TokenGrepMethod
     MatchesTokenType,
     Scope,
     NamedUnit,
+    Type,
     PossibleCommaSeperated,
     Letter
 }
@@ -40,6 +42,7 @@ struct TokenGrepResult
         TokenGrepResult[] commaSeperated;
         Token[] tokens; // Glob
         NamedUnit name;
+        AstNode type;
 
     }
 
@@ -122,7 +125,7 @@ const size_t DECLARATION_TYPE = 0;
 const size_t DECLARATION_VARS = 1;
 // int x, y, z;
 const TokenGrepPacket[] DeclarationLine = [
-    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.Type, []),
     TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
             TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
         ]),
@@ -134,7 +137,7 @@ const size_t DECLARATION_EXPRESSION = 3;
 
 // int x, y, z = [1, 2, 3];
 const TokenGrepPacket[] DeclarationAndAssignment = [
-    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.Type, []),
     TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
             TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
         ]),
@@ -197,7 +200,7 @@ const FUNCTION_SCOPE = 3;
 
 // void main();
 const TokenGrepPacket[] AbstractFunctionDeclaration = [
-    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.Type, []),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
 
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
@@ -215,7 +218,7 @@ const TokenGrepPacket[] AbstractFunctionDeclaration = [
         ])
 ];
 const TokenGrepPacket[] FunctionDeclaration = [
-    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.Type, []),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
 
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
@@ -366,7 +369,22 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
             returnVal ~= commaSeperatedGroup;
             index += maxComma + searchExtent;
             break;
-
+        case TokenGrepMethod.Type:
+            size_t potentialSize = prematureTypeLength(tokens, index);
+            if (!potentialSize)
+                return tokenGrepBox(null);
+            size_t temp;
+            Nullable!AstNode maybeNull = typeFromTokens(tokens, temp);
+            if (maybeNull == null)
+                return tokenGrepBox(null);
+            
+            AstNode type = maybeNull;
+            TokenGrepResult tokenGrep;
+            tokenGrep.method = TokenGrepMethod.Type;
+            tokenGrep.type = type;
+            returnVal ~= tokenGrep;
+            index += potentialSize;
+            break;
         case TokenGrepMethod.Glob:
             size_t temp_index;
             auto firstGlob = testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $], temp_index);
@@ -463,6 +481,7 @@ private Token OPR(dchar o)
 // of each layer they are read left to right, or right to left.
 
 const OperatorPrecedenceLayer[] operatorPrecedence = [
+    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, []),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.PreIncrement, [
                     OPR('+'), OPR('+'), Token(TokenType.Filler)
