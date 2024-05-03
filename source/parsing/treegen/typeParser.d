@@ -100,8 +100,8 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
         return nullable!AstNode(null);
 
     case AstAction.LiteralUnit:
-    // case AstAction.NamedUnit:
-    //     return nullable!AstNode(node);
+    case AstAction.NamedUnit:
+        return nullable!AstNode(node);
     default:
         node.action.writeln;
         assert(0);

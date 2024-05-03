@@ -58,9 +58,9 @@ public AstNode[] phaseOne(Token[] tokens)
         AstNode tokenToBeParsedLater = new AstNode();
         if (token.tokenVariety == TokenType.Letter)
         {
-            // tokenToBeParsedLater.action = AstAction.NamedUnit;
+            tokenToBeParsedLater.action = AstAction.NamedUnit;
             size_t old_index = index;
-            // tokenToBeParsedLater.namedUnit = tokens.genNameUnit(index);
+            tokenToBeParsedLater.namedUnit = tokens.genNameUnit(index);
             if (old_index != index)
                 index--;
         }
@@ -95,7 +95,7 @@ public void phaseTwo(Array!AstNode nodes)
     for (size_t index = 0; index < nodes.length; index++)
     {
         AstNode node = nodes[index];
-        if (/*node.action == AstAction.NamedUnit && */ index + 1 < nodes.length && nodes[index + 1]
+        if (node.action == AstAction.NamedUnit && index + 1 < nodes.length && nodes[index + 1]
             .action.isExpressionLike)
         {
             AstNode functionCall = new AstNode();
@@ -109,12 +109,10 @@ public void phaseTwo(Array!AstNode nodes)
             args.expressionNodeData.components[0 .. $] = components.data[0 .. $];
 
             functionCall.action = AstAction.Call;
-            /*
             functionCall.callNodeData = CallNodeData(
                 node.namedUnit,
                 args
             );
-            */
             nodes[index] = functionCall;
             nodes.linearRemove(nodes[index + 1 .. index + 2]);
         }

@@ -32,6 +32,7 @@ enum AstAction
     // Misc tokens: 
 
     Expression, // Ex: (4+5*9)
+    NamedUnit, // Ex: std.io
     LiteralUnit, // Ex: 6, 6L, "Hello world"
 
     TokenHolder, // A temporary Node that is yet to be parsed 
@@ -180,7 +181,7 @@ class AstNode
         DoubleArgumentOperationNodeData doubleArgumentOperationNodeData; // DoubleArgumentOperation
         CallNodeData callNodeData; // Call
         ExpressionNodeData expressionNodeData; // Expression
-
+        NameUnit namedUnit; // NamedUnit
         Token[] literalUnitCompenents; // LiteralUnit
         Token tokenBeingHeld; // TokenHolder
 
@@ -209,7 +210,9 @@ class AstNode
         case AstAction.Expression:
             sink(expressionNodeData.components.to!string);
             break;
-        
+        case AstAction.NamedUnit:
+            sink(namedUnit.names.to!string);
+            break;
         case AstAction.Call:
             sink(callNodeData.func.names.to!string);
             sink("(\n");
@@ -326,8 +329,8 @@ class AstNode
             break;
         case AstAction.AssignVariable:
             write("Assigning variable(s): ");
-            // foreach (AstNode nameNode; assignVariableNodeData.name)
-                // write(nameNode.namedUnit.names.to!string ~ ", ");
+            foreach (AstNode nameNode; assignVariableNodeData.name)
+                write(nameNode.namedUnit.names.to!string ~ ", ");
             writeln(": ");
             assignVariableNodeData.value.tree(tabCount + 1);
             break;

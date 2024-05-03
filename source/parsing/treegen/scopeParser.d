@@ -184,8 +184,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         {
             parent.declaredVariables ~= DeclaredVariable(name, declarationType);
             AstNode nameNode = new AstNode();
-            // nameNode.action = AstAction.NamedUnit;
-            // nameNode.namedUnit = name;
+            nameNode.action = AstAction.NamedUnit;
+            nameNode.namedUnit = name;
             nameNodes ~= nameNode;
         }
 
@@ -450,9 +450,32 @@ unittest
     assert(newScope.instructions[3].action == AstAction.AssignVariable);
 
     assert(newScope.instructions[0].assignVariableNodeData.name.length == 1);
+    assert(
+        newScope.instructions[0].assignVariableNodeData.name[0].namedUnit.names == [
+            [cast(dchar) 'x']
+        ]);
+    assert(
+        newScope.instructions[1].assignVariableNodeData.name[0].namedUnit.names == [
+            [cast(dchar) 'y']
+        ]);
+    assert(
+        newScope.instructions[2].assignVariableNodeData.name[0].namedUnit.names == [
+            [cast(dchar) 'x']
+        ]);
+    assert(newScope.instructions[3].assignVariableNodeData.name[0].namedUnit.names == [
+            "axolotl".makeUnicodeString
+        ]);
     assert(newScope.instructions[3].assignVariableNodeData.value.action == AstAction.LiteralUnit);
     assert(newScope.instructions[3].assignVariableNodeData.value.literalUnitCompenents[0] == Token(
             TokenType.Quotation, "`Hello world`".makeUnicodeString, 109));
+
+    assert(
+        newScope.instructions[4].assignVariableNodeData.name[0].namedUnit.names == [
+            "tv".makeUnicodeString
+        ]);
+    assert(newScope.instructions[5].assignVariableNodeData.name[0].namedUnit.names == [
+            "floaty".makeUnicodeString
+        ]);
 }
 
 unittest
