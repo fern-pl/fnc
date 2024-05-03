@@ -13,24 +13,24 @@ import errors;
 struct ImportStatement
 {
     dchar[][] keywordExtras;
-    NameUnit nameUnit;
-    NameUnit[] importSelection; // empty for importing everything
+    NamedUnit namedUnit;
+    NamedUnit[] importSelection; // empty for importing everything
 }
 
 struct DeclaredFunction
 {
     dchar[][] precedingKeywords;
     dchar[][] suffixKeywords;
-    NameUnit name;
-    NameUnit returnType;
+    NamedUnit name;
+    NamedUnit returnType;
     // TODO: Args
     ScopeData functionScope;
 }
 
 struct DeclaredVariable
 {
-    NameUnit name;
-    NameUnit type;
+    NamedUnit name;
+    NamedUnit type;
 }
 
 class ScopeData
@@ -38,7 +38,7 @@ class ScopeData
     Nullable!ScopeData parent; // Could be the global scope
 
     bool isPartialModule = false;
-    Nullable!NameUnit moduleName;
+    Nullable!NamedUnit moduleName;
     ImportStatement[] imports;
 
     DeclaredFunction[] declaredFunctions;
@@ -96,12 +96,12 @@ LineVarietyTestResult getLineVarietyTestResult(
     return LineVarietyTestResult(LineVariety.SimpleExpression, -1);
 }
 
-NameUnit[] commaSeperatedNameUnits(Token[] tokens, ref size_t index)
+NamedUnit[] commaSeperatedNamedUnits(Token[] tokens, ref size_t index)
 {
-    NameUnit[] units;
+    NamedUnit[] units;
     while (true)
     {
-        NameUnit name = tokens.genNameUnit(index);
+        NamedUnit name = tokens.genNamedUnit(index);
         if (name.names.length == 0)
             break;
         units ~= name;
@@ -132,7 +132,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
     {
     case LineVariety.ModuleDeclaration:
         tokens.nextNonWhiteToken(index); // Skip 'module' keyword
-        parent.moduleName = tokens.genNameUnit(index);
+        parent.moduleName = tokens.genNamedUnit(index);
 
         parent.isPartialModule = keywords.scontains(PARTIAL_KEYWORD);
 
@@ -143,7 +143,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         tokens.nextNonWhiteToken(index); // Skip 'import' keyword
         parent.imports ~= ImportStatement(
             keywords,
-            tokens.genNameUnit(index),
+            tokens.genNamedUnit(index),
             []
         );
         tokens.nextNonWhiteToken(index); // Skip semicolon
@@ -155,7 +155,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
 
         auto statement = ImportStatement(
             keywords,
-            lineVariety.tokenMatches[IMPORT_PACKAGE_NAME].assertAs(TokenGrepMethod.NameUnit)
+            lineVariety.tokenMatches[IMPORT_PACKAGE_NAME].assertAs(TokenGrepMethod.NamedUnit)
                 .name,
                 []
         );
@@ -164,7 +164,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             .tokenMatches[SELECTIVE_IMPORT_SELECTIONS]
             .assertAs(TokenGrepMethod.PossibleCommaSeperated)
             .commaSeperated
-            .collectNameUnits();
+            .collectNamedUnits();
 
         parent.imports ~= statement;
         break;
@@ -174,13 +174,13 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         scope (exit)
             index = endingIndex;
 
-        NameUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].assertAs(
-            TokenGrepMethod.NameUnit).name;
-        NameUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS]
+        NamedUnit declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].assertAs(
+            TokenGrepMethod.NamedUnit).name;
+        NamedUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS]
             .assertAs(TokenGrepMethod.PossibleCommaSeperated)
-            .commaSeperated.collectNameUnits();
+            .commaSeperated.collectNamedUnits();
         AstNode[] nameNodes;
-        foreach (NameUnit name; declarationNames)
+        foreach (NamedUnit name; declarationNames)
         {
             parent.declaredVariables ~= DeclaredVariable(name, declarationType);
             AstNode nameNode = new AstNode();
@@ -217,9 +217,9 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
         parent.declaredFunctions ~= DeclaredFunction(
             keywords,
             [],
-            lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NameUnit)
+            lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NamedUnit)
                 .name,
-                lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.NameUnit)
+                lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.NamedUnit)
                 .name,
                 parseMultilineScope(
                     FUNCTION_SCOPE_PARSE,
@@ -375,7 +375,7 @@ void tree(ScopeData scopeData, size_t tabCount)
     write("Imports: ");
     foreach (imported; scopeData.imports)
     {
-        write(imported.nameUnit);
+        write(imported.namedUnit);
         write(": (");
         foreach (selection; imported.importSelection)
         {
@@ -428,18 +428,18 @@ unittest
         newScope.declaredVariables
             ==
             [
-                DeclaredVariable(NameUnit(["x".makeUnicodeString]), NameUnit([
+                DeclaredVariable(NamedUnit(["x".makeUnicodeString]), NamedUnit([
                         "int".makeUnicodeString
                     ])),
-                DeclaredVariable(NameUnit(["y".makeUnicodeString]), NameUnit([
+                DeclaredVariable(NamedUnit(["y".makeUnicodeString]), NamedUnit([
                         "int".makeUnicodeString
                     ])),
-                DeclaredVariable(NameUnit(["axolotl".makeUnicodeString]), NameUnit(
+                DeclaredVariable(NamedUnit(["axolotl".makeUnicodeString]), NamedUnit(
                     ["string".makeUnicodeString])),
-                DeclaredVariable(NameUnit(["tv".makeUnicodeString]), NameUnit([
+                DeclaredVariable(NamedUnit(["tv".makeUnicodeString]), NamedUnit([
                         "int".makeUnicodeString
                     ])),
-                DeclaredVariable(NameUnit(["floaty".makeUnicodeString]), NameUnit(
+                DeclaredVariable(NamedUnit(["floaty".makeUnicodeString]), NamedUnit(
                     ["float".makeUnicodeString]))
             ]
     );

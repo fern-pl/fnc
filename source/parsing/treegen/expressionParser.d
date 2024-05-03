@@ -60,7 +60,7 @@ public AstNode[] phaseOne(Token[] tokens)
         {
             tokenToBeParsedLater.action = AstAction.NamedUnit;
             size_t old_index = index;
-            tokenToBeParsedLater.namedUnit = tokens.genNameUnit(index);
+            tokenToBeParsedLater.namedUnit = tokens.genNamedUnit(index);
             if (old_index != index)
                 index--;
         }

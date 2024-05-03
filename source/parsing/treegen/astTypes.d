@@ -2,7 +2,7 @@ module parsing.treegen.astTypes;
 import parsing.tokenizer.tokens : Token;
 import tern.typecons.common : Nullable, nullable;
 
-struct NameUnit
+struct NamedUnit
 {
     dchar[][] names;
 }
@@ -158,7 +158,7 @@ struct ExpressionNodeData
 
 struct CallNodeData
 {
-    NameUnit func;
+    NamedUnit func;
     AstNode args;
 }
 struct TypeGenericNodeData
@@ -181,7 +181,7 @@ class AstNode
         DoubleArgumentOperationNodeData doubleArgumentOperationNodeData; // DoubleArgumentOperation
         CallNodeData callNodeData; // Call
         ExpressionNodeData expressionNodeData; // Expression
-        NameUnit namedUnit; // NamedUnit
+        NamedUnit namedUnit; // NamedUnit
         Token[] literalUnitCompenents; // LiteralUnit
         Token tokenBeingHeld; // TokenHolder
 

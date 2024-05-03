@@ -32,11 +32,11 @@ unittest
     import parsing.tokenizer.make_tokens;
 
     size_t s = 0;
-    assert("int x = 4;".tokenizeText.genNameUnit(s).names == [
+    assert("int x = 4;".tokenizeText.genNamedUnit(s).names == [
             "int".makeUnicodeString
         ]);
     s = 0;
-    assert("std.int x = 4;".tokenizeText.genNameUnit(s)
+    assert("std.int x = 4;".tokenizeText.genNamedUnit(s)
             .names == [
                 "std".makeUnicodeString,
                 "int".makeUnicodeString

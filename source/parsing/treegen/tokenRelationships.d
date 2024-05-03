@@ -17,7 +17,7 @@ enum TokenGrepMethod
     MatchesTokens,
     MatchesTokenType,
     Scope,
-    NameUnit,
+    NamedUnit,
     PossibleCommaSeperated,
     Letter
 }
@@ -39,7 +39,7 @@ struct TokenGrepResult
     {
         TokenGrepResult[] commaSeperated;
         Token[] tokens; // Glob
-        NameUnit name;
+        NamedUnit name;
 
     }
 
@@ -122,9 +122,9 @@ const size_t DECLARATION_TYPE = 0;
 const size_t DECLARATION_VARS = 1;
 // int x, y, z;
 const TokenGrepPacket[] DeclarationLine = [
-    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
     TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
-            TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+            TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
         ]),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
             Token(TokenType.Semicolon, [])
@@ -134,9 +134,9 @@ const size_t DECLARATION_EXPRESSION = 3;
 
 // int x, y, z = [1, 2, 3];
 const TokenGrepPacket[] DeclarationAndAssignment = [
-    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
     TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
-            TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+            TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
         ]),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
             Token(TokenType.Equals, [])
@@ -153,7 +153,7 @@ const TokenGrepPacket[] TotalImport = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Letter, "import".makeUnicodeString)
         ]),
-    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
             Token(TokenType.Semicolon, [])
         ])
@@ -166,14 +166,14 @@ const TokenGrepPacket[] SelectiveImport = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Letter, "import".makeUnicodeString)
         ]),
-    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
 
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Colon, ":".makeUnicodeString)
         ]),
 
     TokenGrepPacketRec(TokenGrepMethod.PossibleCommaSeperated, [
-            TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+            TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
         ]),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
             Token(TokenType.Semicolon, [])
@@ -184,7 +184,7 @@ const TokenGrepPacket[] ModuleDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Letter, "module".makeUnicodeString)
         ]),
-    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
             Token(TokenType.Semicolon, [])
         ])
@@ -197,8 +197,8 @@ const FUNCTION_SCOPE = 3;
 
 // void main();
 const TokenGrepPacket[] AbstractFunctionDeclaration = [
-    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
-    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
 
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['('])
@@ -215,8 +215,8 @@ const TokenGrepPacket[] AbstractFunctionDeclaration = [
         ])
 ];
 const TokenGrepPacket[] FunctionDeclaration = [
-    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
-    TokenGrepPacketToken(TokenGrepMethod.NameUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
 
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['('])
@@ -289,14 +289,14 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
     {
         switch (packet.method)
         {
-        case TokenGrepMethod.NameUnit:
+        case TokenGrepMethod.NamedUnit:
             if (index >= tokens.length)
                 return tokenGrepBox(null);
-            NameUnit name = genNameUnit(tokens, index);
+            NamedUnit name = genNamedUnit(tokens, index);
             if (name.names.length == 0)
                 return tokenGrepBox(null);
             TokenGrepResult result;
-            result.method = TokenGrepMethod.NameUnit;
+            result.method = TokenGrepMethod.NamedUnit;
             result.name = name;
             returnVal ~= result;
             break;
@@ -417,12 +417,12 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
     return tokenGrepBox(returnVal);
 }
 
-NameUnit[] collectNameUnits(TokenGrepResult[] greps)
+NamedUnit[] collectNamedUnits(TokenGrepResult[] greps)
 {
-    NameUnit[] ret;
+    NamedUnit[] ret;
     foreach (TokenGrepResult grepResult; greps)
     {
-        assert(grepResult.method == TokenGrepMethod.NameUnit);
+        assert(grepResult.method == TokenGrepMethod.NamedUnit);
         ret ~= grepResult.name;
     }
     return ret;

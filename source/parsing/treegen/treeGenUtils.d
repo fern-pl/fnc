@@ -4,17 +4,17 @@ import parsing.treegen.astTypes;
 import parsing.tokenizer.tokens;
 import tern.typecons.common : Nullable, nullable;
 
-NameUnit genNameUnit(Token[] tokens, ref size_t index)
+NamedUnit genNamedUnit(Token[] tokens, ref size_t index)
 {
     dchar[][] nameData = new dchar[][0];
-    // NameUnit ret = NameUnit(new dchar[][]);
+    // NamedUnit ret = NamedUnit(new dchar[][]);
     Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
 
     Token token;
 
     // An attempt to generate a name at an EOF
     if (tokenNullable.ptr == null)
-        return NameUnit(nameData);
+        return NamedUnit(nameData);
     index--;
     token = tokenNullable;
 
@@ -31,10 +31,10 @@ NameUnit genNameUnit(Token[] tokens, ref size_t index)
 
         // We hit an EOF
         if (!tokenNullable2.ptr)
-            return NameUnit(nameData);
+            return NamedUnit(nameData);
         token = tokenNullable2;
 
     }
-    return NameUnit(nameData);
+    return NamedUnit(nameData);
 
 }
