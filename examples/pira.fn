@@ -110,8 +110,8 @@ void encrypt(ref ubyte[] data, string key)
         turn();
     }
     
-    long[2][] fold = cast(long[2][])data;
-    long[4][] pair = cast(long[4][])data;
+    long[2][] fold = data |> long[2][];
+    long[4][] pair = data |> long[4][];
 
     foreach (i, ref v; fold[$/2..$])
     {
