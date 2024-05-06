@@ -45,7 +45,7 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
         foreach (i, subArray; splitNodesAtCommas(node.expressionNodeData.components)){
             newNode.commaSeperatedNodes ~= genTypeTree(subArray);
             if (i != 0) newNode.isIntegerLiteral = false;
-            else if(i == 0 && newNode.commaSeperatedNodes[0][0].action == AstAction.LiteralUnit)
+            else if(i == 0 && subArray.length && subArray[0].action == AstAction.LiteralUnit)
                 newNode.isIntegerLiteral = true;
         }
         return nullable!AstNode(newNode);
@@ -97,6 +97,8 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
 
             index = protoNodes.length;
             return nullable!AstNode(newNode);
+        case TokenType.Semicolon:
+            return nullable!AstNode(null);
         default:
             node.tokenBeingHeld.writeln;
             assert(0);
@@ -201,7 +203,7 @@ Nullable!AstNode typeFromTokens(Token[] tokens, ref size_t index)
     if (array.length == 0)
         return nullable!AstNode(null);
     if (array.length != 1)
-        throw new SyntaxError("Can't reduce type into a single AST node", firstToken);
+        return nullable!AstNode(null);
 
     return nullable!AstNode(array[0]);
 }
