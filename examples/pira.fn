@@ -89,7 +89,7 @@ void encrypt(ref ubyte[] data, string key)
     long[2] s = split16(++S);
 
     if (data.length % 32 != 0)
-        data ~= new ubyte[32 - (data.length % 32)];
+        data ~= ubyte[32 - (data.length % 32)];
 
     void turn()
     {

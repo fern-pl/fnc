@@ -85,6 +85,7 @@ Operators are a builtin part of the language used to perform certain operations.
 | `--` `++` `~` `-` | Unary postdecrement, postincrement, not, and neg operators. Postdecrement and postincrement may appear as preX versions in which they are after a variable. |
 | `*` `&` | Unary pointer dereference and reference. |
 | `x ? y : z` | Ternary operator, if `x` evaluates to `true`, the output will be `y`, otherwise it will be `z` |
+| `x..y` | Iota operator, creates a range from `x` to `y` not containing the value `y`. |
 
 The following operators are defined as op-assign, meaning that they perform the operation followed by an assignment.
 
