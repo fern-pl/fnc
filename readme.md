@@ -26,6 +26,8 @@ Examples [exist](examples) but are small tidbits meant to facilitate parser test
 5. [Symbols and Aliases](spec/grammar.md#symbols-and-aliases)
 6. [Granular Attributes](spec/grammar.md#attributes)
 7. [Variable-Based Return](spec/grammar.md#functions)
+8. [Iota Operator](spec/grammar#operators)
+9. [Syntactic Sugar Tuples and Tags](spec/grammar#tuple)
 
 ## Specification
 
