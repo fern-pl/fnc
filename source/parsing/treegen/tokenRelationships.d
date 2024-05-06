@@ -115,7 +115,7 @@ const TokenGrepPacket[] IfStatementWithScope = [
         ]),
 ];
 
-// The following are definitions of different type of
+// The following are definitions of different types of
 // structures found throughout the language. They are defined
 // in a modular way, and it is surprisingly efficient.
 // This is all unmantainable as FUCK, and confusing to read.

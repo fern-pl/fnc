@@ -16,6 +16,9 @@ void main()
 
     // auto x = DeclarationAndAssignment.matchesToken("int x = 4;".tokenizeText);
     // (x == null).writeln;
-    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "int[4] main(){}");
+    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
+    int main(){
+        return 69;
+        }");
     newScope.tree();
 }
