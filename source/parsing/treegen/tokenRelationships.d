@@ -698,6 +698,8 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
                     return false;
                 break;
             case TokenType.Period:
+                if (node.tokenBeingHeld.tokenVariety != TokenType.Period)
+                    return false;
                 break;
             default:
                 assert(0);
