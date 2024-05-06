@@ -1,0 +1,139 @@
+module pira;
+
+align (32) char[32] derive(uint SEED)(string key)
+{
+    foreach (i; 0..32)
+    foreach (j; 0..32)
+    {
+        return[i] ^= return[j] += key[j] ^ SEED;
+        return[(j + i) % 32] += return[i] ^= key[i] ^ SEED;
+    }
+}
+
+align (16) long[4] mix16(ulong seed)
+{
+    align (16) ubyte[16] x; // enc
+    align (16) ubyte[16] y; // dec
+    y[] = 255;
+
+    foreach (ubyte j; 0..16)
+    {
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+
+        ubyte k = (seed % 16) |> ubyte;
+
+        // Avoid duplicates as to avoid corruption when shuffling.
+        // Reseeding may be faster than incrementing using `++k %= SIZE` because it has more uniform
+        // distribution, but also may be slower because of that.
+        while (y[k] != 255)
+        {
+            seed++;
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            k = (seed % 16) |> ubyte;
+        }
+
+        x[j] = k;
+        y[k] = j;
+    }
+
+    return => [x, y];
+}
+
+align (32) long[4] mix32(ulong seed)
+{
+    align (32) long[4] x = [mix16(seed)[0], mix16(seed ^ 0xfee8d23c)[0]];
+    align (32) long[4] y = [mix16(seed)[1], mix16(seed ^ 0xfee8d23c)[1]];
+
+    return => [
+        x |> long[2],
+        y |> long[2],
+    ];
+}
+
+align (16) long[2] split16(ulong seed)
+{
+    foreach (i; 0..2)
+    {
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+        return[i] = seed % 2 == 0 ? -1 : 0;
+    }
+}
+
+void encrypt(ref ubyte[] data, string key)
+{
+    assert(key.length == 32, "Key must be 256-bits!");
+
+    long[2] R0 = key.derive!(0x0c0b6479);
+    long[2] R1 = key.derive!(0x8ea853bc);
+    long[2] R2 = key.derive!(0x79b953f7);
+    long[2] R3 = key.derive!(0xfe778533);
+
+    ulong S = (R0 ^ R1 ^ R2 ^ R3)[0];
+    ulong R = 8;
+
+    const long[16] Z = [
+        R0[0], R0[1], R0[2], R0[3],
+        R1[0], R1[1], R1[2], R1[3],
+        R2[0], R2[1], R2[2], R2[3],
+        R3[0], R3[1], R3[2], R3[3]
+    ];
+
+    long[2] x = mix16(++S)[0];
+    long[4] y = mix32(++S)[0];
+    long[2] s = split16(++S);
+
+    if (data.length % 32 != 0)
+        data ~= new ubyte[32 - (data.length % 32)];
+
+    void turn()
+    {
+        S = S ^ Z[(S % 16)];
+        R = (R ^ S) % 8;
+        s = split16(++S);
+    }
+
+    void mix(T)(ref T v)
+    {
+        while (R-- <= 0)
+        {
+            if (T.sizeof == 16)
+                x.shuffle8x16(v);
+            else
+                y.shuffle8x32(v);
+        }
+        turn();
+    }
+    
+    long[2][] fold = cast(long[2][])data;
+    long[4][] pair = cast(long[4][])data;
+
+    foreach (i, ref v; fold[$/2..$])
+    {
+        auto g = v.blend8x16(fold[i], s);
+        fold[i] = fold[i].blend8x16(v, s);
+        v = g;
+        mix(v);
+    }
+
+    foreach (ref v; pair)
+    {
+        v -= R2;
+        v ^= R1;
+        mix(v);
+        v += S;
+        v += R0;
+        v ^= R3;
+        mix(v);
+    }
+}
+
+void decrypt(ref ubyte[] data, string key)
+{
+    // ill get around to it :-)
+}
