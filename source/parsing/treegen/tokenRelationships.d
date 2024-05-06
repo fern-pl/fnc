@@ -292,142 +292,143 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
     {
         switch (packet.method)
         {
-        case TokenGrepMethod.NamedUnit:
-            if (index >= tokens.length)
-                return tokenGrepBox(null);
-            NamedUnit name = genNamedUnit(tokens, index);
-            if (name.names.length == 0)
-                return tokenGrepBox(null);
-            TokenGrepResult result;
-            result.method = TokenGrepMethod.NamedUnit;
-            result.name = name;
-            returnVal ~= result;
-            break;
-        case TokenGrepMethod.MatchesTokenType:
-            Nullable!Token potential = tokens.nextNonWhiteToken(index);
-            if (potential.ptr == null)
-                return tokenGrepBox(null);
-            Token token = potential;
-            bool doRet = true;
-            Token[] found;
-
-            foreach (const(Token) potentialMatch; packet.tokens)
-            {
-                if (potentialMatch.tokenVariety == token.tokenVariety)
-                    doRet = false;
-                found ~= token;
-            }
-            TokenGrepResult res;
-            res.method = TokenGrepMethod.Letter;
-            res.tokens = found;
-            returnVal ~= res;
-            if (doRet)
-                return tokenGrepBox(null);
-            break;
-        case TokenGrepMethod.MatchesTokens:
-            foreach (const(Token) testToken; packet.tokens)
-            {
-                Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
-                if (tokenNullable.ptr == null)
+            case TokenGrepMethod.NamedUnit:
+                if (index >= tokens.length)
                     return tokenGrepBox(null);
-                Token token = tokenNullable;
-                if (token.tokenVariety != testToken.tokenVariety || token.value != testToken.value)
+                NamedUnit name = genNamedUnit(tokens, index);
+                if (name.names.length == 0)
                     return tokenGrepBox(null);
-            }
-            break;
-        case TokenGrepMethod.PossibleCommaSeperated:
-            if (index >= tokens.length)
-                return tokenGrepBox(null);
+                TokenGrepResult result;
+                result.method = TokenGrepMethod.NamedUnit;
+                result.name = name;
+                returnVal ~= result;
+                break;
+            case TokenGrepMethod.MatchesTokenType:
+                Nullable!Token potential = tokens.nextNonWhiteToken(index);
+                if (potential.ptr == null)
+                    return tokenGrepBox(null);
+                Token token = potential;
+                bool doRet = true;
+                Token[] found;
 
-            Token[][] tstack;
-            Token[] currentGroup;
-            size_t maxComma = 0;
-            foreach (secountIndex, token; tokens[index .. $])
-            {
-                if (token.tokenVariety == TokenType.Comma)
+                foreach (const(Token) potentialMatch; packet.tokens)
                 {
-                    maxComma = secountIndex + 1;
-                    tstack ~= currentGroup;
-                    currentGroup = new Token[0];
-                    continue;
+                    if (potentialMatch.tokenVariety == token.tokenVariety)
+                        doRet = false;
+                    found ~= token;
                 }
-                currentGroup ~= token;
-            }
-            size_t searchExtent;
-            tstack ~= currentGroup;
-            TokenGrepResult commaSeperatedGroup;
-            commaSeperatedGroup.method = TokenGrepMethod.PossibleCommaSeperated;
-            commaSeperatedGroup.commaSeperated = new TokenGrepResult[0];
-            foreach (Token[] tokenGroup; tstack)
-            {
-                searchExtent = 0;
-                auto res = matchesToken(packet.packets, tokenGroup, searchExtent);
-                if (!res.ptr)
+                TokenGrepResult res;
+                res.method = TokenGrepMethod.Letter;
+                res.tokens = found;
+                returnVal ~= res;
+                if (doRet)
                     return tokenGrepBox(null);
-                commaSeperatedGroup.commaSeperated ~= res.value;
-            }
-            returnVal ~= commaSeperatedGroup;
-            index += maxComma + searchExtent;
-            break;
-        case TokenGrepMethod.Type:
-            size_t potentialSize = prematureTypeLength(tokens, index);
-            if (!potentialSize)
-                return tokenGrepBox(null);
-            size_t temp;
-            Nullable!AstNode maybeNull = typeFromTokens(tokens, temp);
-            if (maybeNull == null)
-                return tokenGrepBox(null);
-            
-            AstNode type = maybeNull;
-            TokenGrepResult tokenGrep;
-            tokenGrep.method = TokenGrepMethod.Type;
-            tokenGrep.type = type;
-            returnVal ~= tokenGrep;
-            index += potentialSize;
-            break;
-        case TokenGrepMethod.Glob:
-            size_t temp_index;
-            auto firstGlob = testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $], temp_index);
-
-            TokenGrepResult globResult;
-            globResult.method = TokenGrepMethod.Glob;
-            globResult.tokens = [];
-            if (firstGlob.ptr)
-            {
-                index += temp_index;
-                return tokenGrepBox(returnVal ~ globResult ~ firstGlob.value);
-            }
-
-            int braceDeph = 0;
-            size_t startingIndex = index;
-            auto grepMatchGroup = testWith[testIndex + 1 .. $];
-            while (true)
-            {
-                Nullable!Token tokenNullable = tokens.nextToken(index);
-                if (tokenNullable.ptr == null)
-                    return tokenGrepBox(null);
-                Token token = tokenNullable;
-                globResult.tokens ~= token;
-
-                if (token.tokenVariety == TokenType.OpenBraces)
-                    braceDeph += 1;
-                else if (token.tokenVariety == TokenType.CloseBraces && braceDeph != 0)
-                    braceDeph -= 1;
-                else if (braceDeph == 0)
+                break;
+            case TokenGrepMethod.MatchesTokens:
+                foreach (const(Token) testToken; packet.tokens)
                 {
-                    size_t index_inc = 0;
-                    auto res = grepMatchGroup.matchesToken(tokens[index .. $], index_inc);
-                    if (res.ptr)
+                    Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
+                    if (tokenNullable.ptr == null)
+                        return tokenGrepBox(null);
+                    Token token = tokenNullable;
+                    if (token.tokenVariety != testToken.tokenVariety || token.value != testToken
+                        .value)
+                        return tokenGrepBox(null);
+                }
+                break;
+            case TokenGrepMethod.PossibleCommaSeperated:
+                if (index >= tokens.length)
+                    return tokenGrepBox(null);
+
+                Token[][] tstack;
+                Token[] currentGroup;
+                size_t maxComma = 0;
+                foreach (secountIndex, token; tokens[index .. $])
+                {
+                    if (token.tokenVariety == TokenType.Comma)
                     {
-                        globResult.tokens = tokens[startingIndex .. index];
-                        index += index_inc;
-                        return tokenGrepBox(returnVal ~ globResult ~ res.value);
+                        maxComma = secountIndex + 1;
+                        tstack ~= currentGroup;
+                        currentGroup = new Token[0];
+                        continue;
+                    }
+                    currentGroup ~= token;
+                }
+                size_t searchExtent;
+                tstack ~= currentGroup;
+                TokenGrepResult commaSeperatedGroup;
+                commaSeperatedGroup.method = TokenGrepMethod.PossibleCommaSeperated;
+                commaSeperatedGroup.commaSeperated = new TokenGrepResult[0];
+                foreach (Token[] tokenGroup; tstack)
+                {
+                    searchExtent = 0;
+                    auto res = matchesToken(packet.packets, tokenGroup, searchExtent);
+                    if (!res.ptr)
+                        return tokenGrepBox(null);
+                    commaSeperatedGroup.commaSeperated ~= res.value;
+                }
+                returnVal ~= commaSeperatedGroup;
+                index += maxComma + searchExtent;
+                break;
+            case TokenGrepMethod.Type:
+                size_t potentialSize = prematureTypeLength(tokens, index);
+                if (!potentialSize)
+                    return tokenGrepBox(null);
+                size_t temp;
+                Nullable!AstNode maybeNull = typeFromTokens(tokens, temp);
+                if (maybeNull == null)
+                    return tokenGrepBox(null);
+
+                AstNode type = maybeNull;
+                TokenGrepResult tokenGrep;
+                tokenGrep.method = TokenGrepMethod.Type;
+                tokenGrep.type = type;
+                returnVal ~= tokenGrep;
+                index += potentialSize;
+                break;
+            case TokenGrepMethod.Glob:
+                size_t temp_index;
+                auto firstGlob = testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $], temp_index);
+
+                TokenGrepResult globResult;
+                globResult.method = TokenGrepMethod.Glob;
+                globResult.tokens = [];
+                if (firstGlob.ptr)
+                {
+                    index += temp_index;
+                    return tokenGrepBox(returnVal ~ globResult ~ firstGlob.value);
+                }
+
+                int braceDeph = 0;
+                size_t startingIndex = index;
+                auto grepMatchGroup = testWith[testIndex + 1 .. $];
+                while (true)
+                {
+                    Nullable!Token tokenNullable = tokens.nextToken(index);
+                    if (tokenNullable.ptr == null)
+                        return tokenGrepBox(null);
+                    Token token = tokenNullable;
+                    globResult.tokens ~= token;
+
+                    if (token.tokenVariety == TokenType.OpenBraces)
+                        braceDeph += 1;
+                    else if (token.tokenVariety == TokenType.CloseBraces && braceDeph != 0)
+                        braceDeph -= 1;
+                    else if (braceDeph == 0)
+                    {
+                        size_t index_inc = 0;
+                        auto res = grepMatchGroup.matchesToken(tokens[index .. $], index_inc);
+                        if (res.ptr)
+                        {
+                            globResult.tokens = tokens[startingIndex .. index];
+                            index += index_inc;
+                            return tokenGrepBox(returnVal ~ globResult ~ res.value);
+                        }
                     }
                 }
-            }
-            break;
-        default:
-            assert(0, "Not implemented");
+                break;
+            default:
+                assert(0, "Not implemented");
 
         }
     }
@@ -482,10 +483,11 @@ private Token OPR(dchar o)
 
 const OperatorPrecedenceLayer[] operatorPrecedence = [
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry(OperationVariety.Period, [
-            Token(TokenType.Filler), Token(TokenType.Period, ['.']), Token(TokenType.Filler)
+            OperationPrecedenceEntry(OperationVariety.Period, [
+                    Token(TokenType.Filler), Token(TokenType.Period, ['.']),
+                    Token(TokenType.Filler)
+                ]),
         ]),
-    ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.PreIncrement, [
                     OPR('+'), OPR('+'), Token(TokenType.Filler)
@@ -600,7 +602,7 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
     OperatorPrecedenceLayer(OperatorOrder.RightToLeft, [
             OperationPrecedenceEntry(OperationVariety.Assignment, [
                     Token(TokenType.Filler), OPR('='), Token(TokenType.Filler)
-                ]), 
+                ]),
             OperationPrecedenceEntry(OperationVariety.AddEq, [
                     Token(TokenType.Filler), OPR('+'), OPR('='),
                     Token(TokenType.Filler)
@@ -647,11 +649,13 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                     Token(TokenType.Filler)
                 ]),
             OperationPrecedenceEntry(OperationVariety.BitshiftLeftUnSignedEq, [
-                    Token(TokenType.Filler), OPR('<'), OPR('<'), OPR('<'), OPR('='),
+                    Token(TokenType.Filler), OPR('<'), OPR('<'), OPR('<'),
+                    OPR('='),
                     Token(TokenType.Filler)
                 ]),
             OperationPrecedenceEntry(OperationVariety.BitshiftRightUnSignedEq, [
-                    Token(TokenType.Filler), OPR('>'), OPR('>'), OPR('>'), OPR('='),
+                    Token(TokenType.Filler), OPR('>'), OPR('>'), OPR('>'),
+                    OPR('='),
                     Token(TokenType.Filler)
                 ])
         ])
@@ -675,27 +679,28 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
         switch (entry.tokens[index].tokenVariety)
         {
 
-        case TokenType.Filler:
+            case TokenType.Filler:
 
-            if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction
-                .Scope)
-                return false;
-            operands ~= node;
-            break;
-        case TokenType.Equals:
-        case TokenType.Operator:
-            if (node.action != AstAction.TokenHolder)
-                return false;
-            Token token = node.tokenBeingHeld;
-            if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType.Operator)
-                return false;
-            if (token.value != entry.tokens[index].value)
-                return false;
-            break;
-        case TokenType.Period:
-            break;
-        default:
-            assert(0);
+                if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction
+                    .Scope)
+                    return false;
+                operands ~= node;
+                break;
+            case TokenType.Equals:
+            case TokenType.Operator:
+                if (node.action != AstAction.TokenHolder)
+                    return false;
+                Token token = node.tokenBeingHeld;
+                if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType
+                    .Operator)
+                    return false;
+                if (token.value != entry.tokens[index].value)
+                    return false;
+                break;
+            case TokenType.Period:
+                break;
+            default:
+                assert(0);
 
         }
     }

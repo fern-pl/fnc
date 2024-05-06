@@ -130,189 +130,190 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
     LineVarietyTestResult lineVariety = getLineVarietyTestResult(scopeParseMethod, tokens, index);
     switch (lineVariety.lineVariety)
     {
-    case LineVariety.ModuleDeclaration:
-        tokens.nextNonWhiteToken(index); // Skip 'module' keyword
-        parent.moduleName = tokens.genNamedUnit(index);
+        case LineVariety.ModuleDeclaration:
+            tokens.nextNonWhiteToken(index); // Skip 'module' keyword
+            parent.moduleName = tokens.genNamedUnit(index);
 
-        parent.isPartialModule = keywords.scontains(PARTIAL_KEYWORD);
+            parent.isPartialModule = keywords.scontains(PARTIAL_KEYWORD);
 
-        tokens.nextNonWhiteToken(index); // Skip semicolon
+            tokens.nextNonWhiteToken(index); // Skip semicolon
 
-        break;
-    case LineVariety.TotalImport:
-        tokens.nextNonWhiteToken(index); // Skip 'import' keyword
-        parent.imports ~= ImportStatement(
-            keywords,
-            tokens.genNamedUnit(index),
-            []
-        );
-        tokens.nextNonWhiteToken(index); // Skip semicolon
-        break;
-    case LineVariety.SelectiveImport:
-        size_t endingIndex = index + lineVariety.length;
-        scope (exit)
-            index = endingIndex;
-
-        auto statement = ImportStatement(
-            keywords,
-            lineVariety.tokenMatches[IMPORT_PACKAGE_NAME].assertAs(TokenGrepMethod.NamedUnit)
-                .name,
-                []
-        );
-
-        statement.importSelection ~= lineVariety
-            .tokenMatches[SELECTIVE_IMPORT_SELECTIONS]
-            .assertAs(TokenGrepMethod.PossibleCommaSeperated)
-            .commaSeperated
-            .collectNamedUnits();
-
-        parent.imports ~= statement;
-        break;
-    case LineVariety.DeclarationLine:
-    case LineVariety.DeclarationAndAssignment:
-        size_t endingIndex = index + lineVariety.length;
-        scope (exit)
-            index = endingIndex;
-
-        AstNode declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].assertAs(
-            TokenGrepMethod.Type).type;
-        NamedUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS]
-            .assertAs(TokenGrepMethod.PossibleCommaSeperated)
-            .commaSeperated.collectNamedUnits();
-        AstNode[] nameNodes;
-        foreach (NamedUnit name; declarationNames)
-        {
-            parent.declaredVariables ~= DeclaredVariable(name, declarationType);
-            AstNode nameNode = new AstNode();
-            nameNode.action = AstAction.NamedUnit;
-            nameNode.namedUnit = name;
-            nameNodes ~= nameNode;
-        }
-
-        if (lineVariety.lineVariety == LineVariety.DeclarationLine)
             break;
+        case LineVariety.TotalImport:
+            tokens.nextNonWhiteToken(index); // Skip 'import' keyword
+            parent.imports ~= ImportStatement(
+                keywords,
+                tokens.genNamedUnit(index),
+                []
+            );
+            tokens.nextNonWhiteToken(index); // Skip semicolon
+            break;
+        case LineVariety.SelectiveImport:
+            size_t endingIndex = index + lineVariety.length;
+            scope (exit)
+                index = endingIndex;
 
-        auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION]
-            .assertAs(TokenGrepMethod.Glob)
-            .tokens.expressionNodeFromTokens();
+            auto statement = ImportStatement(
+                keywords,
+                lineVariety.tokenMatches[IMPORT_PACKAGE_NAME].assertAs(TokenGrepMethod.NamedUnit)
+                    .name,
+                    []
+            );
 
-        if (nodes.length != 1)
-            throw new SyntaxError(
-                "Expression node tree could not be parsed properly (Not reducable into single node)", 
-                lineVariety.tokenMatches[DECLARATION_EXPRESSION].tokens[0]);
-        AstNode result = nodes[0];
-        AstNode assignment = new AstNode;
-        assignment.action = AstAction.AssignVariable;
-        assignment.assignVariableNodeData.name = nameNodes;
-        assignment.assignVariableNodeData.value = result;
+            statement.importSelection ~= lineVariety
+                .tokenMatches[SELECTIVE_IMPORT_SELECTIONS]
+                .assertAs(TokenGrepMethod.PossibleCommaSeperated)
+                .commaSeperated
+                .collectNamedUnits();
 
-        parent.instructions ~= assignment;
+            parent.imports ~= statement;
+            break;
+        case LineVariety.DeclarationLine:
+        case LineVariety.DeclarationAndAssignment:
+            size_t endingIndex = index + lineVariety.length;
+            scope (exit)
+                index = endingIndex;
 
-        break;
-    case LineVariety.FunctionDeclaration:
-        size_t endingIndex = index + lineVariety.length;
-        scope (exit)
-            index = endingIndex;
-        size_t temp;
-        parent.declaredFunctions ~= DeclaredFunction(
-            keywords,
-            [],
-            lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NamedUnit)
-                .name,
-                lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.Type)
-                .type,
-                parseMultilineScope(
-                    FUNCTION_SCOPE_PARSE,
-                    lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob)
-                    .tokens,
-                    temp,
-                    nullable!ScopeData(parent)
-                )
-        );
+            AstNode declarationType = lineVariety.tokenMatches[DECLARATION_TYPE].assertAs(
+                TokenGrepMethod.Type).type;
+            NamedUnit[] declarationNames = lineVariety.tokenMatches[DECLARATION_VARS]
+                .assertAs(TokenGrepMethod.PossibleCommaSeperated)
+                .commaSeperated.collectNamedUnits();
+            AstNode[] nameNodes;
+            foreach (NamedUnit name; declarationNames)
+            {
+                parent.declaredVariables ~= DeclaredVariable(name, declarationType);
+                AstNode nameNode = new AstNode();
+                nameNode.action = AstAction.NamedUnit;
+                nameNode.namedUnit = name;
+                nameNodes ~= nameNode;
+            }
 
-        // assert(0);
-        break;
-    case LineVariety.ReturnStatement:
-        size_t endingIndex = index + lineVariety.length;
-        scope (exit)
-            index = endingIndex;
-        auto returnNodes = expressionNodeFromTokens(
-            lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
-        );
-        if (returnNodes.length != 1)
-            throw new SyntaxError("Return statement invalid", lineVariety.tokenMatches[0].tokens[0]);
+            if (lineVariety.lineVariety == LineVariety.DeclarationLine)
+                break;
 
-        AstNode returnNode = new AstNode;
-        returnNode.action = AstAction.ReturnStatement;
-        returnNode.nodeToReturn = returnNodes[0];
-        parent.instructions ~= returnNode;
-        break;
-    case LineVariety.IfStatementWithScope:
-    case LineVariety.IfStatementWithoutScope:
-        size_t endingIndex = index + lineVariety.length;
-        scope (exit)
-            index = endingIndex;
+            auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION]
+                .assertAs(TokenGrepMethod.Glob)
+                .tokens.expressionNodeFromTokens();
 
-        size_t temp;
+            if (nodes.length != 1)
+                throw new SyntaxError(
+                    "Expression node tree could not be parsed properly (Not reducable into single node)",
+                    lineVariety.tokenMatches[DECLARATION_EXPRESSION].tokens[0]);
+            AstNode result = nodes[0];
+            AstNode assignment = new AstNode;
+            assignment.action = AstAction.AssignVariable;
+            assignment.assignVariableNodeData.name = nameNodes;
+            assignment.assignVariableNodeData.value = result;
 
-        auto conditionNodes = expressionNodeFromTokens(
-            lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
-        );
-        if (conditionNodes.length != 1)
-            throw new SyntaxError(
-                "Expression node tree could not be parsed properly (Not reducable into single node within if statement condition)",
-                lineVariety.tokenMatches[0].tokens[0]);
+            parent.instructions ~= assignment;
 
-        ConditionNodeData conditionNodeData;
-        conditionNodeData.precedingKeywords = keywords;
-        conditionNodeData.condition = conditionNodes[0];
-        if (lineVariety.lineVariety == LineVariety.IfStatementWithScope)
-        {
-            conditionNodeData.isScope = true;
-            conditionNodeData.conditionScope
-                = parseMultilineScope(
-                    FUNCTION_SCOPE_PARSE,
-                    lineVariety.tokenMatches[1].assertAs(TokenGrepMethod.Glob)
+            break;
+        case LineVariety.FunctionDeclaration:
+            size_t endingIndex = index + lineVariety.length;
+            scope (exit)
+                index = endingIndex;
+            size_t temp;
+            parent.declaredFunctions ~= DeclaredFunction(
+                keywords,
+                [],
+                lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NamedUnit)
+                    .name,
+                    lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.Type)
+                    .type,
+                    parseMultilineScope(
+                        FUNCTION_SCOPE_PARSE,
+                        lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob)
                         .tokens,
                         temp,
                         nullable!ScopeData(parent)
-                );
-        }
-        else
-        {
-            conditionNodeData.isScope = false;
-            auto conditionLineNode = expressionNodeFromTokens(
-                lineVariety.tokenMatches[1].assertAs(TokenGrepMethod.Glob).tokens
+                    )
             );
-            if (conditionLineNode.length != 1)
+
+            // assert(0);
+            break;
+        case LineVariety.ReturnStatement:
+            size_t endingIndex = index + lineVariety.length;
+            scope (exit)
+                index = endingIndex;
+            auto returnNodes = expressionNodeFromTokens(
+                lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
+            );
+            if (returnNodes.length != 1)
+                throw new SyntaxError("Return statement invalid", lineVariety
+                        .tokenMatches[0].tokens[0]);
+
+            AstNode returnNode = new AstNode;
+            returnNode.action = AstAction.ReturnStatement;
+            returnNode.nodeToReturn = returnNodes[0];
+            parent.instructions ~= returnNode;
+            break;
+        case LineVariety.IfStatementWithScope:
+        case LineVariety.IfStatementWithoutScope:
+            size_t endingIndex = index + lineVariety.length;
+            scope (exit)
+                index = endingIndex;
+
+            size_t temp;
+
+            auto conditionNodes = expressionNodeFromTokens(
+                lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
+            );
+            if (conditionNodes.length != 1)
                 throw new SyntaxError(
-                    "Expression node tree could not be parsed properly (if without scope)",
-                    lineVariety.tokenMatches[1].tokens[0]);
-            conditionNodeData.conditionResultNode = conditionLineNode[0];
+                    "Expression node tree could not be parsed properly (Not reducable into single node within if statement condition)",
+                    lineVariety.tokenMatches[0].tokens[0]);
 
-        }
-        AstNode node = new AstNode();
-        node.action = AstAction.IfStatement;
-        node.conditionNodeData = conditionNodeData;
-        parent.instructions ~= node;
-        break;
+            ConditionNodeData conditionNodeData;
+            conditionNodeData.precedingKeywords = keywords;
+            conditionNodeData.condition = conditionNodes[0];
+            if (lineVariety.lineVariety == LineVariety.IfStatementWithScope)
+            {
+                conditionNodeData.isScope = true;
+                conditionNodeData.conditionScope
+                    = parseMultilineScope(
+                        FUNCTION_SCOPE_PARSE,
+                        lineVariety.tokenMatches[1].assertAs(TokenGrepMethod.Glob)
+                            .tokens,
+                            temp,
+                            nullable!ScopeData(parent)
+                    );
+            }
+            else
+            {
+                conditionNodeData.isScope = false;
+                auto conditionLineNode = expressionNodeFromTokens(
+                    lineVariety.tokenMatches[1].assertAs(TokenGrepMethod.Glob).tokens
+                );
+                if (conditionLineNode.length != 1)
+                    throw new SyntaxError(
+                        "Expression node tree could not be parsed properly (if without scope)",
+                        lineVariety.tokenMatches[1].tokens[0]);
+                conditionNodeData.conditionResultNode = conditionLineNode[0];
 
-    case LineVariety.SimpleExpression:
-        size_t expression_end = tokens.findNearestSemiColon(index);
-        if (expression_end == -1)
-            throw new SyntaxError("Semicolon not found!", tokens[index]);
-        auto nodes = expressionNodeFromTokens(tokens[index .. expression_end]);
-        if (nodes.length != 1)
-            throw new SyntaxError(
-                "Expression node tree could not be parsed properly (Not reducable into single node)", tokens[index]);
-        parent.instructions ~= nodes[0];
-        index = expression_end + 1;
+            }
+            AstNode node = new AstNode();
+            node.action = AstAction.IfStatement;
+            node.conditionNodeData = conditionNodeData;
+            parent.instructions ~= node;
+            break;
 
-        break;
-    default:
-        import std.conv;
+        case LineVariety.SimpleExpression:
+            size_t expression_end = tokens.findNearestSemiColon(index);
+            if (expression_end == -1)
+                throw new SyntaxError("Semicolon not found!", tokens[index]);
+            auto nodes = expressionNodeFromTokens(tokens[index .. expression_end]);
+            if (nodes.length != 1)
+                throw new SyntaxError(
+                    "Expression node tree could not be parsed properly (Not reducable into single node)", tokens[index]);
+            parent.instructions ~= nodes[0];
+            index = expression_end + 1;
 
-        assert(0, "Not yet implemented: " ~ lineVariety.lineVariety.to!string);
+            break;
+        default:
+            import std.conv;
+
+            assert(0, "Not yet implemented: " ~ lineVariety.lineVariety.to!string);
 
     }
     return lineVariety;
@@ -334,8 +335,11 @@ ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, Token[]
 
     return scopeData;
 }
-ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, string data){
+
+ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, string data)
+{
     import parsing.tokenizer.make_tokens;
+
     size_t index;
     GLOBAL_ERROR_STATE = data;
     return parseMultilineScope(

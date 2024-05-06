@@ -51,8 +51,7 @@ public enum GenerationFlags
 
     // Feature sets
     Common,
-    Native,
-    // Remaining features may be toggled, sourced from gallinule ID enums (not CR)
+    Native,// Remaining features may be toggled, sourced from gallinule ID enums (not CR)
 }
 
 void main()

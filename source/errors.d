@@ -10,7 +10,8 @@ class SyntaxError : Error
     this(string msg, Token problemToken, string file = __FILE__, size_t line = __LINE__, Throwable next = null)
     {
         string errorString = msg;
-        try{
+        try
+        {
             import std.conv : to;
 
             bool foundLine = false;
@@ -19,7 +20,8 @@ class SyntaxError : Error
             size_t startOfLine = 0;
             size_t testIndex = 0;
 
-            if (GLOBAL_ERROR_STATE != null && problemToken.startingIndex < GLOBAL_ERROR_STATE.length)
+            if (GLOBAL_ERROR_STATE != null && problemToken.startingIndex < GLOBAL_ERROR_STATE
+                .length)
             {
                 while (GLOBAL_ERROR_STATE.length > testIndex)
                 {
@@ -47,11 +49,13 @@ class SyntaxError : Error
 
             errorString ~= AnsiColor.BackgroundRed;
             size_t endOfProblem = problemToken.startingIndex + problemToken.value.length;
-            
+
             errorString ~= GLOBAL_ERROR_STATE[problemToken.startingIndex .. endOfProblem];
             errorString ~= AnsiColor.Reset;
             errorString ~= GLOBAL_ERROR_STATE[endOfProblem .. testIndex];
-        } catch(Exception e){
+        }
+        catch (Exception e)
+        {
             errorString ~= "ASDKASDASD";
         }
         super(errorString, file, line, next);

@@ -34,84 +34,87 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
 {
     switch (node.action)
     {
-    case AstAction.Expression:
-    case AstAction.ArrayGrouping:
-        AstNode newNode = new AstNode;
-        newNode.action = node.action == AstAction.Expression ? AstAction.TypeTuple
-            : AstAction.TypeArray;
-        newNode.commaSeperatedNodes = new AstNode[][0];
-        newNode.firstNodeOperand = null;
-        newNode.isIntegerLiteral = false;
-        foreach (i, subArray; splitNodesAtCommas(node.expressionNodeData.components)){
-            newNode.commaSeperatedNodes ~= genTypeTree(subArray);
-            if (i != 0) newNode.isIntegerLiteral = false;
-            else if(i == 0 && subArray.length && subArray[0].action == AstAction.LiteralUnit)
-                newNode.isIntegerLiteral = true;
-        }
-        return nullable!AstNode(newNode);
-    case AstAction.TokenHolder:
-        if (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace)
-            return nullable!AstNode(null);
-        switch (node.tokenBeingHeld.tokenVariety)
-        {
-        case TokenType.ExclamationMark:
-            if (previouslyParsedNodes.length == 0)
-                throw new SyntaxError(
-                    "Can't result template and it's connection to a type", node.tokenBeingHeld);
+        case AstAction.Expression:
+        case AstAction.ArrayGrouping:
             AstNode newNode = new AstNode;
-            newNode.action = AstAction.TypeGeneric;
-            AstNode[] followingNodes = genTypeTree(protoNodes[index + 1 .. $]);
-            if (followingNodes.length == 0)
-                throw new SyntaxError(
-                    "Generic has no nodes", node.tokenBeingHeld);
-            newNode.typeGenericNodeData = TypeGenericNodeData(
-                previouslyParsedNodes[$ - 1],
-                followingNodes[0]
-            );
-
-            index = protoNodes.length;
-            previouslyParsedNodes[$ - 1] = newNode;
-
-            if (followingNodes.length != 1)
-                previouslyParsedNodes ~= followingNodes[1 .. $];
-
-            return nullable!AstNode(null);
-        case TokenType.Operator:
-            AstNode newNode = new AstNode;
-            AstNode[] followingNodes = genTypeTree(protoNodes[index + 1 .. $]);
-            // protoNodes[index+1 .. $].writeln;
-            newNode.expressionNodeData = ExpressionNodeData(node.tokenBeingHeld.value[0], 0, followingNodes);
-            if (newNode.expressionNodeData.opener == '*')
+            newNode.action = node.action == AstAction.Expression ? AstAction.TypeTuple
+                : AstAction.TypeArray;
+            newNode.commaSeperatedNodes = new AstNode[][0];
+            newNode.firstNodeOperand = null;
+            newNode.isIntegerLiteral = false;
+            foreach (i, subArray; splitNodesAtCommas(node.expressionNodeData.components))
             {
-                newNode.action = AstAction.TypePointer;
+                newNode.commaSeperatedNodes ~= genTypeTree(subArray);
+                if (i != 0)
+                    newNode.isIntegerLiteral = false;
+                else if (i == 0 && subArray.length && subArray[0].action == AstAction.LiteralUnit)
+                    newNode.isIntegerLiteral = true;
             }
-            else if (newNode.expressionNodeData.opener == '&')
-            {
-                newNode.action = AstAction.TypeReference;
-            }
-            else
-            {
-                throw new SyntaxError(
-                    "Unknown type operator", node.tokenBeingHeld);
-            }
-
-            index = protoNodes.length;
             return nullable!AstNode(newNode);
-        case TokenType.Semicolon:
-            return nullable!AstNode(null);
-        default:
-            node.tokenBeingHeld.writeln;
-            assert(0);
-        }
-        node.tokenBeingHeld.writeln;
-        return nullable!AstNode(null);
+        case AstAction.TokenHolder:
+            if (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace)
+                return nullable!AstNode(null);
+            switch (node.tokenBeingHeld.tokenVariety)
+            {
+                case TokenType.ExclamationMark:
+                    if (previouslyParsedNodes.length == 0)
+                        throw new SyntaxError(
+                            "Can't result template and it's connection to a type", node
+                                .tokenBeingHeld);
+                    AstNode newNode = new AstNode;
+                    newNode.action = AstAction.TypeGeneric;
+                    AstNode[] followingNodes = genTypeTree(protoNodes[index + 1 .. $]);
+                    if (followingNodes.length == 0)
+                        throw new SyntaxError(
+                            "Generic has no nodes", node.tokenBeingHeld);
+                    newNode.typeGenericNodeData = TypeGenericNodeData(
+                        previouslyParsedNodes[$ - 1],
+                        followingNodes[0]
+                    );
 
-    case AstAction.LiteralUnit:
-    case AstAction.NamedUnit:
-        return nullable!AstNode(node);
-    default:
-        node.action.writeln;
-        assert(0);
+                    index = protoNodes.length;
+                    previouslyParsedNodes[$ - 1] = newNode;
+
+                    if (followingNodes.length != 1)
+                        previouslyParsedNodes ~= followingNodes[1 .. $];
+
+                    return nullable!AstNode(null);
+                case TokenType.Operator:
+                    AstNode newNode = new AstNode;
+                    AstNode[] followingNodes = genTypeTree(protoNodes[index + 1 .. $]);
+                    // protoNodes[index+1 .. $].writeln;
+                    newNode.expressionNodeData = ExpressionNodeData(node.tokenBeingHeld.value[0], 0, followingNodes);
+                    if (newNode.expressionNodeData.opener == '*')
+                    {
+                        newNode.action = AstAction.TypePointer;
+                    }
+                    else if (newNode.expressionNodeData.opener == '&')
+                    {
+                        newNode.action = AstAction.TypeReference;
+                    }
+                    else
+                    {
+                        throw new SyntaxError(
+                            "Unknown type operator", node.tokenBeingHeld);
+                    }
+
+                    index = protoNodes.length;
+                    return nullable!AstNode(newNode);
+                case TokenType.Semicolon:
+                    return nullable!AstNode(null);
+                default:
+                    node.tokenBeingHeld.writeln;
+                    assert(0);
+            }
+            node.tokenBeingHeld.writeln;
+            return nullable!AstNode(null);
+
+        case AstAction.LiteralUnit:
+        case AstAction.NamedUnit:
+            return nullable!AstNode(node);
+        default:
+            node.action.writeln;
+            assert(0);
     }
 }
 
@@ -165,19 +168,19 @@ size_t prematureTypeLength(Token[] tokens, size_t index)
 
         switch (token.tokenVariety)
         {
-        case TokenType.Operator:
-        case TokenType.Comment:
-        case TokenType.WhiteSpace:
-            break;
-        case TokenType.Period:
-        case TokenType.ExclamationMark:
-            wasLastFinalToken = false;
-            break;
-        default:
-            if (wasLastFinalToken)
-                return index - originalIndex - 1;
-            wasLastFinalToken = true;
-            break;
+            case TokenType.Operator:
+            case TokenType.Comment:
+            case TokenType.WhiteSpace:
+                break;
+            case TokenType.Period:
+            case TokenType.ExclamationMark:
+                wasLastFinalToken = false;
+                break;
+            default:
+                if (wasLastFinalToken)
+                    return index - originalIndex - 1;
+                wasLastFinalToken = true;
+                break;
         }
 
     }
@@ -191,11 +194,10 @@ Nullable!AstNode typeFromTokens(Token[] tokens, ref size_t index)
     size_t length = tokens.prematureTypeLength(index);
     if (length == 0)
         return nullable!AstNode(null);
-    
 
     // Groups parenthesis and brackets into expression groups
     Token firstToken = tokens[index];
-    AstNode[] protoNodes = phaseOne(tokens[index..index+=length]);
+    AstNode[] protoNodes = phaseOne(tokens[index .. index += length]);
     Nullable!(AstNode[]) maybeArray = genTypeTree(protoNodes);
     if (maybeArray == null)
         return nullable!AstNode(null);

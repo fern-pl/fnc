@@ -23,6 +23,7 @@ unittest
 
         assert(output == commentFromString);
         import std.stdio;
+
         assert(stringWithComment[index .. $] == afterComment);
 
     }

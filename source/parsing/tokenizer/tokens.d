@@ -29,9 +29,9 @@ const dchar[] validBraceVarieties = ['{', '}', '(', ')', '[', ']'];
 const dchar[] validOpenBraceVarieties = ['{', '(', '['];
 const dchar[] validCloseBraceVarieties = ['}', ')', ']'];
 const dchar[dchar] braceOpenToBraceClose = [
-    '{': '}',
-    '(': ')',
-    '[': ']'
+    '{' : '}',
+    '(' : ')',
+    '[' : ']'
 ];
 
 const dchar[] validOperators = ['<', '>', '+', '-', '*', '/', '%', '~', '&'];
@@ -106,22 +106,22 @@ TokenType getVarietyOfLetter(dchar symbol)
 
     switch (symbol)
     {
-    case '=':
-        return TokenType.Equals;
-    case ';':
-        return TokenType.Semicolon;
-    case ':':
-        return TokenType.Colon;
-    case '|':
-        return TokenType.Pipe;
-    case '.':
-        return TokenType.Period;
-    case ',':
-        return TokenType.Comma;
-    case '!':
-        return TokenType.ExclamationMark;
-    default:
-        break;
+        case '=':
+            return TokenType.Equals;
+        case ';':
+            return TokenType.Semicolon;
+        case ':':
+            return TokenType.Colon;
+        case '|':
+            return TokenType.Pipe;
+        case '.':
+            return TokenType.Period;
+        case ',':
+            return TokenType.Comma;
+        case '!':
+            return TokenType.ExclamationMark;
+        default:
+            break;
     }
 
     if (isDigit(symbol))
