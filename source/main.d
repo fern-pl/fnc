@@ -63,8 +63,9 @@ void main()
     // auto x = DeclarationAndAssignment.matchesToken("int x = 4;".tokenizeText);
     // (x == null).writeln;
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-    int main(){
-        return 69;
-        }");
+    int main()
+    {
+        return some.func(23).print();
+    }");
     newScope.tree();
 }

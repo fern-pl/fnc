@@ -481,7 +481,11 @@ private Token OPR(dchar o)
 // of each layer they are read left to right, or right to left.
 
 const OperatorPrecedenceLayer[] operatorPrecedence = [
-    // OperatorPrecedenceLayer(OperatorOrder.LeftToRight, []),
+    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+        OperationPrecedenceEntry(OperationVariety.Period, [
+            Token(TokenType.Filler), Token(TokenType.Period, ['.']), Token(TokenType.Filler)
+        ]),
+    ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.PreIncrement, [
                     OPR('+'), OPR('+'), Token(TokenType.Filler)
@@ -687,6 +691,8 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
                 return false;
             if (token.value != entry.tokens[index].value)
                 return false;
+            break;
+        case TokenType.Period:
             break;
         default:
             assert(0);

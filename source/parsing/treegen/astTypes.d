@@ -119,7 +119,9 @@ enum OperationVariety
     LessThan, // <
     LessThanEq,
     EqualTo,
-    NotEqualTo
+    NotEqualTo,
+
+    Period // foo.bar
 }
 
 import parsing.treegen.scopeParser : ScopeData;
