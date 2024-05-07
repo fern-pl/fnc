@@ -85,6 +85,7 @@ Operators are a builtin part of the language used to perform certain operations.
 | `--` `++` `~` `-` | Unary postdecrement, postincrement, not, and neg operators. Postdecrement and postincrement may appear as preX versions in which they are after a variable. |
 | `*` `&` | Unary pointer dereference and reference. |
 | `x ? y : z` | Ternary operator, if `x` evaluates to `true`, the output will be `y`, otherwise it will be `z` |
+| `x..y` | Iota operator, creates a range from `x` to `y` not containing the value `y`. |
 
 The following operators are defined as op-assign, meaning that they perform the operation followed by an assignment.
 
@@ -142,8 +143,8 @@ An example of tagged syntax is as follows:
 ```
 tagged IpAddr
 {
-	V4(ubyte, ubyte, ubyte, ubyte);
-	V6(string);
+	ubyte[4] V4;
+	string V6;
 }
 ```
 
@@ -153,7 +154,27 @@ All types may, but not must, contain member declarations, and the above are only
 
 `(types..)`
 
+Tagged have a tag which indicates what kind of value they hold, but they will only ever hold one of their fields as a value. Tagged may be checked for their `tag` by doing `foo is name` or `foo is type` like in `foo is V4`.
+
+Unlike all other types, tagged may inherit a builtin type as a prime inherit, which will act as the default type for all fields which do not have a type declared.
+
 Tagged may be implicitly created by wrapping multiple types in parenthesis, like `(int, short) foo` and assignment when value is one of `int` and `short`.
+Additionally, tagged may implicitly create from a type by accessing a member, like from `IpAddr.V4` in which the default value of `V4` is selected.
+
+```
+tagged A : ^ubyte
+{
+    a = 3;
+    int b;
+}
+
+A foo = A.a;
+A bar = A.b(2);
+// Illegal! No explicit constructor calls because it is unknown what the tag is supposed to be!
+A baz = A(2);
+```
+
+Fields in tagged act as the constructor as well as data, and tagged may not be directly constructed using the type.
 
 ### Tuple
 
@@ -191,6 +212,21 @@ Setting or modifying the value of `return` does not have any effect in a `void` 
 ##### Parameters
 
 `[variable declaration]...`
+
+Parameters appended with `...` after their declaration will act as variadic, or array parameters which may take an infinite number of said declaration at the end of the list.
+If a function takes one parameter of an array type, it will be variadic by default, like in this example:
+
+```
+void foo(int[2])
+{
+    // ...
+}
+
+foo(1, 2);
+foo([1, 2]);
+```
+
+Parameters with values set after their declaration will have optional values set by default, these, like variadic parameters, must be the last parameters in the function signature.
 
 ##### Arguments
 
