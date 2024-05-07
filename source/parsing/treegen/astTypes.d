@@ -121,7 +121,8 @@ enum OperationVariety
     EqualTo,
     NotEqualTo,
 
-    Period // foo.bar
+    Period, // foo.bar
+    Range, // x..y OR 0..99
 }
 
 import parsing.treegen.scopeParser : ScopeData;
@@ -135,6 +136,17 @@ struct ConditionNodeData
     {
         ScopeData conditionScope;
         AstNode conditionResultNode;
+    }
+}
+
+struct ElseNodeData
+{
+    dchar[][] precedingKeywords;
+    bool isScope;
+    union
+    {
+        ScopeData elseScope;
+        AstNode elseResultNode;
     }
 }
 
@@ -178,7 +190,8 @@ class AstNode
         KeywordNodeData keywordNodeData; // Keyword
         AssignVariableNodeData assignVariableNodeData; // AssignVariable
 
-        ConditionNodeData conditionNodeData;
+        ConditionNodeData conditionNodeData; // IfStatement
+        ElseNodeData elseNodeData;
 
         SingleArgumentOperationNodeData singleArgumentOperationNodeData; // SingleArgumentOperation
         DoubleArgumentOperationNodeData doubleArgumentOperationNodeData; // DoubleArgumentOperation
@@ -374,12 +387,23 @@ class AstNode
                     conditionNodeData.conditionScope.tree(tabCount + 1);
                 }
                 else
-                {
                     conditionNodeData.conditionResultNode.tree(tabCount + 1);
-                }
+                
                 // printTabs();
                 break;
+            case AstAction.ElseStatement:
+                write(action);
+                writeln(" hasScope = " ~ elseNodeData.isScope.to!string ~ " keywords = " ~ elseNodeData
+                        .precedingKeywords.to!string);
+                if (elseNodeData.isScope)
+                {
+                    import parsing.treegen.scopeParser : tree;
 
+                    elseNodeData.elseScope.tree(tabCount + 1);
+                }
+                else
+                    elseNodeData.elseResultNode.tree(tabCount + 1);
+                break;
             default:
                 writeln(this.to!string);
                 break;
@@ -387,14 +411,6 @@ class AstNode
     }
 }
 
-// struct ScopeParsingMode{
-//     bool allowDefiningObjects;
-//     bool allowDefiningFunctions;
-//     bool allowVariableDefinitions;
-//     bool allowInlineVariableAssignments;
-//     bool hasProperties;
-//     bool isCommaSeperated;
-// }
 import std.container.array;
 
 Nullable!AstNode nextNonWhiteNode(Array!AstNode nodes, ref size_t index)

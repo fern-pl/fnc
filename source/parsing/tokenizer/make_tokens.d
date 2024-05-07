@@ -110,12 +110,17 @@ const TokenType[] groupableTokens = [
 private Token[] groupTokens(Token[] tokens)
 {
     Token[] groupedTokens;
-    foreach (Token token; tokens)
+    foreach (index, Token token; tokens)
     {
         // Handles numbers with decimals
         if (token.tokenVariety == TokenType.Period
             && groupedTokens.length
-            && groupedTokens[$ - 1].tokenVariety == TokenType.Number)
+            && groupedTokens[$ - 1].tokenVariety == TokenType.Number
+            && !( // Don't confuse ranges with numbers
+                index+1 < tokens.length
+                &&
+                tokens[index+1].tokenVariety == TokenType.Period
+            ))
         {
             groupedTokens[$ - 1].value ~= token.value;
             continue;
@@ -136,6 +141,10 @@ private Token[] groupTokens(Token[] tokens)
         if (groupedTokens[$ - 1].tokenVariety == TokenType.Letter && token.tokenVariety == TokenType
             .Number)
         {
+            groupedTokens[$ - 1].value ~= token.value;
+            continue;
+        }
+        if (groupedTokens[$ - 1].tokenVariety == TokenType.Period && token.tokenVariety == TokenType.Period){
             groupedTokens[$ - 1].value ~= token.value;
             continue;
         }

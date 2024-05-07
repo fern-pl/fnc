@@ -70,10 +70,20 @@ TokenGrepPacket TokenGrepPacketRec(TokenGrepMethod method, TokenGrepPacket[] lis
     return ret;
 }
 
+// The following are definitions of different types of
+// structures found throughout the language. They are defined
+// in a modular way, and it is surprisingly efficient.
+// This is all unmantainable as FUCK, and confusing to read.
+// But this works, and is quite convinent. 
+
 const TokenGrepPacket[] ReturnStatement = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Letter, "return".makeUnicodeString)
         ]),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.Equals, ['=']),
+            Token(TokenType.Operator, ['>']),
+    ]),
     TokenGrepPacketToken(TokenGrepMethod.Glob, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Semicolon, [';'])
@@ -114,12 +124,27 @@ const TokenGrepPacket[] IfStatementWithScope = [
             Token(TokenType.CloseBraces, ['}'])
         ]),
 ];
-
-// The following are definitions of different types of
-// structures found throughout the language. They are defined
-// in a modular way, and it is surprisingly efficient.
-// This is all unmantainable as FUCK, and confusing to read.
-// But this works, and is quite convinent. 
+const TokenGrepPacket[] ElseStatementWithoutScope = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.Letter, "else".makeUnicodeString)
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.Semicolon, [';'])
+        ]),
+];
+const TokenGrepPacket[] ElseStatementWithScope = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.Letter, "else".makeUnicodeString)
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.OpenBraces, ['{'])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.CloseBraces, ['}'])
+        ]),
+];
 
 const size_t DECLARATION_TYPE = 0;
 const size_t DECLARATION_VARS = 1;
@@ -251,6 +276,8 @@ enum LineVariety
     SimpleExpression,
     IfStatementWithScope,
     IfStatementWithoutScope,
+    ElseStatementWithScope,
+    ElseStatementWithoutScope,
     DeclarationLine,
     DeclarationAndAssignment,
 }
@@ -274,7 +301,10 @@ const VarietyTestPair[] GLOBAL_SCOPE_PARSE = [
 
 const VarietyTestPair[] FUNCTION_SCOPE_PARSE = [
     VarietyTestPair(LineVariety.IfStatementWithScope, IfStatementWithScope),
+    VarietyTestPair(LineVariety.ElseStatementWithScope, ElseStatementWithScope),
     VarietyTestPair(LineVariety.IfStatementWithoutScope, IfStatementWithoutScope),
+
+    VarietyTestPair(LineVariety.ElseStatementWithoutScope, ElseStatementWithoutScope),
     VarietyTestPair(LineVariety.ReturnStatement, ReturnStatement),
 ] ~ ABSTRACT_SCOPE_PARSE;
 
@@ -401,30 +431,34 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                 int braceDeph = 0;
                 size_t startingIndex = index;
+                index--;
                 auto grepMatchGroup = testWith[testIndex + 1 .. $];
                 while (true)
                 {
                     Nullable!Token tokenNullable = tokens.nextToken(index);
-                    if (tokenNullable.ptr == null)
+                    if (tokenNullable == null)
                         return tokenGrepBox(null);
                     Token token = tokenNullable;
                     globResult.tokens ~= token;
-
+                    
                     if (token.tokenVariety == TokenType.OpenBraces)
-                        braceDeph += 1;
-                    else if (token.tokenVariety == TokenType.CloseBraces && braceDeph != 0)
-                        braceDeph -= 1;
-                    else if (braceDeph == 0)
+                        braceDeph++;
+                    if (token.tokenVariety == TokenType.CloseBraces)
+                        braceDeph--;
+
+                    if (braceDeph == 0)
                     {
                         size_t index_inc = 0;
-                        auto res = grepMatchGroup.matchesToken(tokens[index .. $], index_inc);
-                        if (res.ptr)
+                        auto res = grepMatchGroup.matchesToken(tokens[index+1 .. $], index_inc);
+                        if (res != null)
                         {
-                            globResult.tokens = tokens[startingIndex .. index];
-                            index += index_inc;
+                            globResult.tokens = tokens[startingIndex .. index+1];
+                            index += index_inc + 1;
                             return tokenGrepBox(returnVal ~ globResult ~ res.value);
                         }
                     }
+
+
                 }
                 break;
             default:
@@ -599,6 +633,12 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                     Token(TokenType.Filler)
                 ]),
         ]),
+    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+            OperationPrecedenceEntry(OperationVariety.Range, [
+                    Token(TokenType.Filler), Token(TokenType.Period, ['.', '.']),
+                    Token(TokenType.Filler)
+                ]),
+        ]),
     OperatorPrecedenceLayer(OperatorOrder.RightToLeft, [
             OperationPrecedenceEntry(OperationVariety.Assignment, [
                     Token(TokenType.Filler), OPR('='), Token(TokenType.Filler)
@@ -698,7 +738,8 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
                     return false;
                 break;
             case TokenType.Period:
-                if (node.tokenBeingHeld.tokenVariety != TokenType.Period)
+                if (node.tokenBeingHeld.tokenVariety != TokenType.Period 
+                    || node.tokenBeingHeld.value.length != entry.tokens[index].value.length)
                     return false;
                 break;
             default:

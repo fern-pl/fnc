@@ -20,8 +20,6 @@ unittest
             int tv = x++ + y;
             float floaty = tv / 2;
         ".tokenizeText(), index, nullable!ScopeData(null));
-    import std.stdio;
-    newScope.instructions[0].tree();
     assert(newScope.instructions[0].action == AstAction.AssignVariable);
     assert(newScope.instructions[1].action == AstAction.AssignVariable);
     assert(newScope.instructions[2].action == AstAction.AssignVariable);

@@ -259,6 +259,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             auto conditionNodes = expressionNodeFromTokens(
                 lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
             );
+            (lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens).writeln;
             if (conditionNodes.length != 1)
                 throw new SyntaxError(
                     "Expression node tree could not be parsed properly (Not reducable into single node within if statement condition)",
@@ -297,7 +298,49 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             node.conditionNodeData = conditionNodeData;
             parent.instructions ~= node;
             break;
+        case LineVariety.ElseStatementWithScope:
+        case LineVariety.ElseStatementWithoutScope:
+            if (!parent.instructions.length || parent.instructions[$ - 1].action != AstAction
+                .IfStatement)
+                throw new SyntaxError(
+                    "Else statement without if statement!",
+                    lineVariety.tokenMatches[1].tokens[0]);
+            AstNode node = new AstNode();
+            node.action = AstAction.ElseStatement;
+            size_t endingIndex = index + lineVariety.length;
+            scope (exit)
+                index = endingIndex;
 
+            ElseNodeData elseNodeData;
+            elseNodeData.precedingKeywords = keywords;
+            if (lineVariety.lineVariety == LineVariety.ElseStatementWithScope)
+            {
+                size_t temp;
+                elseNodeData.isScope = true;
+                elseNodeData.elseScope
+                    = parseMultilineScope(
+                        FUNCTION_SCOPE_PARSE,
+                        lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob)
+                            .tokens,
+                            temp,
+                            nullable!ScopeData(parent)
+                    );
+            }
+            else
+            {
+                elseNodeData.isScope = false;
+                auto lineNode = expressionNodeFromTokens(
+                    lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
+                );
+                if (lineNode.length != 1)
+                    throw new SyntaxError(
+                        "Expression node tree could not be parsed properly (else without scope)",
+                        lineVariety.tokenMatches[0].tokens[0]);
+                elseNodeData.elseResultNode = lineNode[0];
+            }
+            node.elseNodeData = elseNodeData;
+            parent.instructions ~= node;
+            break;
         case LineVariety.SimpleExpression:
             size_t expression_end = tokens.findNearestSemiColon(index);
             if (expression_end == -1)
