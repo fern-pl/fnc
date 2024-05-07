@@ -17,11 +17,11 @@
 +/
 
 
-pure inline T min(T x, T y)
+pure inline T min(T)(T x, T y)
 {
     return => x > y : y ? x;
 }
-pure inline T max(T x, T y)
+pure inline T max(T)(T x, T y)
 {
     return => x > y : x ? y;
 }

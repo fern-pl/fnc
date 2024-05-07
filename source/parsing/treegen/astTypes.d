@@ -171,11 +171,22 @@ struct ExpressionNodeData
     AstNode[] components;
 }
 
+/+++ These are the act of calling a function ++++/
+struct FunctionCallArgument
+{
+    Nullable!(dchar[]) specifiedName = Nullable!(dchar[])(null);
+    AstNode source;
+}
 struct CallNodeData
 {
     NamedUnit func;
-    AstNode args;
+    FunctionCallArgument[] args;
 }
+/+++++++/
+
+
+
+
 
 struct TypeGenericNodeData
 {
@@ -342,7 +353,7 @@ class AstNode
                 break;
             case AstAction.Call:
                 writeln("Call " ~ callNodeData.func.to!string ~ ":");
-                callNodeData.args.tree(tabCount + 1);
+                // callNodeData.args.tree(tabCount + 1);
                 break;
             case AstAction.DoubleArgumentOperation:
                 write("opr ");

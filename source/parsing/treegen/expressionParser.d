@@ -89,6 +89,23 @@ public AstNode[] phaseOne(Token[] tokens)
     return ret;
 }
 
+private AstNode[][] splitNodesAtComma(const(AstNode[]) inputNodes)
+{
+    AstNode[][] nodes;
+    AstNode[] current;
+    foreach (AstNode node; inputNodes)
+    {
+        if (node.action == AstAction.TokenHolder 
+            && node.tokenBeingHeld.tokenVariety == TokenType.Comma)
+        {
+            nodes ~= current;
+            current = new nodes[0];
+            continue;
+        }
+        current ~= node;
+    }
+    return nodes;
+}
 // Handle function calls and operators
 public void phaseTwo(Array!AstNode nodes)
 {
