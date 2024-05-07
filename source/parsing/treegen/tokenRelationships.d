@@ -83,7 +83,7 @@ const TokenGrepPacket[] ReturnStatement = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Equals, ['=']),
             Token(TokenType.Operator, ['>']),
-    ]),
+        ]),
     TokenGrepPacketToken(TokenGrepMethod.Glob, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Semicolon, [';'])
@@ -314,6 +314,8 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
     return matchesToken(testWith, tokens, index);
 }
 
+import std.stdio;
+
 alias tokenGrepBox = Nullable!(TokenGrepResult[]);
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index)
 {
@@ -343,6 +345,9 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                 foreach (const(Token) potentialMatch; packet.tokens)
                 {
+                    potentialMatch.write;
+                    " == ".write;
+                    token.writeln;
                     if (potentialMatch.tokenVariety == token.tokenVariety)
                         doRet = false;
                     found ~= token;
@@ -370,35 +375,18 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 if (index >= tokens.length)
                     return tokenGrepBox(null);
 
-                Token[][] tstack;
-                Token[] currentGroup;
-                size_t maxComma = 0;
-                foreach (secountIndex, token; tokens[index .. $])
-                {
-                    if (token.tokenVariety == TokenType.Comma)
-                    {
-                        maxComma = secountIndex + 1;
-                        tstack ~= currentGroup;
-                        currentGroup = new Token[0];
-                        continue;
-                    }
-                    currentGroup ~= token;
-                }
-                size_t searchExtent;
-                tstack ~= currentGroup;
                 TokenGrepResult commaSeperatedGroup;
                 commaSeperatedGroup.method = TokenGrepMethod.PossibleCommaSeperated;
                 commaSeperatedGroup.commaSeperated = new TokenGrepResult[0];
-                foreach (Token[] tokenGroup; tstack)
+                for (size_t commaSearchIndex = index; commaSearchIndex < tokens.length;
+                    commaSearchIndex++)
                 {
-                    searchExtent = 0;
-                    auto res = matchesToken(packet.packets, tokenGroup, searchExtent);
-                    if (!res.ptr)
-                        return tokenGrepBox(null);
-                    commaSeperatedGroup.commaSeperated ~= res.value;
+                    size_t matchSize;
+                    auto itemTestResult = packet.packets.matchesToken(tokens[commaSearchIndex .. $], matchSize);
+                    if (itemTestResult == null) break;
+                    
                 }
                 returnVal ~= commaSeperatedGroup;
-                index += maxComma + searchExtent;
                 break;
             case TokenGrepMethod.Type:
                 size_t potentialSize = prematureTypeLength(tokens, index);
@@ -440,24 +428,26 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                         return tokenGrepBox(null);
                     Token token = tokenNullable;
                     globResult.tokens ~= token;
-                    
+
                     if (token.tokenVariety == TokenType.OpenBraces)
                         braceDeph++;
                     if (token.tokenVariety == TokenType.CloseBraces)
                         braceDeph--;
 
+                    braceDeph.write;
+                    ": ".write;
+                    token.writeln;
                     if (braceDeph == 0)
                     {
                         size_t index_inc = 0;
-                        auto res = grepMatchGroup.matchesToken(tokens[index+1 .. $], index_inc);
+                        auto res = grepMatchGroup.matchesToken(tokens[index + 1 .. $], index_inc);
                         if (res != null)
                         {
-                            globResult.tokens = tokens[startingIndex .. index+1];
+                            globResult.tokens = tokens[startingIndex .. index + 1];
                             index += index_inc + 1;
                             return tokenGrepBox(returnVal ~ globResult ~ res.value);
                         }
                     }
-
 
                 }
                 break;
@@ -738,7 +728,7 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
                     return false;
                 break;
             case TokenType.Period:
-                if (node.tokenBeingHeld.tokenVariety != TokenType.Period 
+                if (node.tokenBeingHeld.tokenVariety != TokenType.Period
                     || node.tokenBeingHeld.value.length != entry.tokens[index].value.length)
                     return false;
                 break;

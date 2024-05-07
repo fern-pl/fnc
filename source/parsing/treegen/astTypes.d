@@ -45,13 +45,22 @@ enum AstAction
     TypeReference, // &int
     TypeGeneric, // Result!(int, string)
     TypeVoidable
-
 }
 
 bool isExpressionLike(AstAction action)
 {
     return action == AstAction.Expression
         || action == AstAction.ArrayGrouping;
+}
+
+bool isCallable(AstAction action)
+{
+    return action == AstAction.DoubleArgumentOperation
+        || action == AstAction.SingleArgumentOperation
+        || action == AstAction.Call
+        || action == AstAction.Expression
+        || action == AstAction.LiteralUnit
+        || action == AstAction.NamedUnit;
 }
 
 struct KeywordNodeData
@@ -177,16 +186,13 @@ struct FunctionCallArgument
     Nullable!(dchar[]) specifiedName = Nullable!(dchar[])(null);
     AstNode source;
 }
+
 struct CallNodeData
 {
-    NamedUnit func;
+    AstNode func;
     FunctionCallArgument[] args;
 }
 /+++++++/
-
-
-
-
 
 struct TypeGenericNodeData
 {
@@ -250,10 +256,10 @@ class AstNode
                 sink(namedUnit.names.to!string);
                 break;
             case AstAction.Call:
-                sink(callNodeData.func.names.to!string);
-                sink("(\n");
-                sink(callNodeData.args.to!string);
-                sink("\n)");
+                sink(callNodeData.func.to!string);
+                // sink("(\n");
+                // sink(callNodeData.args.to!string);
+                // sink("\n)");
                 break;
             case AstAction.LiteralUnit:
                 sink(literalUnitCompenents.to!string);
@@ -404,7 +410,7 @@ class AstNode
                 }
                 else
                     conditionNodeData.conditionResultNode.tree(tabCount + 1);
-                
+
                 // printTabs();
                 break;
             case AstAction.ElseStatement:
@@ -429,17 +435,22 @@ class AstNode
 
 import std.container.array;
 
+bool isWhite(const AstNode node)
+{
+    import parsing.tokenizer.tokens : TokenType;
+
+    return node.action == AstAction.TokenHolder &&
+        (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace
+                || node.tokenBeingHeld.tokenVariety == TokenType.Comment);
+}
+
 Nullable!AstNode nextNonWhiteNode(Array!AstNode nodes, ref size_t index)
 {
     Nullable!AstNode found;
     while (nodes.length > index)
     {
-        import parsing.tokenizer.tokens;
-
         AstNode node = nodes[index++];
-        if (node.action == AstAction.TokenHolder &&
-            (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace
-                || node.tokenBeingHeld.tokenVariety == TokenType.Comment))
+        if (node.isWhite)
             continue;
         found = node;
         break;
@@ -452,12 +463,8 @@ Nullable!AstNode nextNonWhiteNode(AstNode[] nodes, ref size_t index)
     Nullable!AstNode found;
     while (nodes.length > index)
     {
-        import parsing.tokenizer.tokens;
-
         AstNode node = nodes[index++];
-        if (node.action == AstAction.TokenHolder &&
-            (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace
-                || node.tokenBeingHeld.tokenVariety == TokenType.Comment))
+        if (node.isWhite)
             continue;
         found = node;
         break;

@@ -59,21 +59,17 @@ void main()
     size_t index = 0;
     // typeFromTokens("".tokenizeText, index);
 
-    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-    import std.os;
-    
-    double add(const double x, const double y, const double z = 5)
-    {
-        return => x + y + z * 2;
-    }
-    auto getAdd()
-    {
-        return => add.ptr;
-    }
-    int main()
-    {
-        auto t = getAdd()(3, 5);
-        auto tt = getAdd()(y : t+x, 4);   
-    }");
-    newScope.tree();
+    // auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "
+    // auto t = getAdd()(3, 5);
+    // ");
+    // newScope.tree();
+    // ASSIG
+    import errors;
+    GLOBAL_ERROR_STATE = "auto x   = hello(1, 2)(2);";
+    auto t = DeclarationAndAssignment.matchesToken(GLOBAL_ERROR_STATE.tokenizeText, index);
+    // GLOBAL_ERROR_STATE.tokenizeText.writeln;
+    (t != null).writeln;
+    import parsing.treegen.expressionParser;
+    // expressionNodeFromTokens(t.value[3].tokens).writeln;
+
 }

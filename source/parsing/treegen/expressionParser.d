@@ -89,17 +89,17 @@ public AstNode[] phaseOne(Token[] tokens)
     return ret;
 }
 
-private AstNode[][] splitNodesAtComma(const(AstNode[]) inputNodes)
+private AstNode[][] splitNodesAtComma(AstNode[] inputNodes)
 {
     AstNode[][] nodes;
     AstNode[] current;
     foreach (AstNode node; inputNodes)
     {
-        if (node.action == AstAction.TokenHolder 
+        if (node.action == AstAction.TokenHolder
             && node.tokenBeingHeld.tokenVariety == TokenType.Comma)
         {
             nodes ~= current;
-            current = new nodes[0];
+            current = new AstNode[0];
             continue;
         }
         current ~= node;
@@ -107,41 +107,92 @@ private AstNode[][] splitNodesAtComma(const(AstNode[]) inputNodes)
     return nodes;
 }
 // Handle function calls and operators
-public void phaseTwo(Array!AstNode nodes)
+public void phaseTwo(ref Array!AstNode nodes)
 {
+    AstNode[] nonWhiteStack;
+    size_t[] nonWhiteIndexStack;
+
+    Array!AstNode newNodesArray;
+
+
+    scope (exit)
+        nodes = newNodesArray;
+
+    // Nullable!AstAction lastNonWhite = nullable!AstNode(null);
     for (size_t index = 0; index < nodes.length; index++)
     {
         AstNode node = nodes[index];
-        if (node.action == AstAction.NamedUnit && index + 1 < nodes.length && nodes[index + 1]
-            .action.isExpressionLike)
+
+        if (node.action == AstAction.Expression
+            && nonWhiteStack.length
+            && nonWhiteStack[$ - 1].action.isCallable
+            )
         {
             AstNode functionCall = new AstNode();
-            AstNode args = nodes[index + 1];
-
-            Array!AstNode components;
-            components ~= args.expressionNodeData.components;
-            phaseTwo(components);
-            scanAndMergeOperators(components);
-            args.expressionNodeData.components.length = components.data.length;
-            args.expressionNodeData.components[0 .. $] = components.data[0 .. $];
+            scope (exit)
+                newNodesArray[$-1] = functionCall;
+            scope (exit)
+                nonWhiteStack ~= functionCall;
 
             functionCall.action = AstAction.Call;
-            functionCall.callNodeData = CallNodeData(
-                node.namedUnit,
-                args
-            );
-            nodes[index] = functionCall;
-            nodes.linearRemove(nodes[index + 1 .. index + 2]);
+
+            CallNodeData callNodeData;
+
+            scope (exit)
+                functionCall.callNodeData = callNodeData;
+
+            callNodeData.func = nonWhiteStack[$ - 1];
+
+
+            
+
+            // Array!AstNode components;
+            // foreach (AstNode[] argumentNodeBatch; splitNodesAtComma(
+            //         node.expressionNodeData.components))
+            // {
+            //     components.clear();
+            //     components ~= argumentNodeBatch;
+            //     phaseTwo(components);
+            //     scanAndMergeOperators(components);
+            // }
+
         }
-        else if (node.action.isExpressionLike)
+        else
         {
-            Array!AstNode components;
-            components ~= node.expressionNodeData.components;
-            phaseTwo(components);
-            scanAndMergeOperators(components);
-            node.expressionNodeData.components.length = components.data.length;
-            node.expressionNodeData.components[0 .. $] = components.data[0 .. $];
+            newNodesArray ~= node;
+            nonWhiteStack ~= node;
         }
+        nonWhiteIndexStack ~= newNodesArray.length - 1;
+
+        //     if (node.action == AstAction.Expression && lastNonWhite != null )
+        //     {
+        //         AstNode functionCall = new AstNode();
+        //         AstNode args = nodes[index + 1];
+
+        //         Array!AstNode components;
+        //         components ~= args.expressionNodeData.components;
+                // phaseTwo(components);
+                // scanAndMergeOperators(components);
+        //         args.expressionNodeData.components.length = components.data.length;
+        //         args.expressionNodeData.components[0 .. $] = components.data[0 .. $];
+
+        //         functionCall.action = AstAction.Call;
+        //         functionCall.callNodeData = CallNodeData(
+        //             node.namedUnit,
+        //             args
+        //         );
+        //         nodes[index] = functionCall;
+        //         nodes.linearRemove(nodes[index + 1 .. index + 2]);
+        //     }
+        //     else if (node.action.isExpressionLike)
+        //     {
+        //         Array!AstNode components;
+        //         components ~= node.expressionNodeData.components;
+        //         phaseTwo(components);
+        //         scanAndMergeOperators(components);
+        //         node.expressionNodeData.components.length = components.data.length;
+        //         node.expressionNodeData.components[0 .. $] = components.data[0 .. $];
+        //     }
     }
 }
 

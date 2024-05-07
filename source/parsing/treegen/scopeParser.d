@@ -348,7 +348,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             auto nodes = expressionNodeFromTokens(tokens[index .. expression_end]);
             if (nodes.length != 1)
                 throw new SyntaxError(
-                    "Expression node tree could not be parsed properly (Not reducable into single node)", tokens[index]);
+                    "Expression node tree could not be parsed properly (Not reducable into single node in SimpleExpression)", tokens[index]);
             parent.instructions ~= nodes[0];
             index = expression_end + 1;
 
