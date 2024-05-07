@@ -1,0 +1,82 @@
+/// Windows `HResult` enum implementation and helper functions.
+module std.hresult;
+
+public tagged HResult
+{
+    S_OK = 0x00000000;
+    S_FALSE = 0x00000001;
+    E_ABORT = 0x80004004;
+    E_FAIL = 0x80004005;
+    E_NOINTERFACE = 0x80004002;
+    E_NOTIMPL = 0x80004001;
+    E_POINTER = 0x80004003;
+    E_UNEXPECTED = 0x8000FFFF;
+
+    E_ACCESSDENIED = 0x80070005;
+    E_HANDLE = 0x80070006;
+    E_INVALIDARG = 0x80070057;
+    E_OUTOFMEMORY = 0x8007000E;
+    E_BADIMAGEFORMAT = 0x8007000B;
+    E_BOUNDS = 0x8000000B;
+    E_PENDING = 0x8000000A;
+    E_NOT_SET = 0x80070490;
+
+    CO_E_NOTINITIALIZED = 0x800401F0;
+    CO_E_ALREADYINITIALIZED = 0x800401F1;
+    CO_E_NOTSUPPORTED = 0x80004021;
+    CO_E_CLASSSTRING = 0x800401F3;
+    CO_E_APPNOTFOUND = 0x800401F5;
+    CO_E_OBJECTNOTCONNECTED = 0x800401FD;
+
+    DISP_E_BADINDEX = 0x8002000B;
+    DISP_E_OVERFLOW = 0x8002000A;
+    DISP_E_TYPEMISMATCH = 0x80020005;
+    DISP_E_PARAMNOTFOUND = 0x80020004;
+    DISP_E_UNKNOWNINTERFACE = 0x80020001;
+
+    RPC_E_CHANGED_MODE = 0x80010106;
+    RPC_E_TOO_LATE = 0x80010119;
+    RPC_E_INVALIDMETHOD = 0x80010104;
+    RPC_E_DISCONNECTED = 0x80010108;
+    RPC_E_SERVERFAULT = 0x80010105;
+    RPC_E_TIMEOUT = 0x8001011F;
+    RPC_E_NOT_REGISTERED = 0x80010103;
+    RPC_E_DUPLICATE_NAME = 0x8001012C;
+
+    bool OK() => this is HResult.S_OK;
+    bool NOTOK() => this !is HResult.S_OK;
+    bool FALSE() => this is HResult.S_FALSE;
+    bool ABORT() => this is HResult.E_ABORT;
+    bool FAIL() => this is HResult.E_FAIL;
+    bool NOINTERFACE() => this is HResult.E_NOINTERFACE;
+    bool NOTIMPL() => this is HResult.E_NOTIMPL;
+    bool POINTER() => this is HResult.E_POINTER;
+    bool UNEXPECTED() => this is HResult.E_UNEXPECTED;
+    bool ACCESSDENIED() => this is HResult.E_ACCESSDENIED;
+    bool HANDLE() => this is HResult.E_HANDLE;
+    bool INVALIDARG() => this is HResult.E_INVALIDARG;
+    bool OUTOFMEMORY() => this is HResult.E_OUTOFMEMORY;
+    bool BADIMAGEFORMAT() => this is HResult.E_BADIMAGEFORMAT;
+    bool BOUNDS() => this is HResult.E_BOUNDS;
+    bool PENDING() => this is HResult.E_PENDING;
+    bool NOT_SET() => this is HResult.E_NOT_SET;
+    bool NOTINITIALIZED() => this is HResult.CO_E_NOTINITIALIZED;
+    bool ALREADYINITIALIZED() => this is HResult.CO_E_ALREADYINITIALIZED;
+    bool NOTSUPPORTED() => this is HResult.CO_E_NOTSUPPORTED;
+    bool CLASSSTRING() => this is HResult.CO_E_CLASSSTRING;
+    bool APPNOTFOUND() => this is HResult.CO_E_APPNOTFOUND;
+    bool OBJECTNOTCONNECTED() => this is HResult.CO_E_OBJECTNOTCONNECTED;
+    bool BADINDEX() => this is HResult.DISP_E_BADINDEX;
+    bool OVERFLOW() => this is HResult.DISP_E_OVERFLOW;
+    bool TYPEMISMATCH() => this is HResult.DISP_E_TYPEMISMATCH;
+    bool PARAMNOTFOUND() => this is HResult.DISP_E_PARAMNOTFOUND;
+    bool UNKNOWNINTERFACE() => this is HResult.DISP_E_UNKNOWNINTERFACE;
+    bool CHANGEDMODE() => this is HResult.RPC_E_CHANGED_MODE;
+    bool TOOLATE() => this is HResult.RPC_E_TOO_LATE;
+    bool INVALIDMETHOD() => this is HResult.RPC_E_INVALIDMETHOD;
+    bool DISCONNECTED() => this is HResult.RPC_E_DISCONNECTED;
+    bool SERVERFAULT() => this is HResult.RPC_E_SERVERFAULT;
+    bool TIMEOUT() => this is HResult.RPC_E_TIMEOUT;
+    bool NOTREGISTERED() => this is HResult.RPC_E_NOT_REGISTERED;
+    bool DUPLICATENAME() => this is HResult.RPC_E_DUPLICATE_NAME;
+}
