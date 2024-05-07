@@ -123,10 +123,11 @@ Scopes in Fern are started and ended using curly brackets.
 | `continue` | [Statement](grammar.md#statements)
 | `mixin` | [Mixin](grammar.md#mixins)
 | `is` | [Conditional](grammar.md#types)
+| `debug` | [Versioning](model.md#versoning) |
 | `export` | Reserved |
 | `extern` | Reserved |
 | `assert` | Reserved |
-| `debug` | [Versioning](model.md#versoning) |
+| `__asm` | Reserved |
 
 ## Special Symbols
 
@@ -156,3 +157,6 @@ The prefix `__` is resserved for implementation and thus should be blacklisted f
 | `.alignof` | The alignment in bytes of the symbol being targeted, this is a member. |
 | `.offsetof` | The offset in bytes of the symbol being targeted, this is a member. |
 | `.typeof` | The type of the symbol being targeted, this is a member. |
+| `.tag` | The tag of a tagged, this is a member. |
+| `.ptr` | The pointer of an object, this is a member. |
+| `.length` | The length of an array, this is a member. |

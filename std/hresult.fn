@@ -1,7 +1,7 @@
 /// Windows `HResult` enum implementation and helper functions.
 module std.hresult;
 
-public tagged HResult
+public const tagged HResult : ^int
 {
     S_OK = 0x00000000;
     S_FALSE = 0x00000001;
