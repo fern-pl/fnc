@@ -229,6 +229,20 @@ foo(1, 2);
 foo([1, 2]);
 ```
 
+Variadics may appear only once in a signature, and must be the very last declaration, however this rule is slightly bypassed with generics where variadics may appear twice if one of the variadics is used as the type of a runtime argument, like in this example:
+
+```
+void foo(A..., B...)(B b)
+{
+    // ...
+}
+
+// It is impossible to set B explicitly, but this is allowed because it can be set implicitly based on the arguments passed.
+// A = [int, string]
+// B = [int, int]
+foo!(int, string)(1, 2);
+```
+
 Parameters with values set after their declaration will have optional values set by default, these, like variadic parameters, must be the last parameters in the function signature.
 
 ##### Arguments
