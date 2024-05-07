@@ -1,0 +1,59 @@
+module rt.metadata;
+
+public const tagged SymKind : ^short
+{
+    Type = 1 << 0;
+    Struct = 1 << 1;
+    Class = 1 << 2;
+    Tagged = 1 << 3;
+    Tuple = 1 << 4;
+
+    Function = 1 << 5;
+    Delegate = 1 << 6;
+    Lambda = 1 << 7;
+    Ctor = 1 << 8;
+    Dtor = 1 << 9;
+    Unittest = 1 << 16;
+
+    Field = 1 << 10;
+    Local = 1 << 11;
+    Parameter = 1 << 12;
+
+    Expression = 1 << 13;
+    Literal = 1 << 14;
+}
+
+public const tagged SymAttributes : ^int
+{
+    Array = 1 << 0;
+    Dynamic_Array = 1 << 1;
+    Static_Array = 1 << 2;
+    Assoc_Array = 1 << 3;
+
+    Integral = 1 << 4;
+    Scalar = 1 << 5;
+    Floating = 1 << 6;
+    String = 1 << 7;
+    Signed = 1 << 8;
+    Reference = 1 << 9;
+
+    Heap_Storage = 1 << 10;
+    Stack_Storage = 1 << 11;
+    Scalar_Storage = 1 << 12;
+    Float_Storage = 1 << 13;
+    XMM_Storage = 1 << 14;
+    YMM_Storage = 1 << 15;
+    ZMM_Storage = 1 << 16;
+
+    Public = 1 << 17;
+    Private = 1 << 18;
+    Internal = 1 << 19;
+
+    Trusted = 1 << 20;
+    System = 1 << 21;
+    Safe = 1 << 22;
+
+    Abstract = 1 << 23;
+    Static = 1 << 24;
+    Bitfield = 1 << 25;
+}
