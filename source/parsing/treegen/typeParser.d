@@ -56,10 +56,22 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
                 return nullable!AstNode(null);
             switch (node.tokenBeingHeld.tokenVariety)
             {
+                case TokenType.QuestionMark:
+                    if (previouslyParsedNodes.length == 0)
+                        throw new SyntaxError(
+                            "Can't determine voidable and it's connection to a type", node
+                                .tokenBeingHeld);
+                    
+                    AstNode newNode = new AstNode;
+                    newNode.action = AstAction.TypeVoidable;
+                    newNode.voidableType = previouslyParsedNodes[$-1];
+                    previouslyParsedNodes[$-1] = newNode;
+                    return nullable!AstNode(null);
+
                 case TokenType.ExclamationMark:
                     if (previouslyParsedNodes.length == 0)
                         throw new SyntaxError(
-                            "Can't result template and it's connection to a type", node
+                            "Can't determine template and it's connection to a type", node
                                 .tokenBeingHeld);
                     AstNode newNode = new AstNode;
                     newNode.action = AstAction.TypeGeneric;
@@ -168,6 +180,7 @@ size_t prematureTypeLength(Token[] tokens, size_t index)
 
         switch (token.tokenVariety)
         {
+            case TokenType.QuestionMark:
             case TokenType.Operator:
             case TokenType.Comment:
             case TokenType.WhiteSpace:
@@ -196,7 +209,6 @@ Nullable!AstNode typeFromTokens(Token[] tokens, ref size_t index)
         return nullable!AstNode(null);
 
     // Groups parenthesis and brackets into expression groups
-    Token firstToken = tokens[index];
     AstNode[] protoNodes = phaseOne(tokens[index .. index += length]);
     Nullable!(AstNode[]) maybeArray = genTypeTree(protoNodes);
     if (maybeArray == null)

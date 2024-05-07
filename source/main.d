@@ -58,21 +58,13 @@ void main()
 {
     size_t index = 0;
     // typeFromTokens("".tokenizeText, index);
-    auto toks = "if ((2..5).contains(4)) 3; else 7;".tokenizeText;
-    auto x = IfStatementWithoutScope.matchesToken(toks, index);
-    // toks.writeln;
-    (x != null).writeln;
-    x.value[0].tokens.writeln;
-    toks[index].writeln;
 
-    // auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-    // import std.file;
-    // int main()
-    // {
-    //     print(\"Hello World!\");
-    //     __asm(
-    //         ld a, b
-    //     );
-    // }");
-    // newScope.tree();
+    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
+    import std.os;
+    int main()
+    {
+        int? x = 2;
+        writeln(x);
+    }");
+    newScope.tree();
 }

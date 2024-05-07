@@ -21,6 +21,7 @@ enum TokenType
     Quotation,
     Comment,
     ExclamationMark,
+    QuestionMark,
     Period,
     Filler
 }
@@ -120,6 +121,8 @@ TokenType getVarietyOfLetter(dchar symbol)
             return TokenType.Comma;
         case '!':
             return TokenType.ExclamationMark;
+        case '?':
+            return TokenType.QuestionMark;
         default:
             break;
     }

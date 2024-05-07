@@ -44,6 +44,7 @@ enum AstAction
     TypePointer, // *int
     TypeReference, // &int
     TypeGeneric, // Result!(int, string)
+    TypeVoidable
 
 }
 
@@ -211,6 +212,7 @@ class AstNode
         }
 
         TypeGenericNodeData typeGenericNodeData; // TypeGeneric
+        AstNode voidableType;
     }
 
     void toString(scope void delegate(const(char)[]) sink) const
@@ -229,6 +231,9 @@ class AstNode
                 break;
             case AstAction.Expression:
                 sink(expressionNodeData.components.to!string);
+                break;
+            case AstAction.TypeVoidable:
+                sink(voidableType.to!string);
                 break;
             case AstAction.NamedUnit:
                 sink(namedUnit.names.to!string);
