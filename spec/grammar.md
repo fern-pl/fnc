@@ -154,17 +154,20 @@ All types may, but not must, contain member declarations, and the above are only
 
 `(types..)`
 
-Tagged have a tag which indicates what kind of value they hold, but they will only ever hold one of their fields as a value. Tagged may be checked for their `tag` by doing `foo is name` or `foo is type` like in `foo is V4`.
+Tagged have a `tag` which indicates what kind of value they hold, but they will only ever hold one of their fields as a value. Tagged may be checked for their `tag` by doing `foo is name` or `foo is type` like in `foo is V4`.
 
 Unlike all other types, tagged may inherit a builtin type as a prime inherit, which will act as the default type for all fields which do not have a type declared.
 
 Tagged may be implicitly created by wrapping multiple types in parenthesis, like `(int, short) foo` and assignment when value is one of `int` and `short`.
 Additionally, tagged may implicitly create from a type by accessing a member, like from `IpAddr.V4` in which the default value of `V4` is selected.
 
+If all members of a tagged are `const`, they may have a value assigned by default, `tag` is stripped away (but may still be accessed) and it acts exactly as an `enum` would in languages like D, Java, or C#. Otherwise default assignment is not allowed.
+
 ```
 tagged A : ^ubyte
 {
-    a = 3;
+    // This will result in the runtime having to do a lookup if converting 3 to A, because A is not entirely const.
+    const a = 3;
     int b;
 }
 
@@ -404,7 +407,7 @@ Functions have their attributes ***after*** their signature, having attributes p
 | `unsafe` | Ignores all safety checks usually applied to functions. | Function |
 | `@tapped` | Ignores all attributes that may be inferred or applied to the parent scope(s). | Function |
 | `inline` | Guarantees that a function is inlined by the compiler or an error is thrown. | Function |
-| `const` | Immutable, including by any direct references, does not indicate read-only memory. | Variables |
+| `const` | Immutable, including by any direct references, does not indicate read-only memory. | Variables, Types |
 | `auto` | Infers type at comptime, similar to type aliasing but implicit. | Variables |
 | `ref` | Carries a reference to data. | Parameters, Return Values |
 | `mustuse` | Must be used or cast to `void` or an error is thrown. | Return Values |
