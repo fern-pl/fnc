@@ -229,6 +229,20 @@ foo(1, 2);
 foo([1, 2]);
 ```
 
+Variadics may appear only once in a signature, and must be the very last declaration, however this rule is slightly bypassed with generics where variadics may appear twice if one of the variadics is used as the type of a runtime argument, like in this example:
+
+```
+void foo(A..., B...)(B b)
+{
+    // ...
+}
+
+// It is impossible to set B explicitly, but this is allowed because it can be set implicitly based on the arguments passed.
+// A = [int, string]
+// B = [int, int]
+foo!(int, string)(1, 2);
+```
+
 Parameters with values set after their declaration will have optional values set by default, these, like variadic parameters, must be the last parameters in the function signature.
 
 ##### Arguments
@@ -404,7 +418,9 @@ Functions have their attributes ***after*** their signature, having attributes p
 | `partial` | May be distributed across several declarations of the given symbol, allows for splitting across multiple files. | Types, Modules |
 | `abstract` | Does not have an implementation but enforces that, if inherited, it must have an implementation. It is a comptime error to call an abstract function. | Function |
 | `pure` | Does not modify any state except its parent type (if it has any.) | Function |
-| `unsafe` | Ignores all safety checks usually applied to functions. | Function |
+| `system` | Ignores all safety checks usually applied to functions and may not be called from a safe function, an unsafe function. | Function |
+| `trusted` | Ignores all safety checks usually applied to functions but may be called from a safe function, manual review. | Function |
+| `safe` | A safe function with all safety checks, may call `trusted` and `safe`. | Function |
 | `@tapped` | Ignores all attributes that may be inferred or applied to the parent scope(s). | Function |
 | `inline` | Guarantees that a function is inlined by the compiler or an error is thrown. | Function |
 | `const` | Immutable, including by any direct references, does not indicate read-only memory. | Variables, Types |

@@ -13,7 +13,7 @@ public struct LazyFilter(alias F, T)
 
 private:
 final:
-    size_t _length = -1;
+    nuint _length = -1;
 
 public:
     string toString()
@@ -35,7 +35,7 @@ public:
         _range = range;
     }
 
-    size_t length()
+    nuint length()
     {
         if (_length != -1)
             return => _length;
@@ -89,7 +89,7 @@ public:
         }
     }
 
-    size_t opDollar()
+    nuint opDollar()
     {
         return = length;
     }

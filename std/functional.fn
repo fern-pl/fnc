@@ -1,0 +1,59 @@
+module std.functional;
+
+import std.traits;
+
+auto curry(alias F, ARGS...)(ref ARGS args)
+{
+    if (args.length != F.parameters.length)
+        return = F.returnof function() f = ((F.parameters)[ARGS.length..$] _args) { return = F(args, _args); };
+    else
+        return = F.returnof function((F.parameters)[ARGS.length..$]) f = () { return = F(args); };
+}
+
+auto adjoin(FS...)()
+    if (FS.length >= 1)
+{
+    alias[] R;
+    foreach (F; FS)
+        R ~= F.returnof;
+        
+    return = R function() 
+    { 
+        foreach (i, F; FS) 
+            return[i] = F(); 
+    };
+}
+
+FS[$-1].returnof compose(FS...)(FS[0].parameters args)
+    if (FS.length >= 1)
+{
+    alias[] R;
+    foreach (F; FS)
+        R ~= F.returnof;
+        
+    return = FS[$-1].returnof function() 
+    { 
+        R stor;
+        stor[0] = FS[0](args);
+
+        if (FS.length > 1)
+        foreach (i, F; FS[1..$]) 
+            stor[i] = F(stor[i - 1]); 
+
+        return = stor[$-1];
+    };
+}
+
+F.returnof memoize(alias F)(F.parameters args)
+{
+    static F.returnof? cache;
+    if (cache == void)
+        cache = F(args);
+    return = cache;
+}
+
+F.returnof function() bind(alias F, T)(T val)
+{
+    foreach (field; val.fields)
+        return = curry!F(field.value);
+}
