@@ -111,6 +111,7 @@ private AstNode[][] splitNodesAtComma(AstNode[] inputNodes)
 public void phaseTwo(ref Array!AstNode nodes)
 {
     AstNode[] nonWhiteStack;
+    size_t[] nonWhiteIndexStack;
 
     Array!AstNode newNodesArray;
 
@@ -123,12 +124,13 @@ public void phaseTwo(ref Array!AstNode nodes)
 
         if (node.action == AstAction.Expression
             && nonWhiteStack.length
-            && nonWhiteStack[$ - 1].action.isCallable
+            && nonWhiteStack[nonWhiteIndexStack[$ - 1]].action.isCallable
             )
         {
             AstNode functionCall = new AstNode();
-            scope (exit)
-                newNodesArray[$ - 1] = functionCall;
+
+            newNodesArray[nonWhiteIndexStack[$ - 1]] = functionCall;
+            nonWhiteIndexStack ~= newNodesArray.length - 1;
             scope (exit)
                 nonWhiteStack ~= functionCall;
 
@@ -184,11 +186,17 @@ public void phaseTwo(ref Array!AstNode nodes)
             && nonWhiteStack.length)
         {
             AstNode indexNode = new AstNode;
-            
+
             indexNode.action = AstAction.IndexInto;
-            scope (exit) nonWhiteStack ~= indexNode;
-            scope (exit) newNodesArray[$-1] = indexNode;
             
+            newNodesArray[nonWhiteIndexStack[$ - 1]] = indexNode;
+
+            nonWhiteIndexStack ~= newNodesArray.length - 1;
+            scope (exit)
+                nonWhiteStack ~= indexNode;
+
+            
+
             IndexIntoNodeData id;
             indexNode.indexIntoNodeData = id;
             indexNode.indexIntoNodeData.indexInto = nonWhiteStack[$ - 1];
@@ -203,13 +211,15 @@ public void phaseTwo(ref Array!AstNode nodes)
 
             indexNode.indexIntoNodeData.index = components[0];
 
-
-            
         }
         else
         {
             newNodesArray ~= node;
-            nonWhiteStack ~= node;
+            if (!node.isWhite)
+            {
+                nonWhiteStack ~= node;
+                nonWhiteIndexStack ~= newNodesArray.length - 1;
+            }
         }
 
         //     if (node.action == AstAction.Expression && lastNonWhite != null )

@@ -60,7 +60,9 @@ void main()
     // typeFromTokens("".tokenizeText, index);
 
 
-    auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "foo[bar++];");
+    auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "foo(bar)
+    [2
+    ];");
     
     newScope.tree;
     // DeclarationAndAssignment.matchesToken("y=4".tokenizeText).ptr.writeln;
