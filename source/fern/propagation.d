@@ -1,6 +1,7 @@
-module fnc.canvas;
+/// Propagation for CTFE to allow for working with symbols arbitrarily.
+module fern.propagation;
 
-import fnc.metadata;
+import fern.symbols;
 
 public struct Engine
 {

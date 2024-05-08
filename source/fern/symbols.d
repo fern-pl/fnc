@@ -1,4 +1,7 @@
-module fnc.metadata;
+/// Comptime symbol information for types, functions, fields, etc.
+module fern.symbols;
+
+import fern.emission;
 
 public enum SymAttr : ulong
 {
@@ -117,7 +120,8 @@ final:
     Symbol sym;
     Symbol returnof;
     Symbol[] parameters;
-    //Instruction[], Variable[string], size
+    Marker[string] markers;
+    Instruction[] instructions;
     size_t alignment;
 
     string type()
@@ -133,7 +137,7 @@ final:
 }
 
 alias Parameter = Field;
-alias Variable = Field;
+alias Local = Field;
 
 // Expressions and literals should also be represented by a field,
 // but I haven't yet worked this out.
