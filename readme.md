@@ -35,3 +35,7 @@ Examples [exist](examples) but are small tidbits meant to facilitate parser test
 3. [Lexical](spec/lexical.md)
 
 Fern is planned to be able to, as well as natively compile, compile into CIL which may be interpreted directly as if Fern were C# and the standard library is likely to incorporate a more fully fleshed out rendition of [Godwit](https://github.com/cetio/godwit) to enable full seamless integration and interop with .NET languages.
+
+The language is heavily based on D, with elements from C# and Rust, but it drastically varies both on the backend and frontend from such languages. Although it is intended for inexperienced developers to be able to use the language, such differences in the language may be confusing without a programming background and it is recommended to have learned at least one language prior.
+
+For more information on the language just read the spec 🥺🥺
