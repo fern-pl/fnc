@@ -5,11 +5,9 @@
   <a href="https://github.com/cetio/fern"><img src="https://img.shields.io/github/repo-size/cetio/fern.svg" alt="GitHub repo size"/></a>
   <a href="https://github.com/cetio/fern"><img src="https://img.shields.io/github/languages/code-size/cetio/fern.svg" alt="GitHub code size"/></a>
   <a href="https://github.com/cetio/fern"><img src="https://img.shields.io/github/commit-activity/t/cetio/fern.svg" alt="GitHub commits"/></a>
-  
-  
+  <br>
+  <a href="https://github.com/cetio/gallinule"><img src="https://img.shields.io/badge/Gallinule-2ea44f?style=for-the-badge&logo=github" alt="Gallinule"/></a>
 </p>
-
-[![Gallinule](https://img.shields.io/badge/Gallinule-2ea44f?style=for-the-badge&logo=github)](https://github.com/cetio/gallinule)
 
 Fern is a natively compiled, highly versatile language intended to bring together metaprogramming, performance, and ease-of-use to a happy medium.
 
