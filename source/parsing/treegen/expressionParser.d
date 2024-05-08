@@ -146,6 +146,8 @@ public void phaseTwo(ref Array!AstNode nodes)
             foreach (AstNode[] argumentNodeBatch; splitNodesAtComma(
                     node.expressionNodeData.components))
             {
+                if (!argumentNodeBatch.length)
+                    continue;
                 components.clear();
                 components ~= argumentNodeBatch;
                 Token firstToken = components[0].tokenBeingHeld;
@@ -156,9 +158,10 @@ public void phaseTwo(ref Array!AstNode nodes)
                 if (components.length != 1 && components.length != 3)
                     throw new SyntaxError("Function argument parsing error (node reduction)", firstToken);
                 FunctionCallArgument component;
-                
-                scope (exit) callNodeData.args ~= component;
-                
+
+                scope (exit)
+                    callNodeData.args ~= component;
+
                 if (components.length == 1)
                 {
                     component.source = components[0];
@@ -176,6 +179,32 @@ public void phaseTwo(ref Array!AstNode nodes)
                 component.source = components[2];
             }
 
+        }
+        else if (node.action == AstAction.ArrayGrouping
+            && nonWhiteStack.length)
+        {
+            AstNode indexNode = new AstNode;
+            
+            indexNode.action = AstAction.IndexInto;
+            scope (exit) nonWhiteStack ~= indexNode;
+            scope (exit) newNodesArray[$-1] = indexNode;
+            
+            IndexIntoNodeData id;
+            indexNode.indexIntoNodeData = id;
+            indexNode.indexIntoNodeData.indexInto = nonWhiteStack[$ - 1];
+
+            Array!AstNode components;
+            components ~= node.expressionNodeData.components;
+            phaseTwo(components);
+            scanAndMergeOperators(components);
+            components.trimAstNodes();
+
+            assert(components.length == 1, "Can't have empty [] while indexing");
+
+            indexNode.indexIntoNodeData.index = components[0];
+
+
+            
         }
         else
         {

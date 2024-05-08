@@ -59,17 +59,13 @@ void main()
     size_t index = 0;
     // typeFromTokens("".tokenizeText, index);
 
-    // auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "
-    // auto t = getAdd()(3, 5);
-    // ");
-    // newScope.tree();
-    // ASSIG
-    import errors;
-    GLOBAL_ERROR_STATE = "auto x, y = hello(xasd:1, 2)(3, 4);";
-    auto t = DeclarationAndAssignment.matchesToken(GLOBAL_ERROR_STATE.tokenizeText, index);
-    // GLOBAL_ERROR_STATE.tokenizeText.writeln;
-    // (t != null).writeln;
-    import parsing.treegen.expressionParser;
-    expressionNodeFromTokens(t.value[3].tokens)[0].tree;
+
+    auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "foo[bar];");
+    
+    newScope.tree;
+    // DeclarationAndAssignment.matchesToken("y=4".tokenizeText).ptr.writeln;
+    // parseLine(FUNCTION_SCOPE_PARSE, "y=4".tokenizeText, index).writeln;
+
+
 
 }

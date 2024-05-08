@@ -395,7 +395,8 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     break;
                 }
             }
-            
+            if (!commaSeperatedGroup.commaSeperated.length)
+                return tokenGrepBox(null);
             returnVal ~= commaSeperatedGroup;
             index = commaSearchIndex;
             break;

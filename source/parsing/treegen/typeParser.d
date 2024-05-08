@@ -94,21 +94,17 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
                 case TokenType.Operator:
                     AstNode newNode = new AstNode;
                     AstNode[] followingNodes = genTypeTree(protoNodes[index + 1 .. $]);
-                    // protoNodes[index+1 .. $].writeln;
+
                     newNode.expressionNodeData = ExpressionNodeData(node.tokenBeingHeld.value[0], 0, followingNodes);
                     if (newNode.expressionNodeData.opener == '*')
-                    {
                         newNode.action = AstAction.TypePointer;
-                    }
                     else if (newNode.expressionNodeData.opener == '&')
-                    {
                         newNode.action = AstAction.TypeReference;
-                    }
                     else
-                    {
-                        throw new SyntaxError(
-                            "Unknown type operator", node.tokenBeingHeld);
-                    }
+                        return nullable!AstNode(null);
+                        // throw new SyntaxError(
+                        //     "Unknown type operator", node.tokenBeingHeld);
+
 
                     index = protoNodes.length;
                     return nullable!AstNode(newNode);

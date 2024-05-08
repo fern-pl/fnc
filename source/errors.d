@@ -40,10 +40,11 @@ class SyntaxError : Error
                     testIndex++;
                 }
             }
-            import tern.string;
+            import tern.string : AnsiColor;
 
             errorString ~= "\n Line: " ~ lineCount.to!string;
             errorString ~= "\n Col: " ~ afterLineStart.to!string;
+            errorString ~= "\n\t";
 
             errorString ~= GLOBAL_ERROR_STATE[startOfLine .. problemToken.startingIndex];
 
