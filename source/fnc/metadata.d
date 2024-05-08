@@ -87,7 +87,7 @@ final:
     Symbol[] attributes;
 }
 
-public struct Type
+public class Type
 {
 public:
 final:
@@ -110,7 +110,7 @@ final:
     }
 }
 
-public struct Function
+public class Function
 {
 public:
 final:
@@ -132,7 +132,13 @@ final:
     }
 }
 
-public struct Field
+alias Parameter = Field;
+alias Variable = Field;
+
+// Expressions and literals should also be represented by a field,
+// but I haven't yet worked this out.
+
+public class Field
 {
 public:
 final:
@@ -146,4 +152,25 @@ final:
     {
         return sym.parents[$-1];
     }
+}
+
+public class Module
+{
+public:
+final:
+    Symbol sym;
+    Symbol[] imports;
+    Field[string] fields;
+    Function[string] functions;
+}
+
+public class Glob
+{
+public:
+final:
+    Symbol[string] symbols;
+    Module[string] modules;
+    Type[string] types;
+    Field[string] fields;
+    Function[string] functions;
 }
