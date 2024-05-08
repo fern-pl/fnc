@@ -188,18 +188,18 @@ public void phaseTwo(ref Array!AstNode nodes)
             AstNode indexNode = new AstNode;
 
             indexNode.action = AstAction.IndexInto;
-            
-            newNodesArray[nonWhiteIndexStack[$ - 1]] = indexNode;
-
-            nonWhiteIndexStack ~= newNodesArray.length - 1;
-            scope (exit)
-                nonWhiteStack ~= indexNode;
-
-            
 
             IndexIntoNodeData id;
             indexNode.indexIntoNodeData = id;
             indexNode.indexIntoNodeData.indexInto = nonWhiteStack[$ - 1];
+
+            newNodesArray[nonWhiteIndexStack[$ - 1]] = indexNode;
+            nonWhiteIndexStack ~= newNodesArray.length-1;
+            scope(exit) nonWhiteStack ~= indexNode;
+
+            
+
+
 
             Array!AstNode components;
             components ~= node.expressionNodeData.components;
