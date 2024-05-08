@@ -104,21 +104,19 @@ private AstNode[][] splitNodesAtComma(AstNode[] inputNodes)
         }
         current ~= node;
     }
+    nodes ~= current;
     return nodes;
 }
 // Handle function calls and operators
 public void phaseTwo(ref Array!AstNode nodes)
 {
     AstNode[] nonWhiteStack;
-    size_t[] nonWhiteIndexStack;
 
     Array!AstNode newNodesArray;
-
 
     scope (exit)
         nodes = newNodesArray;
 
-    // Nullable!AstAction lastNonWhite = nullable!AstNode(null);
     for (size_t index = 0; index < nodes.length; index++)
     {
         AstNode node = nodes[index];
@@ -130,7 +128,7 @@ public void phaseTwo(ref Array!AstNode nodes)
         {
             AstNode functionCall = new AstNode();
             scope (exit)
-                newNodesArray[$-1] = functionCall;
+                newNodesArray[$ - 1] = functionCall;
             scope (exit)
                 nonWhiteStack ~= functionCall;
 
@@ -142,19 +140,41 @@ public void phaseTwo(ref Array!AstNode nodes)
                 functionCall.callNodeData = callNodeData;
 
             callNodeData.func = nonWhiteStack[$ - 1];
+            callNodeData.args = new FunctionCallArgument[0];
 
+            Array!AstNode components;
+            foreach (AstNode[] argumentNodeBatch; splitNodesAtComma(
+                    node.expressionNodeData.components))
+            {
+                components.clear();
+                components ~= argumentNodeBatch;
+                Token firstToken = components[0].tokenBeingHeld;
+                phaseTwo(components);
+                scanAndMergeOperators(components);
+                components.removeAllWhitespace();
 
-            
-
-            // Array!AstNode components;
-            // foreach (AstNode[] argumentNodeBatch; splitNodesAtComma(
-            //         node.expressionNodeData.components))
-            // {
-            //     components.clear();
-            //     components ~= argumentNodeBatch;
-            //     phaseTwo(components);
-            //     scanAndMergeOperators(components);
-            // }
+                if (components.length != 1 && components.length != 3)
+                    throw new SyntaxError("Function argument parsing error (node reduction)", firstToken);
+                FunctionCallArgument component;
+                
+                scope (exit) callNodeData.args ~= component;
+                
+                if (components.length == 1)
+                {
+                    component.source = components[0];
+                    continue;
+                }
+                components.writeln;
+                if (components[1].action != AstAction.TokenHolder)
+                    throw new SyntaxError("Function argument parsing error (Must include colon for named arguments)", firstToken);
+                if (components[1].tokenBeingHeld.tokenVariety != TokenType.Colon)
+                    throw new SyntaxError("Function argument parsing error (Must include colon for named arguments)", components[1]
+                            .tokenBeingHeld);
+                if (components[0].action != AstAction.NamedUnit)
+                    throw new SyntaxError("Function argument parsing error (Named argument name can't be determined)", firstToken);
+                component.specifiedName = Nullable!(dchar[])(components[0].namedUnit.names[0]);
+                component.source = components[2];
+            }
 
         }
         else
@@ -162,7 +182,6 @@ public void phaseTwo(ref Array!AstNode nodes)
             newNodesArray ~= node;
             nonWhiteStack ~= node;
         }
-        nonWhiteIndexStack ~= newNodesArray.length - 1;
 
         //     if (node.action == AstAction.Expression && lastNonWhite != null )
         //     {
@@ -171,8 +190,8 @@ public void phaseTwo(ref Array!AstNode nodes)
 
         //         Array!AstNode components;
         //         components ~= args.expressionNodeData.components;
-                // phaseTwo(components);
-                // scanAndMergeOperators(components);
+        // phaseTwo(components);
+        // scanAndMergeOperators(components);
         //         args.expressionNodeData.components.length = components.data.length;
         //         args.expressionNodeData.components[0 .. $] = components.data[0 .. $];
 
@@ -196,19 +215,27 @@ public void phaseTwo(ref Array!AstNode nodes)
     }
 }
 
-void trimAstNodes(Array!AstNode nodes)
+void trimAstNodes(ref Array!AstNode nodes)
 {
     // Remove starting whitespace
-    while (nodes.length && nodes[0].action == AstAction.TokenHolder &&
-        (nodes[0].tokenBeingHeld.tokenVariety == TokenType.WhiteSpace
-            || nodes[0].tokenBeingHeld.tokenVariety == TokenType.Comment))
+    while (nodes.length && nodes[0].isWhite)
         nodes.linearRemove(nodes[0 .. 1]);
 
     // Remove ending whitespace
-    while (nodes.length && nodes[$ - 1].action == AstAction.TokenHolder &&
-        (nodes[$ - 1].tokenBeingHeld.tokenVariety == TokenType.WhiteSpace
-            || nodes[$ - 1].tokenBeingHeld.tokenVariety == TokenType.Comment))
+    while (nodes.length && nodes[$ - 1].isWhite)
         nodes.linearRemove(nodes[$ - 1 .. $]);
+}
+
+void removeAllWhitespace(ref Array!AstNode nodes)
+{
+    Array!AstNode newNodes;
+    scope (exit)
+        nodes = newNodes;
+    foreach (AstNode node; nodes)
+    {
+        if (!node.isWhite)
+            newNodes ~= node;
+    }
 }
 
 Array!AstNode expressionNodeFromTokens(Token[] tokens)

@@ -65,7 +65,7 @@ void main()
     // newScope.tree();
     // ASSIG
     import errors;
-    GLOBAL_ERROR_STATE = "auto x, y = hello(1, 2)(3);";
+    GLOBAL_ERROR_STATE = "auto x, y = hello(xasd:1, 2)(3, 4);";
     auto t = DeclarationAndAssignment.matchesToken(GLOBAL_ERROR_STATE.tokenizeText, index);
     // GLOBAL_ERROR_STATE.tokenizeText.writeln;
     // (t != null).writeln;
