@@ -1,59 +1,74 @@
 module rt.metadata;
 
-public const tagged SymKind : ^short
+public const tagged SymAttr : ^long
 {
-    Type = 1 << 0;
-    Struct = 1 << 1;
-    Class = 1 << 2;
-    Tagged = 1 << 3;
-    Tuple = 1 << 4;
+    // Top-Level Kind
+    TYPE = 1 << 0;
+    STRUCT = 1 << 1;
+    CLASS = 1 << 2;
+    TAGGED = 1 << 3;
+    TUPLE = 1 << 4;
+    MODULE = 1 << 5;
 
-    Function = 1 << 5;
-    Delegate = 1 << 6;
-    Lambda = 1 << 7;
-    Ctor = 1 << 8;
-    Dtor = 1 << 9;
-    Unittest = 1 << 16;
+    FUNCTION = 1 << 5;
+    DELEGATE = 1 << 6;
+    LAMBDA = 1 << 7;
+    CTOR = 1 << 8;
+    DTOR = 1 << 9;
+    UNITTEST = 1 << 10;
 
-    Field = 1 << 10;
-    Local = 1 << 11;
-    Parameter = 1 << 12;
+    FIELD = 1 << 11;
+    LOCAL = 1 << 12;
+    PARAMETER = 1 << 13;
 
-    Expression = 1 << 13;
-    Literal = 1 << 14;
-}
+    EXPRESSION = 1 << 14;
+    LITERAL = 1 << 15;
 
-public const tagged SymAttributes : ^int
-{
-    Array = 1 << 0;
-    Dynamic_Array = 1 << 1;
-    Static_Array = 1 << 2;
-    Assoc_Array = 1 << 3;
+    // Attributes
+    PUBLIC = 1 << 16;
+    PRIVATE = 1 << 17;
+    INTERNAL = 1 << 18;
 
-    Integral = 1 << 4;
-    Scalar = 1 << 5;
-    Floating = 1 << 6;
-    String = 1 << 7;
-    Signed = 1 << 8;
-    Reference = 1 << 9;
+    SAFE = 1 << 19;
+    SYSTEM = 1 << 20;
+    TRUSTED = 1 << 21;
 
-    Heap_Storage = 1 << 10;
-    Stack_Storage = 1 << 11;
-    Scalar_Storage = 1 << 12;
-    Float_Storage = 1 << 13;
-    XMM_Storage = 1 << 14;
-    YMM_Storage = 1 << 15;
-    ZMM_Storage = 1 << 16;
+    STATIC = 1 << 22;
+    // NOT thread-local storage.
+    GLOBAL = 1 << 23;
+    // Non-temporal.
+    TRANSIENT = 1 << 24;
+    ATOMIC = 1 << 25;
+    BITFIELD = 1 << 26;
+    PURE = 1 << 36;
+    CONST = 1 << 37;
+    REF = 1 << 38;
 
-    Public = 1 << 17;
-    Private = 1 << 18;
-    Internal = 1 << 19;
+    KIND_HEAP = 1 << 27;
+    KIND_STACK = 1 << 28;
+    KIND_SCALAR = 1 << 29;
+    KIND_FLOAT = 1 << 30;
+    KIND_XMM = 1 << 31;
+    KIND_YMM = 1 << 32;
+    KIND_ZMM = 1 << 33;
+    KIND_READONLY = 1 << 34;
+    KIND_DEFAULT = 1 << 35;
 
-    Trusted = 1 << 20;
-    System = 1 << 21;
-    Safe = 1 << 22;
+    ARRAY = 1 << 39;
+    DYNARRAY = 1 << 40;
+    // Static array.
+    FIXARRAY = 1 << 41;
+    // Associative array.
+    ASOARRAY = 1 << 42;
 
-    Abstract = 1 << 23;
-    Static = 1 << 24;
-    Bitfield = 1 << 25;
+    STRING = 1 << 43;
+    WSTRING = 1 << 44;
+    DSTRING = 1 << 45;
+    BYTE = 1 << 46;
+    WORD = 1 << 47;
+    DWORD = 1 << 48;
+    QWORD = 1 << 49;
+    FLOAT = 1 << 50;
+    DOUBLE = 1 << 51;
+    SIGNED = 1 << 52;
 }

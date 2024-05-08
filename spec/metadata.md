@@ -7,8 +7,7 @@
 | `attributes` | All attributes of the given symbol. | All |
 | `children` | Children of the given symbol. | All |
 | `parents` | Parents of the given symbol. | All |
-| `symkind` | The kind of symbol that the given symbol is. | All |
-| `symattr` | The symbol attributes of the given symbol is, this is ***not*** the same as `attributes`. | All |
+| `symattr` | The symbol attributes of the given symbol has, this is ***not*** the same as `attributes`. | All |
 | `sizeof` | The size of the given symbol's data. | Variables, Types, Functions |
 | `alignof` | The alignment of the given symbol's data. | Variables, Types, Functions |
 | `typeof` | The type of the given symbol's data. | Variables, Types |

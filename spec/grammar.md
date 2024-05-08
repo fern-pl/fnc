@@ -79,7 +79,7 @@ Operators are a builtin part of the language used to perform certain operations.
 | `<\|` | Downcast operator, downcasts data to its superior type. |
 | `>` `<` `<=` `>=` | Comparison operators, special behavior is defined for array types, which return a mask of where the comparison returned true. |
 | `+` `-` `*` `/` `%` `^^` `<<` `>>` `<<<` `^` `&` `\|` `~` `in` | Binary operators. `in` is used for checking if an associative array contains an element, and `~` is used for array concatenation by default. |
-| `==` `!=` `&&` `\|\|` | Equality operators. |
+| `==` `!=` `&&` `\|\|`, `!` | Equality and logical operators, with `!` and `!=` as NOT operators. |
 | `[..]` | Slicing operator, defined to return a slice of elements from a range by default, using a given lower and or upper bounds or the entire range is returned. |
 | `[x]` | Indexing operator, used for range interfaces by default. |
 | `--` `++` `~` `-` | Unary postdecrement, postincrement, not, and neg operators. Postdecrement and postincrement may appear as preX versions in which they are after a variable. |
