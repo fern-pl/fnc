@@ -110,30 +110,32 @@ private AstNode[][] splitNodesAtComma(AstNode[] inputNodes)
 // Handle function calls and operators
 public void phaseTwo(ref Array!AstNode nodes)
 {
-    AstNode[] nonWhiteStack;
     size_t[] nonWhiteIndexStack;
 
     Array!AstNode newNodesArray;
 
     scope (exit)
         nodes = newNodesArray;
+    
+    AstNode lastNonWhite;
+    alias popNonWhiteNode() = {
+        size_t lindex = nonWhiteIndexStack[$ - 1];
+        nonWhiteIndexStack.length--;
+
+        lastNonWhite = newNodesArray[lindex];
+        newNodesArray.linearRemove(newNodesArray[lindex..$]);
+    };
 
     for (size_t index = 0; index < nodes.length; index++)
     {
         AstNode node = nodes[index];
-
         if (node.action == AstAction.Expression
-            && nonWhiteStack.length
-            && nonWhiteStack[nonWhiteIndexStack[$ - 1]].action.isCallable
+            && nonWhiteIndexStack.length
+            && newNodesArray[nonWhiteIndexStack[$ - 1]].action.isCallable
             )
         {
+            popNonWhiteNode();
             AstNode functionCall = new AstNode();
-
-            newNodesArray[nonWhiteIndexStack[$ - 1]] = functionCall;
-            nonWhiteIndexStack ~= newNodesArray.length - 1;
-            scope (exit)
-                nonWhiteStack ~= functionCall;
-
             functionCall.action = AstAction.Call;
 
             CallNodeData callNodeData;
@@ -141,7 +143,7 @@ public void phaseTwo(ref Array!AstNode nodes)
             scope (exit)
                 functionCall.callNodeData = callNodeData;
 
-            callNodeData.func = nonWhiteStack[$ - 1];
+            callNodeData.func = lastNonWhite;
             callNodeData.args = new FunctionCallArgument[0];
 
             Array!AstNode components;
@@ -180,26 +182,21 @@ public void phaseTwo(ref Array!AstNode nodes)
                 component.specifiedName = Nullable!(dchar[])(components[0].namedUnit.names[0]);
                 component.source = components[2];
             }
+            newNodesArray ~= functionCall;
+            nonWhiteIndexStack ~= newNodesArray.length - 1;
 
         }
         else if (node.action == AstAction.ArrayGrouping
-            && nonWhiteStack.length)
+            && nonWhiteIndexStack.length)
         {
+            popNonWhiteNode();
             AstNode indexNode = new AstNode;
 
             indexNode.action = AstAction.IndexInto;
+            indexNode.indexIntoNodeData.indexInto = lastNonWhite;
 
-            IndexIntoNodeData id;
-            indexNode.indexIntoNodeData = id;
-            indexNode.indexIntoNodeData.indexInto = nonWhiteStack[$ - 1];
-
-            newNodesArray[nonWhiteIndexStack[$ - 1]] = indexNode;
-            nonWhiteIndexStack ~= newNodesArray.length-1;
-            scope(exit) nonWhiteStack ~= indexNode;
-
-            
-
-
+            newNodesArray ~= indexNode;
+            nonWhiteIndexStack ~= newNodesArray.length - 1;
 
             Array!AstNode components;
             components ~= node.expressionNodeData.components;
@@ -217,7 +214,6 @@ public void phaseTwo(ref Array!AstNode nodes)
             newNodesArray ~= node;
             if (!node.isWhite)
             {
-                nonWhiteStack ~= node;
                 nonWhiteIndexStack ~= newNodesArray.length - 1;
             }
         }
