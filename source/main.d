@@ -65,11 +65,11 @@ void main()
     // newScope.tree();
     // ASSIG
     import errors;
-    GLOBAL_ERROR_STATE = "auto x   = hello(1, 2)(2);";
+    GLOBAL_ERROR_STATE = "auto x, y = hello(1, 2)(3);";
     auto t = DeclarationAndAssignment.matchesToken(GLOBAL_ERROR_STATE.tokenizeText, index);
     // GLOBAL_ERROR_STATE.tokenizeText.writeln;
-    (t != null).writeln;
+    // (t != null).writeln;
     import parsing.treegen.expressionParser;
-    // expressionNodeFromTokens(t.value[3].tokens).writeln;
+    expressionNodeFromTokens(t.value[3].tokens)[0].tree;
 
 }

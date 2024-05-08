@@ -257,9 +257,9 @@ class AstNode
                 break;
             case AstAction.Call:
                 sink(callNodeData.func.to!string);
-                // sink("(\n");
-                // sink(callNodeData.args.to!string);
-                // sink("\n)");
+                sink("(");
+                sink(callNodeData.args.to!string);
+                sink(")");
                 break;
             case AstAction.LiteralUnit:
                 sink(literalUnitCompenents.to!string);
@@ -358,7 +358,24 @@ class AstNode
                 }
                 break;
             case AstAction.Call:
-                writeln("Call " ~ callNodeData.func.to!string ~ ":");
+                writeln("Calling function resolved from:");
+                callNodeData.func.tree(tabCount + 1);
+                printTabs();
+                write("With Params (");
+                write(callNodeData.args.length);
+                writeln(")");
+                foreach (arg; callNodeData.args)
+                {
+                    if (arg.specifiedName != null){
+                        printTabs();
+                        arg.specifiedName.value.write();
+                        ": ".writeln;
+                        arg.source.tree(tabCount + 2);
+                    }else
+                        arg.source.tree(tabCount + 1);
+                    
+                }
+
                 // callNodeData.args.tree(tabCount + 1);
                 break;
             case AstAction.DoubleArgumentOperation:
