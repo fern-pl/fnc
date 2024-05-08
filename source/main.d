@@ -60,14 +60,16 @@ void main()
     // typeFromTokens("".tokenizeText, index);
 
 
-    auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "foo(
-        bar[1]
-        )
-        [
-            1
-        ];");
+    auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "return => (1+1) ++ 3 * (6 * (9));");
     
     newScope.tree;
+    size_t min = -1;
+    size_t max = 0;
+
+    import parsing.treegen.astTypes : getMinMax;
+    getMinMax(newScope.instructions[0], min, max);
+    min.writeln;
+    max.writeln;
     // DeclarationAndAssignment.matchesToken("y=4".tokenizeText).ptr.writeln;
     // parseLine(FUNCTION_SCOPE_PARSE, "y=4".tokenizeText, index).writeln;
 

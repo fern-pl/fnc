@@ -240,8 +240,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                 lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
             );
             if (returnNodes.length != 1)
-                throw new SyntaxError("Return statement invalid", lineVariety
-                        .tokenMatches[0].tokens[0]);
+                throw new SyntaxError("Return statement invalid", returnNodes.data);
 
             AstNode returnNode = new AstNode;
             returnNode.action = AstAction.ReturnStatement;
@@ -348,7 +347,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             auto nodes = expressionNodeFromTokens(tokens[index .. expression_end]);
             if (nodes.length != 1)
                 throw new SyntaxError(
-                    "Expression node tree could not be parsed properly (Not reducable into single node in SimpleExpression)", tokens[index]);
+                    "Expression node tree could not be parsed properly (Not reducable into single node in SimpleExpression)", nodes.data);
             parent.instructions ~= nodes[0];
             index = expression_end + 1;
 

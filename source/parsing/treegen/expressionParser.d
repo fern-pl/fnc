@@ -116,14 +116,14 @@ public void phaseTwo(ref Array!AstNode nodes)
 
     scope (exit)
         nodes = newNodesArray;
-    
+
     AstNode lastNonWhite;
     alias popNonWhiteNode() = {
         size_t lindex = nonWhiteIndexStack[$ - 1];
         nonWhiteIndexStack.length--;
 
         lastNonWhite = newNodesArray[lindex];
-        newNodesArray.linearRemove(newNodesArray[lindex..$]);
+        newNodesArray.linearRemove(newNodesArray[lindex .. $]);
     };
 
     for (size_t index = 0; index < nodes.length; index++)
@@ -209,13 +209,24 @@ public void phaseTwo(ref Array!AstNode nodes)
             indexNode.indexIntoNodeData.index = components[0];
 
         }
+        else if (node.action.isExpressionLike)
+        {
+            Array!AstNode components;
+            components ~= node.expressionNodeData.components;
+            phaseTwo(components);
+            scanAndMergeOperators(components);
+            assert(components.length == 1, "Expression is invalid");
+            node = components[0];
+
+            goto ADD_NODE;
+        }
         else
         {
+            ADD_NODE:
             newNodesArray ~= node;
             if (!node.isWhite)
-            {
                 nonWhiteIndexStack ~= newNodesArray.length - 1;
-            }
+
         }
 
         //     if (node.action == AstAction.Expression && lastNonWhite != null )
@@ -237,15 +248,6 @@ public void phaseTwo(ref Array!AstNode nodes)
         //         );
         //         nodes[index] = functionCall;
         //         nodes.linearRemove(nodes[index + 1 .. index + 2]);
-        //     }
-        //     else if (node.action.isExpressionLike)
-        //     {
-        //         Array!AstNode components;
-        //         components ~= node.expressionNodeData.components;
-        //         phaseTwo(components);
-        //         scanAndMergeOperators(components);
-        //         node.expressionNodeData.components.length = components.data.length;
-        //         node.expressionNodeData.components[0 .. $] = components.data[0 .. $];
         //     }
     }
 }

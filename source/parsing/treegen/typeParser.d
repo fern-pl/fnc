@@ -59,8 +59,7 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
                 case TokenType.QuestionMark:
                     if (previouslyParsedNodes.length == 0)
                         throw new SyntaxError(
-                            "Can't determine voidable and it's connection to a type", node
-                                .tokenBeingHeld);
+                            "Can't determine voidable and it's connection to a type", node);
                     
                     AstNode newNode = new AstNode;
                     newNode.action = AstAction.TypeVoidable;
@@ -71,14 +70,13 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
                 case TokenType.ExclamationMark:
                     if (previouslyParsedNodes.length == 0)
                         throw new SyntaxError(
-                            "Can't determine template and it's connection to a type", node
-                                .tokenBeingHeld);
+                            "Can't determine template and it's connection to a type", node);
                     AstNode newNode = new AstNode;
                     newNode.action = AstAction.TypeGeneric;
                     AstNode[] followingNodes = genTypeTree(protoNodes[index + 1 .. $]);
                     if (followingNodes.length == 0)
                         throw new SyntaxError(
-                            "Generic has no nodes", node.tokenBeingHeld);
+                            "Generic has no nodes", node);
                     newNode.typeGenericNodeData = TypeGenericNodeData(
                         previouslyParsedNodes[$ - 1],
                         followingNodes[0]

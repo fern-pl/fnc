@@ -247,61 +247,61 @@ class AstNode
         sink("{");
         switch (action)
         {
-        case AstAction.Keyword:
-            sink(keywordNodeData.to!string);
-            break;
-        case AstAction.TokenHolder:
-            sink(tokenBeingHeld.to!string);
-            break;
-        case AstAction.TypePointer:
-        case AstAction.Expression:
-            sink(expressionNodeData.components.to!string);
-            break;
-        case AstAction.TypeVoidable:
-            sink(voidableType.to!string);
-            break;
-        case AstAction.NamedUnit:
-            sink(namedUnit.names.to!string);
-            break;
-        case AstAction.Call:
-            sink(callNodeData.func.to!string);
-            sink("(");
-            sink(callNodeData.args.to!string);
-            sink(")");
-            break;
-        case AstAction.LiteralUnit:
-            sink(literalUnitCompenents.to!string);
-            break;
-        case AstAction.DoubleArgumentOperation:
-            sink(doubleArgumentOperationNodeData.operationVariety.to!string);
-            sink(", ");
-            sink(doubleArgumentOperationNodeData.left.to!string);
-            sink(", ");
-            sink(doubleArgumentOperationNodeData.right.to!string);
-            break;
-        case AstAction.TypeArray:
-            bool hasFirstOperand = (cast(void*) firstNodeOperand) != null;
-            if (hasFirstOperand)
-            {
-                sink("Array of: ");
-                sink(firstNodeOperand.to!string);
-                sink(" ");
-            }
-            if (isIntegerLiteral)
-            {
-                sink("with ");
-                sink(commaSeperatedNodes[0][0].to!string);
-                sink(" elements");
-            }
-            else
-                foreach (const(AstNode[]) containingReductions; commaSeperatedNodes)
+            case AstAction.Keyword:
+                sink(keywordNodeData.to!string);
+                break;
+            case AstAction.TokenHolder:
+                sink(tokenBeingHeld.to!string);
+                break;
+            case AstAction.TypePointer:
+            case AstAction.Expression:
+                sink(expressionNodeData.components.to!string);
+                break;
+            case AstAction.TypeVoidable:
+                sink(voidableType.to!string);
+                break;
+            case AstAction.NamedUnit:
+                sink(namedUnit.names.to!string);
+                break;
+            case AstAction.Call:
+                sink(callNodeData.func.to!string);
+                sink("(");
+                sink(callNodeData.args.to!string);
+                sink(")");
+                break;
+            case AstAction.LiteralUnit:
+                sink(literalUnitCompenents.to!string);
+                break;
+            case AstAction.DoubleArgumentOperation:
+                sink(doubleArgumentOperationNodeData.operationVariety.to!string);
+                sink(", ");
+                sink(doubleArgumentOperationNodeData.left.to!string);
+                sink(", ");
+                sink(doubleArgumentOperationNodeData.right.to!string);
+                break;
+            case AstAction.TypeArray:
+                bool hasFirstOperand = (cast(void*) firstNodeOperand) != null;
+                if (hasFirstOperand)
                 {
-                    sink(commaSeperatedNodes.to!string);
+                    sink("Array of: ");
+                    sink(firstNodeOperand.to!string);
+                    sink(" ");
                 }
+                if (isIntegerLiteral)
+                {
+                    sink("with ");
+                    sink(commaSeperatedNodes[0][0].to!string);
+                    sink(" elements");
+                }
+                else
+                    foreach (const(AstNode[]) containingReductions; commaSeperatedNodes)
+                    {
+                        sink(commaSeperatedNodes.to!string);
+                    }
 
-            break;
-        default:
-            break;
+                break;
+            default:
+                break;
         }
         sink("}");
     }
@@ -325,143 +325,188 @@ class AstNode
 
         switch (action)
         {
-        case AstAction.TypeGeneric:
-            write(action);
-            writeln(":");
-            typeGenericNodeData.left.tree(tabCount + 1);
-            typeGenericNodeData.right.tree(tabCount + 1);
-            break;
-        case AstAction.TypePointer:
-        case AstAction.TypeReference:
-            write(action);
-            writeln(":");
-            foreach (subnode; expressionNodeData.components)
-            {
-                subnode.tree(tabCount + 1);
-            }
-            break;
-        case AstAction.TypeArray:
-            bool hasFirstOperand = (cast(void*) firstNodeOperand) != null;
-            if (hasFirstOperand && commaSeperatedNodes.length)
-                writeln("List of N indexed with X");
-            else
-                writeln("List of X");
-            if (firstNodeOperand)
-                firstNodeOperand.tree(tabCount + 1);
-            foreach (AstNode[] possibleReducedNodes; commaSeperatedNodes)
-            {
-                if (possibleReducedNodes.length > 0)
-                    possibleReducedNodes[0].tree(tabCount + 1);
-
-            }
-            break;
-        case AstAction.TypeTuple:
-            write(action);
-            writeln(":");
-            foreach (AstNode[] possibleReducedNodes; commaSeperatedNodes)
-            {
-                if (possibleReducedNodes.length > 0)
-                    possibleReducedNodes[0].tree(tabCount + 1);
-
-            }
-            break;
-        case AstAction.Call:
-            writeln("Calling function resolved from:");
-            callNodeData.func.tree(tabCount + 1);
-            printTabs();
-            write("With Params (");
-            write(callNodeData.args.length);
-            writeln(")");
-            foreach (arg; callNodeData.args)
-            {
-                if (arg.specifiedName != null)
+            case AstAction.TypeGeneric:
+                write(action);
+                writeln(":");
+                typeGenericNodeData.left.tree(tabCount + 1);
+                typeGenericNodeData.right.tree(tabCount + 1);
+                break;
+            case AstAction.TypePointer:
+            case AstAction.TypeReference:
+                write(action);
+                writeln(":");
+                foreach (subnode; expressionNodeData.components)
                 {
-                    printTabs();
-                    arg.specifiedName.value.write();
-                    ": ".writeln;
-                    arg.source.tree(tabCount + 2);
+                    subnode.tree(tabCount + 1);
+                }
+                break;
+            case AstAction.TypeArray:
+                bool hasFirstOperand = (cast(void*) firstNodeOperand) != null;
+                if (hasFirstOperand && commaSeperatedNodes.length)
+                    writeln("List of N indexed with X");
+                else
+                    writeln("List of X");
+                if (firstNodeOperand)
+                    firstNodeOperand.tree(tabCount + 1);
+                foreach (AstNode[] possibleReducedNodes; commaSeperatedNodes)
+                {
+                    if (possibleReducedNodes.length > 0)
+                        possibleReducedNodes[0].tree(tabCount + 1);
+
+                }
+                break;
+            case AstAction.TypeTuple:
+                write(action);
+                writeln(":");
+                foreach (AstNode[] possibleReducedNodes; commaSeperatedNodes)
+                {
+                    if (possibleReducedNodes.length > 0)
+                        possibleReducedNodes[0].tree(tabCount + 1);
+
+                }
+                break;
+            case AstAction.Call:
+                writeln("Calling function resolved from:");
+                callNodeData.func.tree(tabCount + 1);
+                printTabs();
+                write("With Params (");
+                write(callNodeData.args.length);
+                writeln(")");
+                foreach (arg; callNodeData.args)
+                {
+                    if (arg.specifiedName != null)
+                    {
+                        printTabs();
+                        arg.specifiedName.value.write();
+                        ": ".writeln;
+                        arg.source.tree(tabCount + 2);
+                    }
+                    else
+                        arg.source.tree(tabCount + 1);
+
+                }
+
+                // callNodeData.args.tree(tabCount + 1);
+                break;
+            case AstAction.DoubleArgumentOperation:
+                write("opr ");
+                writeln(doubleArgumentOperationNodeData.operationVariety.to!string ~ ":");
+                doubleArgumentOperationNodeData.left.tree(tabCount + 1);
+                doubleArgumentOperationNodeData.right.tree(tabCount + 1);
+                break;
+            case AstAction.SingleArgumentOperation:
+                writeln(singleArgumentOperationNodeData.operationVariety.to!string ~ ":");
+                singleArgumentOperationNodeData.value.tree(tabCount + 1);
+                break;
+            case AstAction.IndexInto:
+                writeln("Index into:");
+                tabCount++;
+                printTabs();
+                writeln("This:");
+                indexIntoNodeData.indexInto.tree(tabCount + 1);
+                printTabs();
+                writeln("With this:");
+                indexIntoNodeData.index.tree(tabCount + 1);
+                tabCount--;
+                break;
+
+            case AstAction.Expression:
+                writeln(
+                    "Result of expression with " ~ expressionNodeData.components.length.to!string ~ " components:");
+                foreach (subnode; expressionNodeData.components)
+                {
+                    subnode.tree(tabCount + 1);
+                }
+                break;
+            case AstAction.ReturnStatement:
+                writeln(action);
+                nodeToReturn.tree(tabCount + 1);
+                break;
+            case AstAction.AssignVariable:
+                write("Assigning variable(s): ");
+                foreach (AstNode nameNode; assignVariableNodeData.name)
+                    write(nameNode.namedUnit.names.to!string ~ ", ");
+                writeln(": ");
+                assignVariableNodeData.value.tree(tabCount + 1);
+                break;
+            case AstAction.IfStatement:
+                write(action);
+                writeln(" hasScope = " ~ conditionNodeData.isScope.to!string ~ " keywords = " ~ conditionNodeData
+                        .precedingKeywords.to!string);
+                conditionNodeData.condition.tree(tabCount + 1);
+                if (conditionNodeData.isScope)
+                {
+                    import parsing.treegen.scopeParser : tree;
+
+                    conditionNodeData.conditionScope.tree(tabCount + 1);
                 }
                 else
-                    arg.source.tree(tabCount + 1);
+                    conditionNodeData.conditionResultNode.tree(tabCount + 1);
 
-            }
+                // printTabs();
+                break;
+            case AstAction.ElseStatement:
+                write(action);
+                writeln(" hasScope = " ~ elseNodeData.isScope.to!string ~ " keywords = " ~ elseNodeData
+                        .precedingKeywords.to!string);
+                if (elseNodeData.isScope)
+                {
+                    import parsing.treegen.scopeParser : tree;
 
-            // callNodeData.args.tree(tabCount + 1);
-            break;
-        case AstAction.DoubleArgumentOperation:
-            write("opr ");
-            writeln(doubleArgumentOperationNodeData.operationVariety.to!string ~ ":");
-            doubleArgumentOperationNodeData.left.tree(tabCount + 1);
-            doubleArgumentOperationNodeData.right.tree(tabCount + 1);
+                    elseNodeData.elseScope.tree(tabCount + 1);
+                }
+                else
+                    elseNodeData.elseResultNode.tree(tabCount + 1);
+                break;
+            default:
+                writeln(this.to!string);
+                break;
+        }
+    }
+}
+private void getRelatedTokensFromNodes(AstNode[] nodes, ref Token[] output)
+{
+    foreach (AstNode node; nodes)
+    {
+        getRelatedTokens(node, output);
+    }
+}
+void getRelatedTokens(AstNode node, ref Token[] output)
+{
+    switch (node.action){
+        // TODO: Improve all of this
+        case AstAction.TypePointer:
+        case AstAction.TypeReference:
+            getRelatedTokens(node.firstNodeOperand, output);
             break;
         case AstAction.SingleArgumentOperation:
-            writeln(singleArgumentOperationNodeData.operationVariety.to!string ~ ":");
-            singleArgumentOperationNodeData.value.tree(tabCount + 1);
+            getRelatedTokens(node.singleArgumentOperationNodeData.value, output);
             break;
-        case AstAction.IndexInto:
-            writeln("Index into:");
-            tabCount++;
-            printTabs();
-            writeln("This:");
-            indexIntoNodeData.indexInto.tree(tabCount+1);
-            printTabs();
-            writeln("With this:");
-            indexIntoNodeData.index.tree(tabCount+1);
-            tabCount--;
+        case AstAction.DoubleArgumentOperation:
+            getRelatedTokens(node.doubleArgumentOperationNodeData.left, output);
+            getRelatedTokens(node.doubleArgumentOperationNodeData.right, output);
             break;
-
-        case AstAction.Expression:
-            writeln(
-                "Result of expression with " ~ expressionNodeData.components.length.to!string ~ " components:");
-            foreach (subnode; expressionNodeData.components)
-            {
-                subnode.tree(tabCount + 1);
-            }
+        case AstAction.LiteralUnit:
+            output ~= node.literalUnitCompenents;
             break;
-        case AstAction.ReturnStatement:
-            writeln(action);
-            nodeToReturn.tree(tabCount + 1);
-            break;
-        case AstAction.AssignVariable:
-            write("Assigning variable(s): ");
-            foreach (AstNode nameNode; assignVariableNodeData.name)
-                write(nameNode.namedUnit.names.to!string ~ ", ");
-            writeln(": ");
-            assignVariableNodeData.value.tree(tabCount + 1);
-            break;
-        case AstAction.IfStatement:
-            write(action);
-            writeln(" hasScope = " ~ conditionNodeData.isScope.to!string ~ " keywords = " ~ conditionNodeData
-                    .precedingKeywords.to!string);
-            conditionNodeData.condition.tree(tabCount + 1);
-            if (conditionNodeData.isScope)
-            {
-                import parsing.treegen.scopeParser : tree;
-
-                conditionNodeData.conditionScope.tree(tabCount + 1);
-            }
-            else
-                conditionNodeData.conditionResultNode.tree(tabCount + 1);
-
-            // printTabs();
-            break;
-        case AstAction.ElseStatement:
-            write(action);
-            writeln(" hasScope = " ~ elseNodeData.isScope.to!string ~ " keywords = " ~ elseNodeData
-                    .precedingKeywords.to!string);
-            if (elseNodeData.isScope)
-            {
-                import parsing.treegen.scopeParser : tree;
-
-                elseNodeData.elseScope.tree(tabCount + 1);
-            }
-            else
-                elseNodeData.elseResultNode.tree(tabCount + 1);
+        case AstAction.TokenHolder:
+            output ~= node.tokenBeingHeld;
             break;
         default:
-            writeln(this.to!string);
             break;
-        }
+    }
+}
+
+
+void getMinMax(AstNode node, ref size_t minV, ref size_t maxV)
+{
+    Token[] tokens;
+    getRelatedTokens(node, tokens);
+    foreach (Token token; tokens)
+    {
+        import std.algorithm : min, max;
+        minV = min(minV, token.startingIndex);
+        maxV = max(maxV, token.startingIndex);
     }
 }
 
