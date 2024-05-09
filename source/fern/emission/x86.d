@@ -942,7 +942,7 @@ final:
 
     this(T)(T val)
     {
-        locals ~= Local(val);
+        locals ~= Variable(val);
     }
 }
 
@@ -951,7 +951,7 @@ public struct Instruction
 public:
 final:
     OpCode opcode;
-    Local[] operands;
+    Variable[] operands;
     Details details;
     int score;
 
@@ -1007,7 +1007,7 @@ final:
         return true;
     }
 
-    this(OpCode opcode, Local[] operands...)
+    this(OpCode opcode, Variable[] operands...)
     {
         Details detail(string fmt) pure
         {
@@ -1496,7 +1496,7 @@ final:
 {
 public:
 final:
-    Local[string] locals;
+    Variable[string] locals;
     Instruction[] instructions;
 
     void init()

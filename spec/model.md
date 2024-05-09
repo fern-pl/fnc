@@ -162,7 +162,7 @@ struct A
 int foo = A();
 ```
 
-### Promotion Conversion
+### Promotion Cast
 
 Integers may promote to a larger integer in which they do not lose any bits and maintain the same format.
 

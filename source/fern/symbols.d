@@ -81,7 +81,7 @@ public enum SymAttr : ulong
 
     GLOB = 1L << 53,
 
-    FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD;
+    FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD
 }
 
 public class Symbol
@@ -128,24 +128,60 @@ final:
             return "struct";
     }
 
-    bool canReinterpret(Type val)
+    bool canCast(Type val)
     {
         // arrays cannot reinterpret unless static and same size
         // pointers can only reinterpret if the types can reinterpret with a depth == 0
         // prims can reinterpret if the first field can reinterpret and there is only 1 field
         // fields must have the same format, size, and offset
-        // ints can reinterpret if reinterpreting from a larger size
+        // ints can reinterpret if reinterpreting from a smaller int
 
-        foreach (i; field; val.fields)
+        // TODO: There's no way this is sufficiently efficient, needs a rewrite?
+        //       Does this even work???
+
+        if (val == this)
+            return true;
+        else if (val.fields.length != fields.length)
+            return false;
+
+        if (fields.length == 1 && val.fields.length == 0)
+            return fields[0].type.canCast(val);
+        else if (val.fields.length == 1 && fields.length == 0)
+            return val.fields[0].type.canCast(this);
+        else if (val.fields.length == 0 && fields.length == 0)
         {
-            if (field.size != fields[i].size ||
-                field.offset != fields[i].offset ||
-                !field.sharesFormat(fields[i]))
+            return !val.attr.hasFlag(SymAttr.DYNARRAY) &&
+                !val.attr.hasFlag(SymAttr.ASOARRAY) &&
+                !attr.hasFlag(SymAttr.DYNARRAY) &&
+                !attr.hasFlag(SymAttr.ASOARRAY) &&
+                (val.attr & SymAttr.FORMAT_MASK) == (attr & SymAttr.FORMAT_MASK) &&
+                val.size >= size;
+        }
+
+        foreach (i, field; val.fields)
+        {
+            if (field.offset != fields[i].offset ||
+                (field.type.attr & SymAttr.FORMAT_MASK) != (fields[i].type.attr & SymAttr.FORMAT_MASK) ||
+                !field.type.canCast(fields[i].type))
                 return false;
         }
+
         return true;
     }
 }
+
+/* unittest 
+{
+    Type a = new Type();
+    a.size = 1;
+    a.attr |= SymAttr.BYTE;
+
+    Type b = new Type();
+    b.size = 2;
+    b.attr |= SymAttr.WORD;
+
+    assert(!b.canCast(a));
+} */
 
 public class Function : Symbol
 {
@@ -189,11 +225,6 @@ final:
     Type type()
     {
         return cast(Type)parents[$-1];
-    }
-
-    bool sharesFormat(Field val)
-    {
-        return val.attr
     }
 }
 
