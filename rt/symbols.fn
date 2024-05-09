@@ -1,4 +1,4 @@
-module rt.metadata;
+module rt.symbols;
 
 public const tagged SymAttr : ^long
 {
@@ -71,4 +71,6 @@ public const tagged SymAttr : ^long
     FLOAT = 1 << 50;
     DOUBLE = 1 << 51;
     SIGNED = 1 << 52;
+
+    GLOB = 1 << 53;
 }

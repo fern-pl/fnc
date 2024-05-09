@@ -85,23 +85,34 @@ public class Symbol
 {
 public:
 final:
+    Glob glob;
     SymAttr attr;
     string name;
     Symbol[] parents;
     Symbol[] children;
     Symbol[] attributes;
+
+    string identifier()
+    {
+        string ret;
+        foreach (parent; parents)
+            ret ~= parent.name~'.';
+        return ret~name;
+    }
 }
 
 public class Type : Symbol
 {
 public:
 final:
-    Type[string] inherits;
-    Field[string] fields;
-    Function[string] functions;
+    Type[] inherits;
+    Variable[] fields;
+    Function[] functions;
     ubyte[] data;
     size_t size;
     size_t alignment;
+    // For pointer and arrays, how deeply nested they are.
+    uint depth;
 
     string type()
     {
@@ -119,9 +130,9 @@ public class Function : Symbol
 public:
 final:
     // The first parameter is always the return.
-    Local[string] parameters;
+    Variable[] parameters;
     // This will include the return and parameters as the first locals.
-    Local[string] locals;
+    Variable[] locals;
     Instruction[] instructions;
     size_t alignment;
 
@@ -137,13 +148,11 @@ final:
     }
 }
 
-public alias Parameter = Field;
-public alias Local = Field;
-
-// Expressions and literals should also be represented by a field,
+// Locals and parameters use Variable.
+// Expressions and literals should also be represented by a variable,
 // but I haven't yet worked this out.
 
-public class Field : Symbol
+public class Variable : Symbol
 {
 public:
 final:
@@ -165,9 +174,10 @@ public class Module : Symbol
 {
 public:
 final:
-    Symbol[string] imports;
-    Field[string] fields;
-    Function[string] functions;
+    Symbol[] imports;
+    Type[] types;
+    Variable[] fields;
+    Function[] functions;
 }
 
 public class Glob
@@ -177,6 +187,7 @@ final:
     Symbol[string] symbols;
     Module[string] modules;
     Type[string] types;
-    Field[string] fields;
+    Variable[string] fields;
     Function[string] functions;
+    Function[] unittests;
 }
