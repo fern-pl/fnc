@@ -2,6 +2,8 @@
 
 ## Member Evaluations
 
+> Locals are commonly referred to as variables, which in Fern are specifically variables that are local to a function (ie: not a field or parameter variable. )
+
 | Member | Evaluates | Applicable |
 |--------|-----------|------------|
 | `attributes` | All attributes of the given symbol. | All |
@@ -16,9 +18,91 @@
 | `offsetof` | The offset of the given symbol's data. | Variables |
 | `returnof` | Return type of the given symbol. | Functions |
 | `parameters` | Parameters of the given symbol. | Functions |
+| `locals` | Locals of the given symbol. | Functions |
+| `children` | Imported symbols of the given symbol. | Module |
 
-## Symbol Kinds & Formats
+## Symbol Attributes & Formats
 
-| Symbol Kind | Definition |
+| Symbol Attribute | Definition |
 |-------------|------------|
-| 
+| `type` | Structure of data with or without instance presence - `struct`, `class`, `tagged` or `tuple`. |
+| `struct` | A product-type aggregate passed by-value. |
+| `class` | A product-type aggregate passed by-reference. |
+| `tagged` | A sum-type aggregate passed by-value with a `tag`. |
+| `tuple` | A sum-type aggregate passed by-value with arbitrary types. |
+| `module` | Top or domain level scope with no instance presence. |
+| `function` | Executable code scope taking parameters and returning a return type. |
+| `delegate` | Dynamic executable code scope taking parameters and returning a return type from an address. |
+| `lambda` | Special inline format of `delegate`. |
+| `ctor` | Scope constructor, namely used for `type` and `module`. |
+| `dtor` | Scope destructor, namely used for `type` and `module`. |
+| `unittest` | Scope independent executable code taking no parameters and not returning anything. Executes synchronously and may not be called. |
+| `field` | Data that exists and persists outside of an execution scope. |
+| `local` | Data that exists and persists only inside of an execution scope. |
+| `parameter` | Local declarations in a function signature which require arguments. |
+| `expression` | Code which may not function without an existing statement to modify, like `1 + 1` |
+| `literal` | Value known to the compiler before execution. |
+| `glob` | The global scope of the entire program, containing all of its symbols. |
+
+This is implementation defined, but generally symbols have or store the same information as the following formats internally:
+
+```
+Symbol [ 
+    SymAttr attr;
+    string name;
+    Symbol[] parents;
+    Symbol[] children;
+    Symbol[] attributes;
+]
+```
+
+```
+Type : Symbol [
+    Type[string] inherits;
+    Field[string] fields;
+    Function[string] functions;
+    ubyte[] init;
+    size_t sizeof;
+    size_t alignof;
+]
+```
+
+```
+# This is also used for delegates, lambdas, ctors, dtors, and unittests.
+Function : Symbol [
+    // The first parameter is always the return.
+    Local[string] parameters;
+    // This will include the return and parameters as the first locals.
+    Local[string] locals;
+    Instruction[] instructions;
+    size_t alignof;
+]
+```
+
+```
+# This is also used for locals, parameters, expressions, and literals.
+Field : Symbol [
+    ubyte[] init;
+    size_t sizeof;
+    size_t alignof;
+    size_t offsetof;
+    Marker marker;
+]
+```
+
+```
+Module : Symbol [
+    Symbol[string] imports;
+    Field[string] fields;
+    Function[string] functions;
+]
+```
+
+```
+# This is used to store global information about the program.
+Glob : Symbol [
+    Symbol[string] imports;
+    Field[string] fields;
+    Function[string] functions;
+]
+```

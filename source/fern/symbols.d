@@ -77,6 +77,8 @@ public enum SymAttr : ulong
     FLOAT = 1L << 50,
     DOUBLE = 1L << 51,
     SIGNED = 1L << 52,
+
+    GLOB = 1L << 53,
 }
 
 public class Symbol
@@ -90,12 +92,11 @@ final:
     Symbol[] attributes;
 }
 
-public class Type
+public class Type : Symbol
 {
 public:
 final:
-    Symbol sym;
-    Symbol[] inherits;
+    Type[string] inherits;
     Field[string] fields;
     Function[string] functions;
     ubyte[] data;
@@ -104,22 +105,22 @@ final:
 
     string type()
     {
-        if ((sym.attr & SymAttr.CLASS) != 0)
+        if ((attr & SymAttr.CLASS) != 0)
             return "class";
-        else if ((sym.attr & SymAttr.TAGGED) != 0)
+        else if ((attr & SymAttr.TAGGED) != 0)
             return "tagged";
-        else //if ((sym.attr & SymAttr.STRUCT) != 0)
+        else //if ((attr & SymAttr.STRUCT) != 0)
             return "struct";
     }
 }
 
-public class Function
+public class Function : Symbol
 {
 public:
 final:
-    Symbol sym;
-    Symbol returnof;
-    Symbol[] parameters;
+    // The first parameter is always the return.
+    Local[string] parameters;
+    // This will include the return and parameters as the first locals.
     Local[string] locals;
     Instruction[] instructions;
     size_t alignment;
@@ -127,9 +128,9 @@ final:
     string type()
     {
         // ctor and dtor are also functions, so we needn't check for them.
-        if ((sym.attr & SymAttr.FUNCTION) != 0)
+        if ((attr & SymAttr.FUNCTION) != 0)
             return "function";
-        else if ((sym.attr & SymAttr.UNITTEST) != 0)
+        else if ((attr & SymAttr.UNITTEST) != 0)
             return "unittest";
         else
             return "delegate";
@@ -142,31 +143,29 @@ public alias Local = Field;
 // Expressions and literals should also be represented by a field,
 // but I haven't yet worked this out.
 
-public class Field
+public class Field : Symbol
 {
-    Marker marker;
-    alias marker this;
-
 public:
 final:
-    Symbol sym;
     ubyte[] data;
     size_t size;
     size_t alignment;
     size_t offset;
+    Marker marker;
+
+    alias marker this;
 
     Symbol type()
     {
-        return sym.parents[$-1];
+        return parents[$-1];
     }
 }
 
-public class Module
+public class Module : Symbol
 {
 public:
 final:
-    Symbol sym;
-    Symbol[] imports;
+    Symbol[string] imports;
     Field[string] fields;
     Function[string] functions;
 }

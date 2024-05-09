@@ -33,6 +33,7 @@ Examples [exist](examples) but are small tidbits meant to facilitate parser test
 
 2. [Grammar](spec/grammar.md)
 3. [Lexical](spec/lexical.md)
+4. [Metaprogramming](spec/metaprogramming.md)
 
 Fern is planned to be able to, as well as natively compile, compile into CIL which may be interpreted directly as if Fern were C# and the standard library is likely to incorporate a more fully fleshed out rendition of [Godwit](https://github.com/cetio/godwit) to enable full seamless integration and interop with .NET languages.
 
