@@ -2,6 +2,7 @@
 module fern.emission.x86;
 
 import gallinule.x86;
+import fern.symbols;
 import std.traits;
 
 public enum OpCode : ushort
@@ -787,26 +788,6 @@ public enum OpCode : ushort
     SETCC
 }
 
-public enum TypeModifiers
-{
-    FLOAT = 1 << 0,
-    POINTER = 1 << 1,
-    ARRAY = 1 << 2,
-    // Specially defined because vectors and strings get register priority regardless of usage :-)
-    VECTOR = 1 << 3,
-    BYTE = 1 << 4,
-    WORD = 1 << 5,
-    DWORD = 1 << 6,
-    QWORD = 1 << 7,
-    SIGNED = 1 << 8,
-    ATOMIC = 1 << 9,
-    TRANSIENT = 1 << 10,
-    REF = 1 << 11,
-
-    STRING = VECTOR | ARRAY,
-    INTEGRAL_MASK = 0b00001111
-}
-
 public enum Details
 {
     // PUSHA, POPA, RET and CALL require special parsing
@@ -847,22 +828,10 @@ public enum Kind : ubyte
     REGISTER
 }
 
-// TODO: Use symbols :-)
-
-public struct Type
-{
-    TypeModifiers modifiers;
-    size_t size;
-    Type[] fields;
-    Marker[] disjoints;
-}
-
 public struct Marker
 {
 public:
 final:
-    string name;
-    Type type;
     /// This is for internal marking allocation, not symbols!
     Kind kind;
     /// ditto
@@ -968,12 +937,12 @@ final:
                 return T(offset, segment);
         }
 
-        assert(0, "Attempted to convert a marker not of kind REGISTER or ALLOCATION to a type!");
+        assert(0, "Attempted to convert a local not of kind REGISTER or ALLOCATION to a type!");
     }
 
     this(T)(T val)
     {
-        markers ~= Marker(val);
+        locals ~= Local(val);
     }
 }
 
@@ -982,7 +951,7 @@ public struct Instruction
 public:
 final:
     OpCode opcode;
-    Marker[] operands;
+    Local[] operands;
     Details details;
     int score;
 
@@ -1038,7 +1007,7 @@ final:
         return true;
     }
 
-    this(OpCode opcode, Marker[] operands...)
+    this(OpCode opcode, Local[] operands...)
     {
         Details detail(string fmt) pure
         {
@@ -1527,7 +1496,7 @@ final:
 {
 public:
 final:
-    Marker[string] markers;
+    Local[string] locals;
     Instruction[] instructions;
 
     void init()
@@ -1536,7 +1505,7 @@ final:
         {
             foreach (j, ref operand; instr.operands)
             {
-                if (operand.name == null || markers[operand.name].score != 0)
+                if (operand.name == null || locals[operand.name].score != 0)
                     continue;
                 
                 if (instr.details.hasFlag(Details.READ1) != 0 && j == 0)
@@ -1546,12 +1515,12 @@ final:
                 else if (instr.details.hasFlag(Details.READ3) && j == 2)
                     instructions = Instruction(OpCode.XOR, operand, operand)~instructions;
 
-                if (markers[operand.name].modifiers.hasFlag(TypeModifiers.STRING))
-                    markers[operand.name].score = int.max - 1;
-                else if (markers[operand.name].modifiers.hasFlag(TypeModifiers.VECTOR))
-                    markers[operand.name].score = int.max;
+                if (locals[operand.name].modifiers.hasFlag(TypeModifiers.STRING))
+                    locals[operand.name].score = int.max - 1;
+                else if (locals[operand.name].modifiers.hasFlag(TypeModifiers.VECTOR))
+                    locals[operand.name].score = int.max;
                 else
-                    markers[operand.name].score++;
+                    locals[operand.name].score++;
             }
         }
     }

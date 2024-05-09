@@ -120,7 +120,7 @@ final:
     Symbol sym;
     Symbol returnof;
     Symbol[] parameters;
-    Marker[string] markers;
+    Local[string] locals;
     Instruction[] instructions;
     size_t alignment;
 
@@ -136,14 +136,17 @@ final:
     }
 }
 
-alias Parameter = Field;
-alias Local = Field;
+public alias Parameter = Field;
+public alias Local = Field;
 
 // Expressions and literals should also be represented by a field,
 // but I haven't yet worked this out.
 
 public class Field
 {
+    Marker marker;
+    alias marker this;
+
 public:
 final:
     Symbol sym;
