@@ -1,4 +1,5 @@
 module tests.scopeParser;
+
 import parsing.treegen.astTypes;
 import parsing.treegen.tokenRelationships;
 import parsing.treegen.scopeParser;
