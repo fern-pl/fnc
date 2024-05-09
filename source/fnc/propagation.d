@@ -3,7 +3,6 @@ module fnc.propagation;
 
 import fnc.symbols;
 import fnc.emission;
-import tern.object : ddup;
 
 public struct Engine
 {
@@ -19,10 +18,13 @@ final:
             with (OpCode) switch (instr.opcode)
             {
                 case MOV:
-                    if (instr.operands[0].isVariable)
-                        glob.variables[instr.operands[0].identifier].data = (cast(Variable)instr.operands[1]).data;
-                    else if (instr.operands[0].isAlias)
-                        glob.aliases[instr.operands[0].identifier].data = instr.operands[1];
+                    Symbol lhs = glob.symbols[instr.operands[0]];
+                    Symbol rhs = glob.symbols[instr.operands[1]];
+
+                    if (lhs.isVariable)
+                        (cast(Variable)lhs).data = (cast(Variable)rhs).data.dup;
+                    else if (lhs.isAlias)
+                        (cast(Alias)lhs).data = rhs;
                     break;
                 default:
                     assert(0, "Unsupported CTFE instruction!");

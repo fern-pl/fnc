@@ -125,6 +125,9 @@ final:
     bool isLocal() => (attr & SymAttr.LOCAL) != 0;
     bool isParameter() => (attr & SymAttr.PARAMETER) != 0;
     bool isVariable() => isField || isLocal || isParameter;
+
+    bool isExpression() => (attr & SymAttr.EXPRESSION) != 0;
+    bool isLiteral() => (attr & SymAttr.LITERAL) != 0;
 }
 
 public class Type : Symbol
