@@ -2,6 +2,7 @@
 module fern.symbols;
 
 import fern.emission;
+import tern.state;
 
 public enum SymAttr : ulong
 {
@@ -79,6 +80,8 @@ public enum SymAttr : ulong
     SIGNED = 1L << 52,
 
     GLOB = 1L << 53,
+
+    FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD;
 }
 
 public class Symbol
@@ -124,6 +127,24 @@ final:
         else //if ((attr & SymAttr.STRUCT) != 0)
             return "struct";
     }
+
+    bool canReinterpret(Type val)
+    {
+        // arrays cannot reinterpret unless static and same size
+        // pointers can only reinterpret if the types can reinterpret with a depth == 0
+        // prims can reinterpret if the first field can reinterpret and there is only 1 field
+        // fields must have the same format, size, and offset
+        // ints can reinterpret if reinterpreting from a larger size
+
+        foreach (i; field; val.fields)
+        {
+            if (field.size != fields[i].size ||
+                field.offset != fields[i].offset ||
+                !field.sharesFormat(fields[i]))
+                return false;
+        }
+        return true;
+    }
 }
 
 public class Function : Symbol
@@ -165,9 +186,14 @@ final:
 
     alias marker this;
 
-    Symbol type()
+    Type type()
     {
-        return parents[$-1];
+        return cast(Type)parents[$-1];
+    }
+
+    bool sharesFormat(Field val)
+    {
+        return val.attr
     }
 }
 
