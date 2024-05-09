@@ -9,6 +9,7 @@ I# Metaprogramming
 | `attributes` | All attributes of the given symbol. | All |
 | `children` | Children of the given symbol. | All |
 | `parents` | Parents of the given symbol. | All |
+| `identifier` | The full identifier of the given symbol, including parents. | All |
 | `symattr` | The symbol attributes of the given symbol has, this is ***not*** the same as `attributes`. | All |
 | `inherits` | Initial value of the given symbol's data. | Types |
 | `sizeof` | The size of the given symbol's data. | Variables, Types, Functions |
@@ -48,6 +49,7 @@ This is implementation defined, but generally symbols have or store the same inf
 
 ```
 Symbol [ 
+    Glob glob;
     SymAttr attr;
     string name;
     Symbol[] parents;
@@ -58,12 +60,15 @@ Symbol [
 
 ```
 Type : Symbol [
-    Type[string] inherits;
-    Field[string] fields;
-    Function[string] functions;
+    Type[] inherits;
+    Variable[] fields;
+    Function[] functions;
     ubyte[] init;
     size_t sizeof;
     size_t alignof;
+    // For pointer and arrays, how deeply nested they are.
+    // This is not front-facing to the runtime.
+    uint depth;
 ]
 ```
 
@@ -71,9 +76,9 @@ Type : Symbol [
 # This is also used for delegates, lambdas, ctors, dtors, and unittests.
 Function : Symbol [
     // The first parameter is always the return.
-    Local[string] parameters;
+    Variable[] parameters;
     // This will include the return and parameters as the first locals.
-    Local[string] locals;
+    Variable[string] locals;
     Instruction[] instructions;
     size_t alignof;
 ]
@@ -81,7 +86,7 @@ Function : Symbol [
 
 ```
 # This is also used for locals, parameters, expressions, and literals.
-Field : Symbol [
+Variable : Symbol [
     ubyte[] init;
     size_t sizeof;
     size_t alignof;
@@ -92,9 +97,10 @@ Field : Symbol [
 
 ```
 Module : Symbol [
-    Symbol[string] imports;
-    Field[string] fields;
-    Function[string] functions;
+    Symbol[] imports;
+    Type[] types;
+    Variable[] fields;
+    Function[] functions;
 ]
 ```
 
@@ -106,5 +112,6 @@ Glob : Symbol [
     Type[string] types;
     Field[string] fields;
     Function[string] functions;
+    Function[] unittests;
 ]
 ```

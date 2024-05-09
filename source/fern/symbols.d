@@ -112,6 +112,7 @@ final:
     size_t size;
     size_t alignment;
     // For pointer and arrays, how deeply nested they are.
+    // This is not front-facing to the runtime.
     uint depth;
 
     string type()
@@ -132,7 +133,7 @@ final:
     // The first parameter is always the return.
     Variable[] parameters;
     // This will include the return and parameters as the first locals.
-    Variable[] locals;
+    Variable[string] locals;
     Instruction[] instructions;
     size_t alignment;
 
