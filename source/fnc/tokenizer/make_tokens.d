@@ -1,4 +1,4 @@
-module parsing.tokenizer.make_tokens;
+module fnc.tokenizer.make_tokens;
 
 import std.algorithm : find, min;
 import std.string : indexOf;
@@ -6,7 +6,7 @@ import std.string : indexOf;
 import std.utf : decode;
 import tern.typecons.common : Nullable, nullable;
 
-import parsing.tokenizer.tokens;
+import fnc.tokenizer.tokens;
 
 dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index)
 {

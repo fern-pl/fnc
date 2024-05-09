@@ -1,14 +1,15 @@
-module parsing.treegen.scopeParser;
-import parsing.tokenizer.tokens;
-import parsing.treegen.astTypes;
-import parsing.treegen.expressionParser;
-import parsing.treegen.treeGenUtils;
-import parsing.treegen.tokenRelationships;
-import parsing.treegen.keywords;
+module fnc.treegen.scope_parser;
+
+import fnc.tokenizer.tokens;
+import fnc.treegen.ast_types;
+import fnc.treegen.expression_parser;
+import fnc.treegen.utils;
+import fnc.treegen.relationships;
+import fnc.treegen.keywords;
 
 import tern.typecons.common : Nullable, nullable;
 import std.container.array;
-import errors;
+import fnc.errors;
 
 struct ImportStatement
 {
@@ -380,7 +381,7 @@ ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, Token[]
 
 ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, string data)
 {
-    import parsing.tokenizer.make_tokens;
+    import fnc.tokenizer.make_tokens;
 
     size_t index;
     GLOBAL_ERROR_STATE = data;

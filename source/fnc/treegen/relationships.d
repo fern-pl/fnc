@@ -1,8 +1,9 @@
-module parsing.treegen.tokenRelationships;
-import parsing.tokenizer.tokens;
-import parsing.treegen.astTypes;
-import parsing.treegen.treeGenUtils;
-import parsing.treegen.typeParser;
+module fnc.treegen.relationships;
+
+import fnc.tokenizer.tokens;
+import fnc.treegen.ast_types;
+import fnc.treegen.utils;
+import fnc.treegen.type_parser;
 import tern.typecons.common : Nullable, nullable;
 
 /+

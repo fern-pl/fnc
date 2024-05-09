@@ -1,16 +1,16 @@
 module tests.parser;
 
 import std.container.array;
-import parsing.tokenizer.tokens;
-import parsing.treegen.astTypes;
-import parsing.treegen.expressionParser;
-import parsing.treegen.treeGenUtils;
+import fnc.tokenizer.tokens;
+import fnc.treegen.ast_types;
+import fnc.treegen.expression_parser;
+import fnc.treegen.utils;
 
-import parsing.treegen.tokenRelationships;
+import fnc.treegen.relationships;
 
 // unittest
 // {
-//     import parsing.tokenizer.make_tokens;
+//     import fnc.tokenizer.make_tokens;
 
 //     AstNode[] phaseOneNodes = phaseOne("math.sqrt(3 * 5 + 6 * 7 / 2)*(x+3)/2+4".tokenizeText);
 //     Array!AstNode nodes;
@@ -29,7 +29,7 @@ import parsing.treegen.tokenRelationships;
 
 unittest
 {
-    import parsing.tokenizer.make_tokens;
+    import fnc.tokenizer.make_tokens;
 
     size_t s = 0;
     assert("int x = 4;".tokenizeText.genNamedUnit(s).names == [
@@ -46,7 +46,7 @@ unittest
 unittest
 {
     import std.stdio;
-    import parsing.tokenizer.make_tokens;
+    import fnc.tokenizer.make_tokens;
 
     assert(DeclarationLine.matchesToken(
             tokenizeText("mod.type.submod x,r,q,a, A_variable  \n\r\t ;")
@@ -76,8 +76,8 @@ unittest
 
 unittest
 {
-    import parsing.tokenizer.make_tokens;
-    import parsing.treegen.keywords;
+    import fnc.tokenizer.make_tokens;
+    import fnc.treegen.keywords;
 
     Token[] tokens = tokenizeText("align(an invalid alignment) abstract pure int x();");
 
@@ -92,7 +92,7 @@ unittest
 
 unittest
 {
-    import parsing.tokenizer.make_tokens;
+    import fnc.tokenizer.make_tokens;
 
     auto nodes = expressionNodeFromTokens("(p[t++]<<<=1) + 10 / x[9]++".tokenizeText);
     // assert(nodes.length == 1);
@@ -103,8 +103,8 @@ unittest
 
 unittest
 {
-    import parsing.tokenizer.make_tokens;
-    import parsing.treegen.scopeParser;
+    import fnc.tokenizer.make_tokens;
+    import fnc.treegen.scope_parser;
 
     size_t index = 0;
     auto scopeData = new ScopeData;
@@ -121,8 +121,8 @@ unittest
 
 unittest
 {
-    import parsing.tokenizer.make_tokens;
-    import parsing.treegen.scopeParser;
+    import fnc.tokenizer.make_tokens;
+    import fnc.treegen.scope_parser;
     import std.stdio;
 
     size_t index = 0;

@@ -1,4 +1,4 @@
-module parsing.tokenizer.tokens;
+module fnc.tokenizer.tokens;
 
 import std.ascii : isASCII, isDigit, isAlpha, isAlphaNum, isWhite;
 import std.algorithm : find, min;

@@ -1,7 +1,8 @@
-module parsing.treegen.keywords;
-import parsing.tokenizer.tokens;
+module fnc.treegen.keywords;
+
+import fnc.tokenizer.tokens;
 import std.string : indexOf;
-import errors;
+import fnc.errors;
 
 const dchar[][] FUNC_STYLE_KEYWORD = [
     "align".makeUnicodeString

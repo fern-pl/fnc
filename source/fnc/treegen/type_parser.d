@@ -1,10 +1,10 @@
-module parsing.treegen.typeParser;
+module fnc.treegen.type_parser;
 
-import parsing.tokenizer.tokens;
-import parsing.treegen.astTypes;
+import fnc.tokenizer.tokens;
+import fnc.treegen.ast_types;
 
 import tern.typecons.common : Nullable, nullable;
-import errors;
+import fnc.errors;
 
 import std.array;
 import std.stdio;
@@ -196,7 +196,7 @@ size_t prematureTypeLength(Token[] tokens, size_t index)
 
 Nullable!AstNode typeFromTokens(Token[] tokens, ref size_t index)
 {
-    import parsing.treegen.expressionParser : phaseOne;
+    import fnc.treegen.expression_parser : phaseOne;
 
     size_t length = tokens.prematureTypeLength(index);
     if (length == 0)

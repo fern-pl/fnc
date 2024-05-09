@@ -1,7 +1,8 @@
-module parsing.treegen.treeGenUtils;
-import errors;
-import parsing.treegen.astTypes;
-import parsing.tokenizer.tokens;
+module fnc.treegen.utils;
+
+import fnc.errors;
+import fnc.treegen.ast_types;
+import fnc.tokenizer.tokens;
 import tern.typecons.common : Nullable, nullable;
 
 NamedUnit genNamedUnit(Token[] tokens, ref size_t index)

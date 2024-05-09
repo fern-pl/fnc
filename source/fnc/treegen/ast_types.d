@@ -1,5 +1,6 @@
-module parsing.treegen.astTypes;
-import parsing.tokenizer.tokens : Token;
+module fnc.treegen.ast_types;
+
+import fnc.tokenizer.tokens : Token;
 import tern.typecons.common : Nullable, nullable;
 
 struct NamedUnit
@@ -136,7 +137,7 @@ enum OperationVariety
     Range, // x..y OR 0..99
 }
 
-import parsing.treegen.scopeParser : ScopeData;
+import fnc.treegen.scope_parser : ScopeData;
 
 struct ConditionNodeData
 {
@@ -436,7 +437,7 @@ class AstNode
                 conditionNodeData.condition.tree(tabCount + 1);
                 if (conditionNodeData.isScope)
                 {
-                    import parsing.treegen.scopeParser : tree;
+                    import fnc.treegen.scope_parser : tree;
 
                     conditionNodeData.conditionScope.tree(tabCount + 1);
                 }
@@ -451,7 +452,7 @@ class AstNode
                         .precedingKeywords.to!string);
                 if (elseNodeData.isScope)
                 {
-                    import parsing.treegen.scopeParser : tree;
+                    import fnc.treegen.scope_parser : tree;
 
                     elseNodeData.elseScope.tree(tabCount + 1);
                 }
@@ -514,7 +515,7 @@ import std.container.array;
 
 bool isWhite(const AstNode node)
 {
-    import parsing.tokenizer.tokens : TokenType;
+    import fnc.tokenizer.tokens : TokenType;
 
     return node.action == AstAction.TokenHolder &&
         (node.tokenBeingHeld.tokenVariety == TokenType.WhiteSpace

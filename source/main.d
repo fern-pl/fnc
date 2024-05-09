@@ -1,11 +1,11 @@
 module main;
 
-import parsing.tokenizer.tokens;
-import parsing.tokenizer.make_tokens;
+import fnc.tokenizer.tokens;
+import fnc.tokenizer.make_tokens;
 import tern.typecons.common : Nullable, nullable;
-import parsing.treegen.scopeParser;
-import parsing.treegen.tokenRelationships;
-import parsing.treegen.typeParser;
+import fnc.treegen.scope_parser;
+import fnc.treegen.relationships;
+import fnc.treegen.type_parser;
 
 import std.stdio;
 
@@ -66,7 +66,7 @@ void main()
     size_t min = -1;
     size_t max = 0;
 
-    import parsing.treegen.astTypes : getMinMax;
+    import fnc.treegen.ast_types : getMinMax;
     getMinMax(newScope.instructions[0], min, max);
     min.writeln;
     max.writeln;

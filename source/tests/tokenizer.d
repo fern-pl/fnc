@@ -1,6 +1,6 @@
 module tests.tokenizer;
-import parsing.tokenizer.tokens;
-import parsing.tokenizer.make_tokens;
+import fnc.tokenizer.tokens;
+import fnc.tokenizer.make_tokens;
 
 unittest
 {

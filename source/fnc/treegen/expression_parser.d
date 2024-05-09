@@ -1,11 +1,11 @@
-module parsing.treegen.expressionParser;
+module fnc.treegen.expression_parser;
 
 import tern.typecons.common : Nullable, nullable;
-import parsing.treegen.astTypes;
-import parsing.tokenizer.tokens;
-import parsing.treegen.tokenRelationships;
-import parsing.treegen.treeGenUtils;
-import errors;
+import fnc.treegen.ast_types;
+import fnc.tokenizer.tokens;
+import fnc.treegen.relationships;
+import fnc.treegen.utils;
+import fnc.errors;
 import std.stdio;
 import std.container.array;
 

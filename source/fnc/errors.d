@@ -1,7 +1,8 @@
-module errors;
+module fnc.errors;
+
 import std.exception;
-import parsing.tokenizer.tokens : Token;
-import parsing.treegen.astTypes : AstNode, getMinMax;
+import fnc.tokenizer.tokens : Token;
+import fnc.treegen.ast_types : AstNode, getMinMax;
 
 public static string GLOBAL_ERROR_STATE = null;
 

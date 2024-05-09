@@ -1,15 +1,15 @@
-module tests.scopeParser;
+module tests.scope_parser;
 
-import parsing.treegen.astTypes;
-import parsing.treegen.tokenRelationships;
-import parsing.treegen.scopeParser;
-import parsing.tokenizer.tokens;
+import fnc.treegen.ast_types;
+import fnc.treegen.relationships;
+import fnc.treegen.scope_parser;
+import fnc.tokenizer.tokens;
 import tern.typecons.common : Nullable, nullable;
 
 unittest
 {
-    import parsing.tokenizer.make_tokens;
-    import parsing.treegen.scopeParser;
+    import fnc.tokenizer.make_tokens;
+    import fnc.treegen.scope_parser;
 
     size_t index = 0;
     auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "
@@ -55,7 +55,7 @@ unittest
 
 unittest
 {
-    import parsing.tokenizer.make_tokens;
+    import fnc.tokenizer.make_tokens;
 
     size_t index;
     auto t = "let x = 4/*asdadasd*/;".tokenizeText;
