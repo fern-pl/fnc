@@ -1,7 +1,7 @@
 /// Code generation facilities for compiler backend.
 module fnc.emission.x86;
 
-import gallinule.x86;
+public import gallinule.x86;
 import fnc.symbols;
 import std.traits;
 

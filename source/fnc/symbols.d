@@ -80,6 +80,7 @@ public enum SymAttr : ulong
     SIGNED = 1L << 52,
 
     GLOB = 1L << 53,
+    ALIAS = 1L << 54,
 
     FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD
 }
@@ -102,6 +103,28 @@ final:
             ret ~= parent.name~'.';
         return ret~name;
     }
+
+    bool isType() => (attr & SymAttr.TYPE) != 0;
+    bool isClass() => (attr & SymAttr.CLASS) != 0;
+    bool isStruct() => (attr & SymAttr.STRUCT) != 0;
+    bool isTagged() => (attr & SymAttr.TAGGED) != 0;
+    bool isTuple() => (attr & SymAttr.TUPLE) != 0;
+
+    bool isModule() => (attr & SymAttr.MODULE) != 0;
+    bool isGlob() => (attr & SymAttr.GLOB) != 0;
+    bool isAlias() => (attr & SymAttr.ALIAS) != 0;
+
+    bool isFunction() => (attr & SymAttr.FUNCTION) != 0;
+    bool isDelegate() => (attr & SymAttr.DELEGATE) != 0;
+    bool isLambda() => (attr & SymAttr.LAMBDA) != 0;
+    bool isCtor() => (attr & SymAttr.CTOR) != 0;
+    bool isDtor() => (attr & SymAttr.DTOR) != 0;
+    bool isUnittest() => (attr & SymAttr.UNITTEST) != 0;
+
+    bool isField() => (attr & SymAttr.FIELD) != 0;
+    bool isLocal() => (attr & SymAttr.LOCAL) != 0;
+    bool isParameter() => (attr & SymAttr.PARAMETER) != 0;
+    bool isVariable() => isField || isLocal || isParameter;
 }
 
 public class Type : Symbol
@@ -141,7 +164,7 @@ final:
 
         if (val == this)
             return true;
-        else if (val.fields.length != fields.length)
+        else if (val.size != size)
             return false;
 
         if (fields.length == 1 && val.fields.length == 0)
@@ -190,7 +213,7 @@ final:
     // The first parameter is always the return.
     Variable[] parameters;
     // This will include the return and parameters as the first locals.
-    Variable[string] locals;
+    Variable[] locals;
     Instruction[] instructions;
     size_t alignment;
 
@@ -228,6 +251,18 @@ final:
     }
 }
 
+public class Alias : Symbol
+{
+public:
+final:
+    Symbol data;
+
+    string type()
+    {
+        return "alias";
+    }
+}
+
 public class Module : Symbol
 {
 public:
@@ -245,7 +280,8 @@ final:
     Symbol[string] symbols;
     Module[string] modules;
     Type[string] types;
-    Variable[string] fields;
+    Variable[string] variables;
     Function[string] functions;
+    Alias[string] aliases;
     Function[] unittests;
 }
