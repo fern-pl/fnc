@@ -128,6 +128,17 @@ final:
 
     bool isExpression() => (attr & SymAttr.EXPRESSION) != 0;
     bool isLiteral() => (attr & SymAttr.LITERAL) != 0;
+
+    Symbol freeze()
+    {
+        if (isVariable)
+        {
+            Variable temp = cast(Variable)this;
+            temp.data = temp.data.dup;
+            return cast(Symbol)temp;
+        }
+        return this;
+    }
 }
 
 public class Type : Symbol
@@ -213,10 +224,10 @@ public class Function : Symbol
 {
 public:
 final:
-    // The first parameter is always the return.
-    Variable[] parameters;
-    // This will include the return and parameters as the first locals.
-    Variable[] locals;
+    // Will begin with all alias parameters and then subsequently ret-args.
+    Symbol[] parameters;
+    // Will begin with ret-args and then subsequently all locals.
+    Symbol[] locals;
     Instruction[] instructions;
     size_t alignment;
 
