@@ -1,4 +1,4 @@
-# Metaprogramming
+I# Metaprogramming
 
 ## Member Evaluations
 
@@ -101,7 +101,9 @@ Module : Symbol [
 ```
 # This is used to store global information about the program.
 Glob : Symbol [
-    Symbol[string] imports;
+    Symbol[string] symbols;
+    Module[string] modules;
+    Type[string] types;
     Field[string] fields;
     Function[string] functions;
 ]
