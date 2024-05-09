@@ -3,6 +3,8 @@ module fnc.propagation;
 
 import fnc.symbols;
 import fnc.emission;
+import std.typecons;
+import tern.object : qdup;
 
 public struct Engine
 {
@@ -12,25 +14,26 @@ final:
 
     Symbol interpret(Function func)
     {
-        Function temp = func.ddup;
+        Variable[] state;
+        foreach (var; func.locals)
+            state ~= var.qdup;
+        
         foreach (instr; func.instructions)
         {
             with (OpCode) switch (instr.opcode)
             {
                 case MOV:
-                    Symbol lhs = glob.symbols[instr.operands[0]];
-                    Symbol rhs = glob.symbols[instr.operands[1]];
-
-                    if (lhs.isVariable)
-                        (cast(Variable)lhs).data = (cast(Variable)rhs).data.dup;
-                    else if (lhs.isAlias)
-                        (cast(Alias)lhs).data = rhs;
+                    if (instr.operands[0].isVariable)
+                        (cast(Variable)instr.operands[0]).data = (cast(Variable)instr.operands[1]).data.dup;
+                    else if (instr.operands[0].isAlias)
+                        (cast(Alias)instr.operands[0]).data = instr.operands[1];
                     break;
                 default:
                     assert(0, "Unsupported CTFE instruction!");
             }
         }
-        scope (exit) func = temp;
+
+        scope (exit) func.locals = state;
         return func.parameters[0];
     }
 }
