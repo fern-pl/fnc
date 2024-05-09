@@ -14,3 +14,12 @@ fnc-test-*
 *.o
 *.obj
 *.lst
+fern-test-*
+
+/fern
+fern.so
+fern.dylib
+fern.dll
+fern.a
+fern.lib
+fern-test-*
