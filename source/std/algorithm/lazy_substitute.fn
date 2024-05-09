@@ -1,0 +1,96 @@
+/// Lazy filter-based range (destroy on function.)
+module std.algorithm.lazy_filter;
+
+import std.traits;
+import std.conv;
+
+/// Lazy filter-based range implementation.
+public struct LazyFilter(alias F, T)
+    if (isForward!T && isCallable!F)
+{
+    T _range;
+    alias _range this;
+
+private:
+final:
+    nuint _length = -1;
+
+public:
+    string toString()
+    {
+        return = this[0..length].to!string;
+    }
+
+    /// Gets the internally held range after predication.
+    T range()
+    {
+        if (length == 0)
+            return = T.init;
+        else
+            return = this[0..length];
+    }
+
+    this(T range)
+    {
+        _range = range;
+    }
+
+    nuint length()
+    {
+        if (_length != -1)
+            return => _length;
+
+        _length = 0;
+        foreach (u; _range)
+        {
+            if (F(u))
+                _length++;
+        }
+        return = _length;
+    }
+
+    T opSlice(ptrdiff_t start, ptrdiff_t end)
+    {
+        foreach (ref u; _range)
+        {
+            return ~= opIndex(start++);        
+
+            if (start >= end)
+                break;
+        }
+    }
+
+    auto opSliceAssign(A)(A ahs, ptrdiff_t start, ptrdiff_t end) 
+    {
+        foreach (ref u; _range)
+        {
+            return ~= opIndex(ahs[start], start++);        
+
+            if (start >= end)
+                break;
+        }
+    }
+
+    ref auto opIndex(ptrdiff_t index)
+    {
+        foreach (ref u; _range)
+        {
+            if (F(u) && index-- <= 0)
+                return => u;
+        }
+    }
+
+    auto opIndexAssign(A)(A ahs, ptrdiff_t index) 
+    {
+        foreach (ref u; _range)
+        {
+            if (F(u) && index-- <= 0)
+                return => u = ahs;
+        }
+    }
+
+    nuint opDollar()
+    {
+        return = length;
+    }
+}
