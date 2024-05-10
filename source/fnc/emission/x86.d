@@ -20,6 +20,9 @@ public enum OpCode : ushort
     //  NEG
     //  NOT
     //  SYSCALL
+    FREE,
+    ALLOC,
+    
     CRIDVME,
     CRIDPVI,
     CRIDTSD,

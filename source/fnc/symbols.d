@@ -5,6 +5,8 @@ import fnc.emission;
 import tern.state;
 import tern.algorithm.mutation : insert, alienate;
 
+// All symbols may have their members accessed at comptime using `->` followed by the member name, alignment is internally align and marker is not visible.
+
 public enum SymAttr : ulong
 {
     // TODO: Make sure Fern can automatically infer long from shifting
@@ -91,7 +93,7 @@ public class Symbol
 public:
 final:
     Glob glob;
-    SymAttr attr;
+    SymAttr symattr;
     string name;
     Symbol[] parents;
     Symbol[] children;
@@ -105,30 +107,30 @@ final:
         return ret~name;
     }
 
-    bool isType() => (attr & SymAttr.TYPE) != 0;
-    bool isClass() => (attr & SymAttr.CLASS) != 0;
-    bool isStruct() => (attr & SymAttr.STRUCT) != 0;
-    bool isTagged() => (attr & SymAttr.TAGGED) != 0;
-    bool isTuple() => (attr & SymAttr.TUPLE) != 0;
+    bool isType() => (symattr & SymAttr.TYPE) != 0;
+    bool isClass() => (symattr & SymAttr.CLASS) != 0;
+    bool isStruct() => (symattr & SymAttr.STRUCT) != 0;
+    bool isTagged() => (symattr & SymAttr.TAGGED) != 0;
+    bool isTuple() => (symattr & SymAttr.TUPLE) != 0;
 
-    bool isModule() => (attr & SymAttr.MODULE) != 0;
-    bool isGlob() => (attr & SymAttr.GLOB) != 0;
-    bool isAlias() => (attr & SymAttr.ALIAS) != 0;
+    bool isModule() => (symattr & SymAttr.MODULE) != 0;
+    bool isGlob() => (symattr & SymAttr.GLOB) != 0;
+    bool isAlias() => (symattr & SymAttr.ALIAS) != 0;
 
-    bool isFunction() => (attr & SymAttr.FUNCTION) != 0;
-    bool isDelegate() => (attr & SymAttr.DELEGATE) != 0;
-    bool isLambda() => (attr & SymAttr.LAMBDA) != 0;
-    bool isCtor() => (attr & SymAttr.CTOR) != 0;
-    bool isDtor() => (attr & SymAttr.DTOR) != 0;
-    bool isUnittest() => (attr & SymAttr.UNITTEST) != 0;
+    bool isFunction() => (symattr & SymAttr.FUNCTION) != 0;
+    bool isDelegate() => (symattr & SymAttr.DELEGATE) != 0;
+    bool isLambda() => (symattr & SymAttr.LAMBDA) != 0;
+    bool isCtor() => (symattr & SymAttr.CTOR) != 0;
+    bool isDtor() => (symattr & SymAttr.DTOR) != 0;
+    bool isUnittest() => (symattr & SymAttr.UNITTEST) != 0;
 
-    bool isField() => (attr & SymAttr.FIELD) != 0;
-    bool isLocal() => (attr & SymAttr.LOCAL) != 0;
-    bool isParameter() => (attr & SymAttr.PARAMETER) != 0;
+    bool isField() => (symattr & SymAttr.FIELD) != 0;
+    bool isLocal() => (symattr & SymAttr.LOCAL) != 0;
+    bool isParameter() => (symattr & SymAttr.PARAMETER) != 0;
     bool isVariable() => isField || isLocal || isParameter;
 
-    bool isExpression() => (attr & SymAttr.EXPRESSION) != 0;
-    bool isLiteral() => (attr & SymAttr.LITERAL) != 0;
+    bool isExpression() => (symattr & SymAttr.EXPRESSION) != 0;
+    bool isLiteral() => (symattr & SymAttr.LITERAL) != 0;
 
     Symbol freeze()
     {
@@ -151,6 +153,7 @@ final:
     Function[] functions;
     ubyte[] data;
     size_t size;
+    // Internally referred to as align.
     size_t alignment;
     // For pointer and arrays, how deeply nested they are.
     // This is not front-facing to the runtime.
@@ -158,11 +161,11 @@ final:
 
     string type()
     {
-        if ((attr & SymAttr.CLASS) != 0)
+        if ((symattr & SymAttr.CLASS) != 0)
             return "class";
-        else if ((attr & SymAttr.TAGGED) != 0)
+        else if ((symattr & SymAttr.TAGGED) != 0)
             return "tagged";
-        else //if ((attr & SymAttr.STRUCT) != 0)
+        else //if ((symattr & SymAttr.STRUCT) != 0)
             return "struct";
     }
 
@@ -188,18 +191,18 @@ final:
             return val.fields[0].type.canCast(this);
         else if (val.fields.length == 0 && fields.length == 0)
         {
-            return !val.attr.hasFlag(SymAttr.DYNARRAY) &&
-                !val.attr.hasFlag(SymAttr.ASOARRAY) &&
-                !attr.hasFlag(SymAttr.DYNARRAY) &&
-                !attr.hasFlag(SymAttr.ASOARRAY) &&
-                (val.attr & SymAttr.FORMAT_MASK) == (attr & SymAttr.FORMAT_MASK) &&
+            return !val.symattr.hasFlag(SymAttr.DYNARRAY) &&
+                !val.symattr.hasFlag(SymAttr.ASOARRAY) &&
+                !symattr.hasFlag(SymAttr.DYNARRAY) &&
+                !symattr.hasFlag(SymAttr.ASOARRAY) &&
+                (val.symattr & SymAttr.FORMAT_MASK) == (symattr & SymAttr.FORMAT_MASK) &&
                 val.size >= size;
         }
 
         foreach (i, field; val.fields)
         {
             if (field.offset != fields[i].offset ||
-                (field.type.attr & SymAttr.FORMAT_MASK) != (fields[i].type.attr & SymAttr.FORMAT_MASK) ||
+                (field.type.symattr & SymAttr.FORMAT_MASK) != (fields[i].type.symattr & SymAttr.FORMAT_MASK) ||
                 !field.type.canCast(fields[i].type))
                 return false;
         }
@@ -212,11 +215,11 @@ final:
 {
     Type a = new Type();
     a.size = 1;
-    a.attr |= SymAttr.BYTE;
+    a.symattr |= SymAttr.BYTE;
 
     Type b = new Type();
     b.size = 2;
-    b.attr |= SymAttr.WORD;
+    b.symattr |= SymAttr.WORD;
 
     assert(!b.canCast(a));
 } */
@@ -235,9 +238,9 @@ final:
     string type()
     {
         // ctor and dtor are also functions, so we needn't check for them.
-        if ((attr & SymAttr.FUNCTION) != 0)
+        if ((symattr & SymAttr.FUNCTION) != 0)
             return "function";
-        else if ((attr & SymAttr.UNITTEST) != 0)
+        else if ((symattr & SymAttr.UNITTEST) != 0)
             return "unittest";
         else
             return "delegate";
@@ -256,13 +259,14 @@ final:
     size_t size;
     size_t alignment;
     size_t offset;
+    // This is not front-facing!
     Marker marker;
 
     alias marker this;
 
-    Type type()
+    Symbol type()
     {
-        return cast(Type)parents[$-1];
+        return parents[$-1];
     }
 }
 

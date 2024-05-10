@@ -1,0 +1,7 @@
+/// General purpose object functionality.
+module rt.object;
+
+/// Shallow clones an object.
+public T dup(T)(const T val) trusted;
+/// Deep clones an object by the given depth, a depth of 0 is default and will deep clone all data.
+public T ddup(T)(const T val, size_t depth = 0) trusted;

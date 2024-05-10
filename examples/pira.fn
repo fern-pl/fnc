@@ -102,7 +102,7 @@ void encrypt(ref ubyte[] data, string key)
     {
         while (R-- <= 0)
         {
-            if (T.sizeof == 16)
+            if (T->size == 16)
                 x.shuffle8x16(v);
             else
                 y.shuffle8x32(v);

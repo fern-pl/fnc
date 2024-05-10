@@ -19,7 +19,7 @@ final:
         // ?? ungggg
         foreach (i, var; func.locals)
         {
-            if ((var.attr & SymAttr.STATIC) == 0 && (var.attr & SymAttr.REF) == 0 && var.isVariable)
+            if ((var.symattr & SymAttr.STATIC) == 0 && (var.symattr & SymAttr.REF) == 0 && var.isVariable)
                 state[i] = cast(Symbol)var.freeze();
         }
 
@@ -56,7 +56,7 @@ final:
                         Symbol[] params = (cast(Function)instr.operands[0]).parameters;
                         foreach (i, operand; instr.operands[1..$])
                         {
-                            if ((operand.attr & SymAttr.REF) == 0 && (operand.attr & SymAttr.CONST) != 0 && operand.isVariable)
+                            if ((operand.symattr & SymAttr.REF) == 0 && (operand.symattr & SymAttr.CONST) != 0 && operand.isVariable)
                                 params[i] = cast(Symbol)operand.freeze();
                         }
                         interpret(cast(Function)instr.operands[0], params);
