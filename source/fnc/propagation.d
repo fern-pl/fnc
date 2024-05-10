@@ -34,11 +34,23 @@ final:
                     if (instr.operands[0].isVariable)
                         (cast(Variable)instr.operands[0]).data = (cast(Variable)instr.operands[1]).data.dup;
                     else if (instr.operands[0].isAlias)
-                        (cast(Alias)instr.operands[0]).data = instr.operands[1];
+                        (cast(Alias)instr.operands[0]).single = instr.operands[1];
+                    break;
+                case LEA:
+                    if (instr.operands[0].isVariable)
+                        (cast(Variable)instr.operands[0]).data = (cast(Variable)instr.operands[1]).data;
+                    else if (instr.operands[0].isAlias)
+                        (cast(Alias)instr.operands[0]).single = instr.operands[1];
                     break;
                 case CALL:
                     if (instr.operands[0].name == "rt.cast")
                         (cast(Variable)instr.operands[1]).data = (cast(Variable)instr.operands[2]).data.dup;
+                    else if (instr.operands[0].name == "rt.concat")
+                    {
+                        if (instr.operands[1].isAlias)
+                            (cast(Alias)instr.operands[1]).many = (cast(Alias)instr.operands[2]).many;
+                        // TODO
+                    }
                     else
                     {
                         Symbol[] params = (cast(Function)instr.operands[0]).parameters;

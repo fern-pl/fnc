@@ -6,7 +6,6 @@ int max(int x, int y)
     return = y;
 }
 
-// TODO: Define tuples in spec.
 int main()
 {
     int x, y, z = [1, 2, 3];

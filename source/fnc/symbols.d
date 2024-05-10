@@ -3,6 +3,7 @@ module fnc.symbols;
 
 import fnc.emission;
 import tern.state;
+import tern.algorithm.mutation : insert, alienate;
 
 public enum SymAttr : ulong
 {
@@ -269,7 +270,34 @@ public class Alias : Symbol
 {
 public:
 final:
-    Symbol data;
+    union
+    {
+        Symbol single;
+        Symbol[] many;
+    }
+
+    Alias flatten()
+    {
+        while (single.isAlias)
+            single = (cast(Alias)single).flatten().single;
+        
+        foreach (i, sym; many)
+        {
+            if (!sym.isAlias)
+                continue;
+
+            if ((cast(Alias)sym).many != null)
+            {
+                // Replace sym with its contents in many.
+                many.alienate(i, 1);
+                many.insert(i, (cast(Alias)sym).flatten().many);
+            }
+            else
+                sym = (cast(Alias)sym).flatten().single;
+        }
+
+        return this;
+    }
 
     string type()
     {
