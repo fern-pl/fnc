@@ -9,11 +9,11 @@ void baz()
 {
     Node a;
     // Node b
-    a.typeof b;
+    a->type b;
     a.next = &b;
     b.next = &a;
     // Linear reference counting would fail here, circular reference will lead to the counter giving up and handing the reigns to the GC.
-    Node c = ubyte[a.sizeof];
+    Node c = ubyte[a->size];
     // b is reassigned to a known value, linear reference counting would resume here, meaning the GC won't not activate.
     b = c;
     // Kidding! It will activate because we cause a circular reference!
