@@ -22,6 +22,7 @@ const dchar[][] KEYWORDS = [
     "@tapped".makeUnicodeString,
     "inline".makeUnicodeString,
     "const".makeUnicodeString,
+    "ref".makeUnicodeString,
     "mustuse".makeUnicodeString,
     "mixin".makeUnicodeString,
 ] ~ FUNC_STYLE_KEYWORD;
@@ -42,8 +43,9 @@ import std.stdio;
 dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
 {
     dchar[][] keywords;
-    while (index < tokens.length && tokens[index].tokenVariety == TokenType.Letter)
+    while (index < tokens.length)
     {
+        
         dchar[] data = tokens[index].value;
 
         bool isKeyword = KEYWORDS.scontains(data);

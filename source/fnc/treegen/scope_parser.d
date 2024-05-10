@@ -18,13 +18,22 @@ struct ImportStatement
     NamedUnit[] importSelection; // empty for importing everything
 }
 
+struct FunctionArgument
+{
+    dchar[][] precedingKeywords;
+    AstNode type;
+    NamedUnit name;
+    Nullable!AstNode maybeDefault;
+}
+
 struct DeclaredFunction
 {
     dchar[][] precedingKeywords;
+    FunctionArgument[] args;
     dchar[][] suffixKeywords;
     NamedUnit name;
     AstNode returnType;
-    // TODO: Args
+
     ScopeData functionScope;
 }
 
@@ -122,6 +131,61 @@ NamedUnit[] commaSeperatedNamedUnits(Token[] tokens, ref size_t index)
     return units;
 }
 
+private FunctionArgument[] genFunctionArgs(Token[] tokens)
+{
+    size_t index;
+    FunctionArgument[] args;
+
+    while (index < tokens.length)
+    {
+        if (tokens.nextNonWhiteToken(index) == null)
+            break;
+        index--;
+
+        dchar[][] keywords = tokens.skipAndExtractKeywords(index);
+
+        LineVarietyTestResult line = FUNCTION_ARGUMENT_PARSE.getLineVarietyTestResult(tokens, index);
+        if (line.lineVariety == LineVariety.SimpleExpression)
+            throw new SyntaxError("Can't parse function arguments", tokens[index]);
+        FunctionArgument argument;
+        argument.precedingKeywords = keywords;
+        
+        argument.type = line.tokenMatches[0].assertAs(TokenGrepMethod.Type).type;
+        argument.name = line.tokenMatches[1].assertAs(TokenGrepMethod.NamedUnit).name;
+        if (LineVariety.DeclarationAndAssignment == line.lineVariety)
+        {
+            auto nodes = line.tokenMatches[3].assertAs(TokenGrepMethod.Glob)
+                .tokens.expressionNodeFromTokens();
+            if (nodes.length != 1)
+                throw new SyntaxError("Function argument could not parse default value", tokens[index]);
+            argument.maybeDefault = Nullable!AstNode(
+                nodes[0]
+            );
+        }
+        args ~= argument;
+
+        index += line.length;
+
+        if (index - 1 < tokens.length && tokens[index - 1].tokenVariety == TokenType.Comma)
+            continue;
+        if (index < tokens.length && tokens[index].tokenVariety == TokenType.Comma)
+        {
+            index++;
+            continue;
+        }
+
+        Nullable!Token maybeComma = tokens.nextNonWhiteToken(index);
+
+        if (maybeComma == null)
+            break;
+
+        if (maybeComma.value.tokenVariety != TokenType.Comma)
+            break;
+    }
+
+    return args;
+}
+
 import std.stdio;
 
 LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, ref size_t index, ScopeData parent)
@@ -217,6 +281,8 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             size_t temp;
             parent.declaredFunctions ~= DeclaredFunction(
                 keywords,
+                genFunctionArgs(lineVariety.tokenMatches[FUNCTION_ARGS].assertAs(TokenGrepMethod.Glob)
+                    .tokens),
                 [],
                 lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NamedUnit)
                     .name,
@@ -259,7 +325,6 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             auto conditionNodes = expressionNodeFromTokens(
                 lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
             );
-            (lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens).writeln;
             if (conditionNodes.length != 1)
                 throw new SyntaxError(
                     "Expression node tree could not be parsed properly (Not reducable into single node within if statement condition)",
@@ -445,7 +510,25 @@ void tree(ScopeData scopeData, size_t tabCount)
         write(" ");
         write(func.name);
         write("\n");
-        func.functionScope.tree(tabCount);
+        printTabs();
+        write("With argments(");
+        write(func.args.length);
+        writeln(")");
+        tabCount++;
+        foreach (arg; func.args)
+        {
+            printTabs();
+            arg.name.write;
+            writeln(" as type:");
+            arg.type.tree(tabCount+1);
+            if (arg.maybeDefault != null){
+                printTabs();
+                writeln("With a default value of: ");
+                arg.maybeDefault.value.tree(tabCount+1);
+            }
+
+        }
+        func.functionScope.tree(--tabCount);
     }
     tabCount--;
     printTabs();

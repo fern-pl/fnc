@@ -176,6 +176,23 @@ const TokenGrepPacket[] DeclarationAndAssignment = [
         ])
 ];
 
+// int x
+const TokenGrepPacket[] FunctionArgDeclaration = [
+    TokenGrepPacketToken(TokenGrepMethod.Type, []),
+
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+];
+const TokenGrepPacket[] FunctionArgDeclarationAndDefault = [
+    TokenGrepPacketToken(TokenGrepMethod.Type, []),
+
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+            Token(TokenType.Equals, [])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+];
+
 const size_t IMPORT_PACKAGE_NAME = 0;
 // import foo.bar
 const TokenGrepPacket[] TotalImport = [
@@ -309,6 +326,17 @@ const VarietyTestPair[] FUNCTION_SCOPE_PARSE = [
     VarietyTestPair(LineVariety.ReturnStatement, ReturnStatement),
 ] ~ ABSTRACT_SCOPE_PARSE;
 
+const VarietyTestPair[] FUNCTION_ARGUMENT_PARSE = [
+    VarietyTestPair(LineVariety.DeclarationAndAssignment,
+        FunctionArgDeclarationAndDefault ~ TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType,
+            [
+                Token(TokenType.Comma, [])
+            ]
+    )),
+    VarietyTestPair(LineVariety.DeclarationAndAssignment, FunctionArgDeclarationAndDefault),
+    VarietyTestPair(LineVariety.DeclarationLine, FunctionArgDeclaration),
+];
+
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 {
     size_t index = 0;
@@ -405,7 +433,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 size_t potentialSize = prematureTypeLength(tokens, index);
                 if (!potentialSize)
                     return tokenGrepBox(null);
-                size_t temp;
+                size_t temp = index;
                 Nullable!AstNode maybeNull = typeFromTokens(tokens, temp);
                 if (maybeNull == null)
                     return tokenGrepBox(null);
@@ -419,11 +447,20 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 break;
             case TokenGrepMethod.Glob:
                 size_t temp_index;
-                auto firstGlob = testWith[testIndex + 1 .. $].matchesToken(tokens[index .. $], temp_index);
+                auto grepMatchGroup = testWith[testIndex + 1 .. $];
+
+                auto firstGlob = grepMatchGroup.matchesToken(tokens[index .. $], temp_index);
 
                 TokenGrepResult globResult;
                 globResult.method = TokenGrepMethod.Glob;
                 globResult.tokens = [];
+
+                if (!grepMatchGroup.length)
+                {
+                    globResult.tokens = tokens[index .. $];
+                    index = tokens.length;
+                    return tokenGrepBox(returnVal ~ globResult);
+                }
                 if (firstGlob.ptr)
                 {
                     index += temp_index;
@@ -433,7 +470,6 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 int braceDeph = 0;
                 size_t startingIndex = index;
                 index--;
-                auto grepMatchGroup = testWith[testIndex + 1 .. $];
                 while (true)
                 {
                     Nullable!Token tokenNullable = tokens.nextToken(index);

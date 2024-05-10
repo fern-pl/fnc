@@ -286,7 +286,7 @@ Array!AstNode expressionNodeFromTokens(Token[] tokens)
     return nodes;
 }
 
-size_t findNearestSemiColon(Token[] tokens, size_t index)
+size_t findNearestSemiColon(Token[] tokens, size_t index, TokenType stopToken = TokenType.Semicolon)
 {
     int parCount = 0;
     while (index < tokens.length)
@@ -296,7 +296,7 @@ size_t findNearestSemiColon(Token[] tokens, size_t index)
             parCount++;
         if (token.tokenVariety == TokenType.CloseBraces)
             parCount--;
-        if (token.tokenVariety == TokenType.Semicolon && parCount == 0)
+        if (token.tokenVariety == stopToken && parCount == 0)
             return index;
         index++;
     }

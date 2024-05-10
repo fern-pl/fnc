@@ -60,16 +60,17 @@ void main()
     // typeFromTokens("".tokenizeText, index);
 
 
-    auto newScope = parseMultilineScope(FUNCTION_SCOPE_PARSE, "return => (1+1) ++ 3 * (6 * (9));");
+    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
+    int add(const ref int x, const ref int y, const int offset = 0){
+        return => x + y - (offset+1);
+    }
+    // int main(){
+    //     return => add(y : 1, x : 1, offset : 3);
+    // }
+    
+    ");
     
     newScope.tree;
-    size_t min = -1;
-    size_t max = 0;
-
-    import fnc.treegen.ast_types : getMinMax;
-    getMinMax(newScope.instructions[0], min, max);
-    min.writeln;
-    max.writeln;
     // DeclarationAndAssignment.matchesToken("y=4".tokenizeText).ptr.writeln;
     // parseLine(FUNCTION_SCOPE_PARSE, "y=4".tokenizeText, index).writeln;
 
