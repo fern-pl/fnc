@@ -60,11 +60,11 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
                     if (previouslyParsedNodes.length == 0)
                         throw new SyntaxError(
                             "Can't determine voidable and it's connection to a type", node);
-                    
+
                     AstNode newNode = new AstNode;
                     newNode.action = AstAction.TypeVoidable;
-                    newNode.voidableType = previouslyParsedNodes[$-1];
-                    previouslyParsedNodes[$-1] = newNode;
+                    newNode.voidableType = previouslyParsedNodes[$ - 1];
+                    previouslyParsedNodes[$ - 1] = newNode;
                     return nullable!AstNode(null);
 
                 case TokenType.ExclamationMark:
@@ -100,9 +100,8 @@ private Nullable!AstNode handleNodeTreegen(AstNode node, ref AstNode[] previousl
                         newNode.action = AstAction.TypeReference;
                     else
                         return nullable!AstNode(null);
-                        // throw new SyntaxError(
-                        //     "Unknown type operator", node.tokenBeingHeld);
-
+                    // throw new SyntaxError(
+                    //     "Unknown type operator", node.tokenBeingHeld);
 
                     index = protoNodes.length;
                     return nullable!AstNode(newNode);

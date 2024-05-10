@@ -222,7 +222,7 @@ public void phaseTwo(ref Array!AstNode nodes)
         }
         else
         {
-            ADD_NODE:
+        ADD_NODE:
             newNodesArray ~= node;
             if (!node.isWhite)
                 nonWhiteIndexStack ~= newNodesArray.length - 1;

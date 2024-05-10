@@ -465,6 +465,7 @@ class AstNode
         }
     }
 }
+
 private void getRelatedTokensFromNodes(AstNode[] nodes, ref Token[] output)
 {
     foreach (AstNode node; nodes)
@@ -472,9 +473,11 @@ private void getRelatedTokensFromNodes(AstNode[] nodes, ref Token[] output)
         getRelatedTokens(node, output);
     }
 }
+
 void getRelatedTokens(AstNode node, ref Token[] output)
 {
-    switch (node.action){
+    switch (node.action)
+    {
         // TODO: Improve all of this
         case AstAction.TypePointer:
         case AstAction.TypeReference:
@@ -498,7 +501,6 @@ void getRelatedTokens(AstNode node, ref Token[] output)
     }
 }
 
-
 void getMinMax(AstNode node, ref size_t minV, ref size_t maxV)
 {
     Token[] tokens;
@@ -506,6 +508,7 @@ void getMinMax(AstNode node, ref size_t minV, ref size_t maxV)
     foreach (Token token; tokens)
     {
         import std.algorithm : min, max;
+
         minV = min(minV, token.startingIndex);
         maxV = max(maxV, token.startingIndex);
     }
