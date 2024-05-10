@@ -64,9 +64,9 @@ void main()
     int add(const ref int x, const ref int y, const int offset = 0){
         return => x + y - (offset+1);
     }
-    // int main(){
-    //     return => add(y : 1, x : 1, offset : 3);
-    // }
+    int main(){
+        return => add(y : 1, x : 1, offset : 3);
+    }
     
     ");
     
