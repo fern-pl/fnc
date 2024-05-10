@@ -282,6 +282,48 @@ const TokenGrepPacket[] FunctionDeclaration = [
             Token(TokenType.CloseBraces, ['}'])
         ]),
 ];
+const int OBJECT_NAME = 0;
+const int OBJECT_BODY = 1;
+const StructDeclaration = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+        Token(TokenType.Letter, "struct".makeUnicodeString)
+    ]),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.OpenBraces, ['{'])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.CloseBraces, ['}'])
+        ]),
+];
+const ClassDeclaration = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+        Token(TokenType.Letter, "class".makeUnicodeString)
+    ]),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.OpenBraces, ['{'])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.CloseBraces, ['}'])
+        ]),
+];
+
+const TaggedDeclaration = [
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+        Token(TokenType.Letter, "tagged".makeUnicodeString)
+    ]),
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.OpenBraces, ['{'])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+            Token(TokenType.CloseBraces, ['}'])
+        ]),
+];
 
 enum LineVariety
 {
@@ -298,6 +340,10 @@ enum LineVariety
     ElseStatementWithoutScope,
     DeclarationLine,
     DeclarationAndAssignment,
+
+    TaggedDeclaration,
+    StructDeclaration,
+    ClassDeclaration
 }
 
 struct VarietyTestPair
@@ -305,6 +351,7 @@ struct VarietyTestPair
     LineVariety variety;
     const(TokenGrepPacket[]) test;
 }
+
 // Defines what you are allowed to do in what types of scope
 const VarietyTestPair[] ABSTRACT_SCOPE_PARSE = [
     VarietyTestPair(LineVariety.TotalImport, TotalImport),
@@ -314,6 +361,9 @@ const VarietyTestPair[] ABSTRACT_SCOPE_PARSE = [
 ];
 const VarietyTestPair[] GLOBAL_SCOPE_PARSE = [
     VarietyTestPair(LineVariety.ModuleDeclaration, ModuleDeclaration),
+    VarietyTestPair(LineVariety.StructDeclaration, StructDeclaration),
+    VarietyTestPair(LineVariety.ClassDeclaration, ClassDeclaration),
+    VarietyTestPair(LineVariety.TaggedDeclaration, TaggedDeclaration),
     VarietyTestPair(LineVariety.FunctionDeclaration, FunctionDeclaration)
 ] ~ ABSTRACT_SCOPE_PARSE;
 
@@ -336,6 +386,15 @@ const VarietyTestPair[] FUNCTION_ARGUMENT_PARSE = [
     VarietyTestPair(LineVariety.DeclarationAndAssignment, FunctionArgDeclarationAndDefault),
     VarietyTestPair(LineVariety.DeclarationLine, FunctionArgDeclaration),
 ];
+
+// Used in structs / classes / tagged
+const VarietyTestPair[] OBJECT_DEFINITION_PARSE = [
+    VarietyTestPair(LineVariety.DeclarationLine, DeclarationLine),
+    VarietyTestPair(LineVariety.DeclarationAndAssignment, DeclarationAndAssignment),
+    VarietyTestPair(LineVariety.FunctionDeclaration, FunctionDeclaration)
+];
+
+
 
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 {

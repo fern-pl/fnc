@@ -43,6 +43,23 @@ struct DeclaredVariable
     AstNode type;
 }
 
+enum ObjectType
+{
+    Struct,
+    Class,
+    Tagged
+}
+
+struct ObjectDeclaration
+{
+    Nullable!ScopeData parent;
+    NamedUnit name;
+    ObjectType type;
+
+    DeclaredFunction[] declaredFunctions;
+    DeclaredVariable[] declaredVariables;
+}
+
 class ScopeData
 {
     Nullable!ScopeData parent; // Could be the global scope
@@ -53,6 +70,9 @@ class ScopeData
 
     DeclaredFunction[] declaredFunctions;
     DeclaredVariable[] declaredVariables;
+    
+    ObjectDeclaration[] declaredObjects;
+
     Array!AstNode instructions;
 
     void toString(scope void delegate(const(char)[]) sink) const
@@ -149,7 +169,7 @@ private FunctionArgument[] genFunctionArgs(Token[] tokens)
             throw new SyntaxError("Can't parse function arguments", tokens[index]);
         FunctionArgument argument;
         argument.precedingKeywords = keywords;
-        
+
         argument.type = line.tokenMatches[0].assertAs(TokenGrepMethod.Type).type;
         argument.name = line.tokenMatches[1].assertAs(TokenGrepMethod.NamedUnit).name;
         if (LineVariety.DeclarationAndAssignment == line.lineVariety)
@@ -203,6 +223,33 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
 
             tokens.nextNonWhiteToken(index); // Skip semicolon
 
+            break;
+        case LineVariety.TaggedDeclaration:
+        case LineVariety.ClassDeclaration:
+        case LineVariety.StructDeclaration:
+            size_t endingIndex = index + lineVariety.length;
+            scope (exit)
+                index = endingIndex;
+            size_t temp;
+            auto objScope = parseMultilineScope(
+                OBJECT_DEFINITION_PARSE,
+                lineVariety.tokenMatches[OBJECT_BODY].assertAs(TokenGrepMethod.Glob)
+                    .tokens,
+                    temp,
+                    nullable!ScopeData(parent)
+            );
+            ObjectDeclaration object = ObjectDeclaration(
+                nullable!ScopeData(parent),
+                lineVariety.tokenMatches[OBJECT_NAME].assertAs(TokenGrepMethod.NamedUnit).name,
+                [
+                    LineVariety.TaggedDeclaration: ObjectType.Tagged,
+                    LineVariety.StructDeclaration: ObjectType.Struct,
+                    LineVariety.ClassDeclaration: ObjectType.Class,
+                ][lineVariety.lineVariety],
+                objScope.declaredFunctions,
+                objScope.declaredVariables
+            );
+            parent.declaredObjects ~= object;
             break;
         case LineVariety.TotalImport:
             tokens.nextNonWhiteToken(index); // Skip 'import' keyword
@@ -297,7 +344,6 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                     )
             );
 
-            // assert(0);
             break;
         case LineVariety.ReturnStatement:
             size_t endingIndex = index + lineVariety.length;
@@ -459,6 +505,40 @@ ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, string 
     );
 }
 
+void ftree(DeclaredFunction func, size_t tabCount){
+        alias printTabs() = {
+        foreach (_; 0 .. tabCount)
+            write("|  ");
+    };
+    printTabs();
+        write(func.precedingKeywords);
+        write(" ");
+        write(func.returnType);
+        write(" ");
+        write(func.name);
+        write("\n");
+        printTabs();
+        write("With argments(");
+        write(func.args.length);
+        writeln(")");
+        tabCount++;
+        foreach (arg; func.args)
+        {
+            printTabs();
+            arg.name.write;
+            writeln(" as type:");
+            arg.type.tree(tabCount + 1);
+            if (arg.maybeDefault != null)
+            {
+                printTabs();
+                writeln("With a default value of: ");
+                arg.maybeDefault.value.tree(tabCount + 1);
+            }
+
+        }
+        func.functionScope.tree(--tabCount);
+}
+
 void tree(ScopeData scopeData) => tree(scopeData, 0);
 void tree(ScopeData scopeData, size_t tabCount)
 {
@@ -503,32 +583,38 @@ void tree(ScopeData scopeData, size_t tabCount)
     tabCount++;
     foreach (func; scopeData.declaredFunctions)
     {
+        func.ftree(tabCount);
+    }
+
+
+    tabCount--;
+    printTabs();
+    writeln("Objects: ");
+    tabCount++;
+
+    foreach (obj; scopeData.declaredObjects)
+    {
         printTabs();
-        write(func.precedingKeywords);
-        write(" ");
-        write(func.returnType);
-        write(" ");
-        write(func.name);
-        write("\n");
-        printTabs();
-        write("With argments(");
-        write(func.args.length);
-        writeln(")");
-        tabCount++;
-        foreach (arg; func.args)
+        obj.type.write;
+        "\t".write;
+        obj.name.write;
+        ":".writeln;
+        
+        foreach (var; obj.declaredVariables)
         {
             printTabs();
-            arg.name.write;
-            writeln(" as type:");
-            arg.type.tree(tabCount+1);
-            if (arg.maybeDefault != null){
-                printTabs();
-                writeln("With a default value of: ");
-                arg.maybeDefault.value.tree(tabCount+1);
-            }
-
+            var.type.write;
+            "\t".write;
+            var.name.writeln;
         }
-        func.functionScope.tree(--tabCount);
+        printTabs();
+        writeln("Functions:");
+        foreach (func; obj.declaredFunctions)
+        {
+            func.ftree(tabCount+1);
+        }
+        
+
     }
     tabCount--;
     printTabs();

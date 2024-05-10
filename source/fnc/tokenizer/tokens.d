@@ -163,14 +163,14 @@ Nullable!Token nextToken(Token[] tokens, ref size_t index)
     found = tokens[++index];
     return found;
 }
-
+bool isWhite(Token token) => token.tokenVariety == TokenType.WhiteSpace || token.tokenVariety == TokenType.Comment;
 Nullable!Token nextNonWhiteToken(ref Token[] tokens, ref size_t index)
 {
     Nullable!Token found;
     while (tokens.length > index)
     {
         Token token = tokens[index++];
-        if (token.tokenVariety == TokenType.WhiteSpace || token.tokenVariety == TokenType.Comment)
+        if (token.isWhite)
             continue;
         found = token;
         break;

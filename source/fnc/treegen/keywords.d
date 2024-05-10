@@ -42,6 +42,9 @@ import std.stdio;
 // Keywords break many other parts of parsing, so best to get them out of the way first
 dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
 {
+    while (tokens[index].isWhite && index < tokens.length)
+        index++;
+
     dchar[][] keywords;
     while (index < tokens.length)
     {

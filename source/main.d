@@ -61,13 +61,16 @@ void main()
 
 
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-    int add(const ref int x, const ref int y, const int offset = 0){
-        return => x + y - (offset+1);
-    }
-    int main(){
-        return => add(y : 1, x : 1, offset : 3);
-    }
-    
+        private struct Element{
+            int kind;
+            short idk;
+            int getKinds(Element other){
+                return => other.kind * kind;
+            }
+        }
+        int main(){
+            return => add(y : 1, x : 1, offset : 3);
+        }
     ");
     
     newScope.tree;
