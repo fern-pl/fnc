@@ -313,9 +313,9 @@ final:
 
     alias marker this;
 
-    Symbol type()
+    Type type()
     {
-        return parents[$-1];
+        return cast(Type)parents[$-1];
     }
 }
 
