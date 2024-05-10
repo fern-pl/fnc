@@ -85,7 +85,9 @@ public enum SymAttr : ulong
     GLOB = 1L << 53,
     ALIAS = 1L << 54,
 
-    FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD
+    FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD,
+    INTEGRAL = BYTE | WORD | DWORD | QWORD,
+    FLOATING = FLOAT | DOUBLE,
 }
 
 public class Symbol
@@ -116,12 +118,16 @@ final:
     bool isModule() => (symattr & SymAttr.MODULE) != 0;
     bool isGlob() => (symattr & SymAttr.GLOB) != 0;
     bool isAlias() => (symattr & SymAttr.ALIAS) != 0;
+    bool isAliasSeq() => isAlias && isArray;
+    bool isAggregate() => isModule || isStruct || isClass || isTagged || isTuple;
 
     bool isFunction() => (symattr & SymAttr.FUNCTION) != 0;
     bool isDelegate() => (symattr & SymAttr.DELEGATE) != 0;
     bool isLambda() => (symattr & SymAttr.LAMBDA) != 0;
     bool isCtor() => (symattr & SymAttr.CTOR) != 0;
     bool isDtor() => (symattr & SymAttr.DTOR) != 0;
+    bool isSCtor() => isCtor && isStatic;
+    bool isSDtor() => isDtor && isStatic;
     bool isUnittest() => (symattr & SymAttr.UNITTEST) != 0;
 
     bool isField() => (symattr & SymAttr.FIELD) != 0;
@@ -131,6 +137,46 @@ final:
 
     bool isExpression() => (symattr & SymAttr.EXPRESSION) != 0;
     bool isLiteral() => (symattr & SymAttr.LITERAL) != 0;
+
+    bool isArray() => (symattr & SymAttr.ARRAY) != 0;
+    bool isDynamicArray() => (symattr & SymAttr.DYNARRAY) != 0;
+    bool isStaticArray() => (symattr & SymAttr.FIXARRAY) != 0;
+    bool isAssociativeArray() => (symattr & SymAttr.ASOARRAY) != 0;
+    bool isString() => (symattr & SymAttr.STRING) != 0;
+    bool isWideString() => (symattr & SymAttr.WSTRING) != 0 || (symattr & SymAttr.DSTRING) != 0;
+    bool isSigned() => (symattr & SymAttr.SIGNED) != 0;
+    bool isIntegral() => (symattr & SymAttr.INTEGRAL) != 0;
+    bool isFloating() => (symattr & SymAttr.FLOATING) != 0;
+    bool isNumeric() => isIntegral || isFloating;
+    bool isByRef() => isClass || isKHeap || isRef;
+    bool isVector() => isKXMM || isKYMM || isKZMM;
+
+    bool isPublic() => (symattr & SymAttr.PUBLIC) != 0;
+    bool isPrivate() => (symattr & SymAttr.PRIVATE) != 0;
+    bool isInternal() => (symattr & SymAttr.INTERNAL) != 0;
+
+    bool isSafe() => (symattr & SymAttr.SAFE) != 0;
+    bool isSystem() => (symattr & SymAttr.SYSTEM) != 0;
+    bool isTrusted() => (symattr & SymAttr.TRUSTED) != 0;
+
+    bool isStatic() => (symattr & SymAttr.STATIC) != 0;
+    bool isGlobal() => (symattr & SymAttr.GLOBAL) != 0;
+    bool isTransient() => (symattr & SymAttr.TRANSIENT) != 0;
+    bool isAtomic() => (symattr & SymAttr.ATOMIC) != 0;
+    bool isBitfield() => (symattr & SymAttr.BITFIELD) != 0;
+    bool isPure() => (symattr & SymAttr.PURE) != 0;
+    bool isConst() => (symattr & SymAttr.CONST) != 0;
+    bool isRef() => (symattr & SymAttr.REF) != 0;
+
+    bool isKHeap() => (symattr & SymAttr.KIND_HEAP) != 0;
+    bool isKStack() => (symattr & SymAttr.KIND_STACK) != 0;
+    bool isKScalar() => (symattr & SymAttr.KIND_SCALAR) != 0;
+    bool isKFloat() => (symattr & SymAttr.KIND_FLOAT) != 0;
+    bool isKXMM() => (symattr & SymAttr.KIND_XMM) != 0;
+    bool isKYMM() => (symattr & SymAttr.KIND_YMM) != 0;
+    bool isKZMM() => (symattr & SymAttr.KIND_ZMM) != 0;
+    bool isKReadOnly() => (symattr & SymAttr.KIND_READONLY) != 0;
+    bool isKDefault() => (symattr & SymAttr.KIND_DEFAULT) != 0;
 
     Symbol freeze()
     {
@@ -250,6 +296,9 @@ final:
 // Locals and parameters use Variable.
 // Expressions and literals should also be represented by a variable,
 // but I haven't yet worked this out.
+
+// Store alias to instance??
+// NOTE: foo->fields should allow you to get the data of foo at runtime!!
 
 public class Variable : Symbol
 {
