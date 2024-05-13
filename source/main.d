@@ -67,7 +67,7 @@ void main()
             int anElmentWithNumber;
         }
         int main(){
-            return => add(y : 1, x : 1, offset : 3);
+            const Element e = Element.idk;
         }
     ");
     
