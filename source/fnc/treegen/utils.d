@@ -9,33 +9,31 @@ NamedUnit genNamedUnit(Token[] tokens, ref size_t index)
 {
     dchar[][] nameData = new dchar[][0];
     // NamedUnit ret = NamedUnit(new dchar[][]);
-    Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
 
-    Token token;
-
-    // An attempt to generate a name at an EOF
-    if (tokenNullable.ptr == null)
-        return NamedUnit(nameData);
-    index--;
-    token = tokenNullable;
-
-    while (token.tokenVariety == TokenType.Letter || token.tokenVariety == TokenType.Number || token.tokenVariety == TokenType
-        .Period)
+    bool hasLastPeriod = true;
+    while (1)
     {
-
-        if (token.tokenVariety != TokenType.Period)
-        {
-            nameData ~= token.value;
-        }
-
-        Nullable!Token tokenNullable2 = tokens.nextToken(index);
-
-        // We hit an EOF
-        if (!tokenNullable2.ptr)
+        Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
+        if (tokenNullable == null)
             return NamedUnit(nameData);
-        token = tokenNullable2;
-
+        Token token = tokenNullable;
+        if (token.tokenVariety == TokenType.Period){
+            hasLastPeriod = true;
+            continue;
+        }
+        if (token.tokenVariety == TokenType.Letter)
+        {
+            if (!hasLastPeriod)
+            {
+                index--;
+                return NamedUnit(nameData);
+            }
+            nameData ~= token.value;
+            hasLastPeriod = false;
+            continue;
+        }
+        index--;
+        return NamedUnit(nameData);
     }
-    return NamedUnit(nameData);
-
+    
 }

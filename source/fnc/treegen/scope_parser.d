@@ -307,7 +307,9 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION]
                 .assertAs(TokenGrepMethod.Glob)
                 .tokens.expressionNodeFromTokens();
-
+            lineVariety.tokenMatches[DECLARATION_EXPRESSION]
+                .assertAs(TokenGrepMethod.Glob)
+                .tokens.writeln;
             if (nodes.length != 1)
                 throw new SyntaxError(
                     "Expression node tree could not be parsed properly (Not reducable into single node)",
@@ -321,6 +323,9 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             parent.instructions ~= assignment;
             break;
         case LineVariety.TaggedUntypedItem:
+            size_t endingIndex = index + lineVariety.length;
+            scope (exit)
+                index = endingIndex;
             NamedUnit name = lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.NamedUnit).name;
             parent.declaredVariables ~= DeclaredVariable(name, AstNode.VOID_NAMED_UNIT);
             break;
