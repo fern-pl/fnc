@@ -140,9 +140,9 @@ final:
     bool isString() => (symattr & SymAttr.STRING) != 0;
     bool isWideString() => (symattr & SymAttr.WSTRING) != 0 || (symattr & SymAttr.DSTRING) != 0;
     bool isSigned() => (symattr & SymAttr.SIGNED) != 0;
-    // bool isIntegral() => (symattr & SymAttr.INTEGRAL) != 0;
-    bool isFloating() => (symattr & SymAttr.FLOAT) != 0;
-    // bool isNumeric() => isIntegral || isFloating;
+    bool isIntegral() => (symattr & SymAttr.BYTE) != 0 || (symattr & SymAttr.WORD) != 0 || (symattr & SymAttr.DWORD) != 0 || (symattr & SymAttr.QWORD) != 0;
+    bool isFloating() => (symattr & SymAttr.FLOAT) != 0 || (symattr & SymAttr.DOUBLE) != 0;
+    bool isNumeric() => isIntegral || isFloating;
     bool isByRef() => isClass || isKHeap || isRef;
     bool isVector() => isKXMM || isKYMM || isKZMM;
 
@@ -174,11 +174,11 @@ final:
     bool isKDefault() => (symattr & SymAttr.KIND_DEFAULT) != 0;
 
     bool isNested() => parents.length > 0 && !parent.isModule;  
-    // bool isPrimitive() => !isAggregate && !isArray;
-    // bool isBuiltin() => !isAggregate;
+    bool isPrimitive() => !isAggregate && !isArray;
+    bool isBuiltin() => !isAggregate;
     bool hasDepth() => isType && (cast(Type)this).depth > 0;
     bool hasBody() => isFunction && (cast(Function)this).instructions.length > 0;
-    // bool hasDataAllocations() => (isFunction && (cast(Function)this).locals.length > 0) || (isAggregate && (cast(Type)this).fields.length > 0);
+    bool hasDataAllocations() => (isFunction && (cast(Function)this).locals.length > 0) || (isAggregate && (cast(Type)this).fields.length > 0);
     bool isEnum()
     {
         if (!isTagged)
@@ -223,25 +223,25 @@ final:
     Symbol getChild(string name) => glob.symbols[identifier~'.'~name];
     Symbol getParent(string name) => glob.symbols[name~'.'~this.name];
     Symbol getAttribute(string name) => attributes[name];
-    // Field getField(string name) => glob.fields[identifier~'.'~name];
+    Field getField(string name) => glob.fields[identifier~'.'~name];
     Function getFunction(string name) => glob.functions[identifier~'.'~name];
     Symbol getInherit(string name) => (cast(Type)this).inherits[name];
     Alias getAlias(string name) => glob.aliases[identifier~'.'~name];
     // Templated functions/types need to be figured out somehow
-    // bool hasParent(string name) => name~'.'~this.name in glob.symbols;
-    // bool hasChild(string name) => identifier~'.'~name in glob.symbols;
-    // bool hasAttribute(string name) => name in attributes;
-    // bool hasField(string name) => hasChild(name) && getChild(name).isField;
-    // bool hasFunction(string name) => hasChild(name) && getChild(name).isFunction;
+    bool hasParent(string name) => name~'.'~this.name in glob.symbols;
+    bool hasChild(string name) => identifier~'.'~name in glob.symbols;
+    bool hasAttribute(string name) => name in attributes;
+    bool hasField(string name) => hasChild(name) && getChild(name).isField;
+    bool hasFunction(string name) => hasChild(name) && getChild(name).isFunction;
     bool hasInherit(string name) => isType && name in (cast(Type)this).inherits;
-    // bool hasAlias(string name) => identifier~'.'~name in glob.symbols && getChild(name).isAlias;
+    bool hasAlias(string name) => identifier~'.'~name in glob.symbols && getChild(name).isAlias;
 
     bool hasParent(Symbol sym) => parents.contains(sym);
     bool hasChild(Symbol sym) => sym.parent == this;
-    // bool hasAttribute(Symbol sym) => sym.name in attributes;
+    bool hasAttribute(Symbol sym) => sym.name in attributes;
     bool hasField(Symbol sym) => sym.isField && sym.parent == this;
     bool hasFunction(Symbol sym) => sym.isFunction && sym.parent == this;
-    // bool hasInherit(Symbol sym) => inherits.contains(sym);
+    bool hasInherit(Symbol sym) => inherits.contains(sym);
     bool hasAlias(Symbol sym) => sym.isAlias && sym.parent == this;
 
     Symbol freeze()
