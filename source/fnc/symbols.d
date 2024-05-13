@@ -178,6 +178,59 @@ final:
     bool isKReadOnly() => (symattr & SymAttr.KIND_READONLY) != 0;
     bool isKDefault() => (symattr & SymAttr.KIND_DEFAULT) != 0;
 
+    bool isNested() => parents.length > 0 && !parent.isModule;  
+    bool isPrimitive() => !isAggregate && !isArray;
+    bool isBuiltin() => !isAggregate;
+    bool hasDepth() => depth > 0;
+    bool isEnum()
+    {
+        if (!isTagged)
+            return false;
+        else if (isConst)
+            return true;
+
+        Type self = cast(Type)this;
+        foreach (field; self.fields)
+        {
+            if (!isConst)
+                return false;
+        }
+        return true;
+    }
+    Function[] getOverloads(string name)
+    {
+        Function[] ret;
+        if (isModule)
+        {
+            Module mod = cast(Module)this;
+            foreach (func; mod.functions)
+            {
+                if (func.name == name)
+                    ret ~= func;
+            }
+            return ret;
+        }
+        else if (isType)
+        {
+            Type type = cast(Type)this;
+            foreach (func; type.functions)
+            {
+                if (func.name == name)
+                    ret ~= func;
+            }
+            return ret;
+        }
+        throw new Throwable("Tried to iterate overloads "~name~" for a non-function carrying symbol!");
+    }
+    // hasMember
+    // getMember
+    // getParent
+    // getInherit
+    // getField
+    // getFuncion
+    // getSymbol
+    // ...
+
     Symbol freeze()
     {
         if (isVariable)
@@ -187,6 +240,11 @@ final:
             return cast(Symbol)temp;
         }
         return this;
+    }
+
+    Symbol parent()
+    {
+        return parents[$-1];
     }
 }
 
