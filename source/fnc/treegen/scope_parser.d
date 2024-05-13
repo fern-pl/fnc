@@ -321,6 +321,9 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             parent.instructions ~= assignment;
             break;
         case LineVariety.TaggedUntypedItem:
+            size_t endingIndex = index + lineVariety.length;
+            scope (exit)
+                index = endingIndex;
             NamedUnit name = lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.NamedUnit).name;
             parent.declaredVariables ~= DeclaredVariable(name, AstNode.VOID_NAMED_UNIT);
             break;

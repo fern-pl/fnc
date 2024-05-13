@@ -240,7 +240,7 @@ class AstNode
         AstNode voidableType;
     }
     static AstNode VOID_NAMED_UNIT(){
-        AstNode voidNamedUnit = new AstNode;
+        AstNode voidNamedUnit = new AstNode();
         voidNamedUnit.action = AstAction.NamedUnit;
         import fnc.tokenizer.tokens : makeUnicodeString;
         voidNamedUnit.namedUnit = NamedUnit(["void".makeUnicodeString]);
