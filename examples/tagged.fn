@@ -1,0 +1,33 @@
+module tagged;
+
+public const tagged A
+{
+    a;
+    b;
+    c;
+}
+
+public tagged B : ^ubyte
+{
+    a;
+    b;
+    int c;
+}
+
+void main()
+{
+    A a = A.a;
+    assert(a is A.a);
+    assert(a !is A.b);
+    a = A.c;
+    assert(a is A.c);
+    // The tag value.
+    assert(a == 2);
+    B b = B.c(0);
+    assert(b is B.c);
+    assert(b == 0);
+    assert(b.tag == 2);
+    b = B.a;
+    assert(b->type is ubyte);
+    assert(b->parent is B);
+}
