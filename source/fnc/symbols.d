@@ -223,7 +223,7 @@ final:
     Symbol getChild(string name) => glob.symbols[identifier~'.'~name];
     Symbol getParent(string name) => glob.symbols[name~'.'~this.name];
     Symbol getAttribute(string name) => attributes[name];
-    Field getField(string name) => glob.fields[identifier~'.'~name];
+    Variable getField(string name) => glob.fields[identifier~'.'~name];
     Function getFunction(string name) => glob.functions[identifier~'.'~name];
     Symbol getInherit(string name) => (cast(Type)this).inherits[name];
     Alias getAlias(string name) => glob.aliases[identifier~'.'~name];
