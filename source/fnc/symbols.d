@@ -117,6 +117,8 @@ final:
     bool isModule() => (symattr & SymAttr.MODULE) != 0;
     bool isGlob() => (symattr & SymAttr.GLOB) != 0;
     bool isAlias() => (symattr & SymAttr.ALIAS) != 0;
+    bool isAliasSeq() => isAlias && isArray;
+    bool isAggregate() => isModule || isStruct || isClass || isTagged || isTuple;
 
     bool isFunction() => (symattr & SymAttr.FUNCTION) != 0;
     bool isDelegate() => (symattr & SymAttr.DELEGATE) != 0;
@@ -223,14 +225,14 @@ final:
     Symbol getChild(string name) => glob.symbols[identifier~'.'~name];
     Symbol getParent(string name) => glob.symbols[name~'.'~this.name];
     Symbol getAttribute(string name) => attributes[name];
-    Variable getField(string name) => glob.fields[identifier~'.'~name];
+    Variable getField(string name) => glob.variables[identifier~'.'~name];
     Function getFunction(string name) => glob.functions[identifier~'.'~name];
     Symbol getInherit(string name) => (cast(Type)this).inherits[name];
     Alias getAlias(string name) => glob.aliases[identifier~'.'~name];
     // Templated functions/types need to be figured out somehow
-    bool hasParent(string name) => name~'.'~this.name in glob.symbols;
-    bool hasChild(string name) => identifier~'.'~name in glob.symbols;
-    bool hasAttribute(string name) => name in attributes;
+    bool hasParent(string name) => (name~'.'~this.name in glob.symbols) != null;
+    bool hasChild(string name) => (identifier~'.'~name in glob.symbols) != null;
+    bool hasAttribute(string name) => (name in attributes) != null;
     bool hasField(string name) => hasChild(name) && getChild(name).isField;
     bool hasFunction(string name) => hasChild(name) && getChild(name).isFunction;
     bool hasInherit(string name) => isType && name in (cast(Type)this).inherits;
@@ -238,10 +240,10 @@ final:
 
     bool hasParent(Symbol sym) => parents.contains(sym);
     bool hasChild(Symbol sym) => sym.parent == this;
-    bool hasAttribute(Symbol sym) => sym.name in attributes;
+    bool hasAttribute(Symbol sym) => (sym.name in attributes) != null;
     bool hasField(Symbol sym) => sym.isField && sym.parent == this;
     bool hasFunction(Symbol sym) => sym.isFunction && sym.parent == this;
-    bool hasInherit(Symbol sym) => inherits.contains(sym);
+    bool hasInherit(Symbol sym) => isType && (sym.identifier in (cast(Type)this).inherits) != null;
     bool hasAlias(Symbol sym) => sym.isAlias && sym.parent == this;
 
     Symbol freeze()
