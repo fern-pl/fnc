@@ -1,0 +1,37 @@
+module rt.array;
+
+public T[] __iota(T)(T start, T end)
+    if (T->isIntegral)
+{
+    return = T[end - start];
+    nuint iter;
+    while (start < end)
+        return[iter++] = start++;
+}
+
+public T __slice(T)(const T val, nuint start, nuint stop)
+    if (T->isArray)
+{
+    return.length = stop - start;
+    return.ptr = val.ptr + start;
+}
+
+// in void* out void[] from the slice.
+public (T->type)[] __slice(T)(T val, nuint start, nuint stop)
+    if (T->isPointer)
+{
+    return.length = stop - start;
+    return.ptr = val + start;
+}
+
+public struct Array(T)
+{
+    nuint length;
+    T* ptr;
+}
+
+public struct AsoArray(K, V)
+{
+    K[] keys;
+    V?[] values;
+}

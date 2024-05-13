@@ -2,13 +2,75 @@
 module rt.object;
 
 /// Shallow clones an object.
-public T dup(T)(const T val) trusted;
-
-/// Deep clones an object by the given depth, a depth of size_t.max is default.
-public T ddup(T)(const T val, size_t depth = size_t.max) trusted
+public T dup(T)(const T val) trusted
 {
-    if (!T->isByRef)
+    return = val;
+}
+
+/// Deep clones an object by the given depth, a depth of nint.max is default.
+public T ddup(T)(const T val, nint depth = nint.max) trusted
+{
+    if (!T->isByRef || depth < 0)
         return val;
     
-    // TODO:
+    return = T();
+    if (T->isArray)
+    {
+        foreach (elem; val)
+            return ~= elem.ddup(depth);
+    }
+    else
+    {
+        foreach (field; val->fields)
+            return->getField(field.name) = field.ddup(depth - 1);
+    }
 }
+
+public B __convert(B, A)(const A val)
+{
+    // void[] to ushort[]
+    if ((B->isStaticArray || B->isDynamicArray) && (B->isStaticArray || B->isDynamicArray))
+    {
+        return.length = (val.length / A->type->size) * B->type->size;
+        return.ptr = val.ptr |> B*;
+        return;
+    }
+
+    // ushort[2] to ubyte[4]
+    if (A->isStaticArray || B->isStaticArray)
+        &return |> *A* => val;
+
+    if (A->fields[0]->type is B)
+        return => val->fields[0];
+
+    if (B->fields[0]->type is A)
+    {
+        return->fields[0] = val;
+        return;
+    }
+
+    if (A->isAggregate && B->isAggregate)
+    {
+        foreach (field; val->fields)
+        {
+            if (B->hasField(field) && B->getField(field)->canCast(field))
+                return->getField(field) = field;
+        }
+        return;
+    }
+    // TODO: this hurts my head
+}
+
+public T->inherits[$-1] __downcast(T)(const T val)
+    if (T->inherits.length > 0)
+{
+    return __convert!(T->inherits[$-1])(val);
+}
+
+/* public ulong hash(T)(const T val) trusted
+{
+    foreach (b; val |> ubyte[T->size])
+    {
+
+    }
+} */
