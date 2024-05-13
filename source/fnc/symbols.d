@@ -4,8 +4,9 @@ module fnc.symbols;
 import fnc.emission;
 import tern.state;
 import tern.algorithm.mutation : insert, alienate;
+import tern.algorithm.searching : contains, indexOf;
 
-// All symbols may have their members accessed at comptime using `->` followed by the member name, alignment is internally align and marker is not visible.
+// All symbols may have their children accessed at comptime using `->` followed by the Child name, alignment is internally align and marker is not visible.
 
 public enum SymAttr : ulong
 {
@@ -97,7 +98,7 @@ final:
     string name;
     Symbol[] parents;
     Symbol[] children;
-    Symbol[] attributes;
+    Symbol[string] attributes;
 
     string identifier()
     {
@@ -132,6 +133,77 @@ final:
     bool isExpression() => (symattr & SymAttr.EXPRESSION) != 0;
     bool isLiteral() => (symattr & SymAttr.LITERAL) != 0;
 
+    bool isNested() => parents.length > 0 && !parent.isModule;  
+    bool isPrimitive() => !isAggregate && !isArray;
+    bool isBuiltin() => !isAggregate;
+    bool hasDepth() => isType && (cast(Type)this).depth > 0;
+    bool hasBody() => isFunction && (cast(Function)this).instructions.length > 0;
+    bool hasDataAllocations() => (isFunction && (cast(Function)this).locals.length > 0) || (isAggregate && (cast(Type)this).fields.length > 0);
+    bool isEnum()
+    {
+        if (!isTagged)
+            return false;
+        else if (isConst)
+            return true;
+
+        Type self = cast(Type)this;
+        foreach (field; self.fields)
+        {
+            if (!isConst)
+                return false;
+        }
+        return true;
+    }
+    Function[] getOverloads(string name)
+    {
+        Function[] ret;
+        if (isModule)
+        {
+            Module mod = cast(Module)this;
+            foreach (func; mod.functions)
+            {
+                if (func.name == name)
+                    ret ~= func;
+            }
+            return ret;
+        }
+        else if (isType)
+        {
+            Type type = cast(Type)this;
+            foreach (func; type.functions)
+            {
+                if (func.name == name)
+                    ret ~= func;
+            }
+            return ret;
+        }
+        throw new Throwable("Tried to iterate overloads "~name~" for a non-function carrying symbol!");
+    }
+
+    Symbol getChild(string name) => glob.symbols[identifier~'.'~name];
+    Symbol getParent(string name) => glob.symbols[name~'.'~this.name];
+    Symbol getAttribute(string name) => attributes[name];
+    Field getField(string name) => glob.fields[identifier~'.'~name];
+    Function getFunction(string name) => glob.functions[identifier~'.'~name];
+    Symbol getInherit(string name) => (cast(Type)this).inherits[name];
+    Alias getAlias(string name) => glob.aliases[identifier~'.'~name];
+    // Templated functions/types need to be figured out somehow
+    bool hasParent(string name) => name~'.'~this.name in glob.symbols;
+    bool hasChild(string name) => identifier~'.'~name in glob.symbols;
+    bool hasAttribute(string name) => name in attributes;
+    bool hasField(string name) => hasChild(name) && getChild(name).isField;
+    bool hasFunction(string name) => hasChild(name) && getChild(name).isFunction;
+    bool hasInherit(string name) => isType && name in (cast(Type)this).inherits;
+    bool hasAlias(string name) => identifier~'.'~name in glob.symbols && getChild(name).isAlias;
+
+    bool hasParent(Symbol sym) => parents.contains(sym);
+    bool hasChild(Symbol sym) => sym.parent == this;
+    bool hasAttribute(Symbol sym) => sym.name in attributes;
+    bool hasField(Symbol sym) => sym.isField && sym.parent == this;
+    bool hasFunction(Symbol sym) => sym.isFunction && sym.parent == this;
+    bool hasInherit(Symbol sym) => inherits.contains(sym);
+    bool hasAlias(Symbol sym) => sym.isAlias && sym.parent == this;
+
     Symbol freeze()
     {
         if (isVariable)
@@ -142,13 +214,27 @@ final:
         }
         return this;
     }
+
+    Symbol parent()
+    {
+        return parents[$-1];
+    }
+
+    // The _ should not show up when doing symbol work in Fern.
+    // sym->module not sym->_module!
+    Module _module()
+    {
+        if (isPrimitive)
+            throw new Throwable("Tried to take the module of a primitive type!");
+        return cast(Module)parents[0];
+    }
 }
 
 public class Type : Symbol
 {
 public:
 final:
-    Type[] inherits;
+    Type[string] inherits;
     Variable[] fields;
     Function[] functions;
     ubyte[] data;
@@ -255,6 +341,7 @@ public class Variable : Symbol
 {
 public:
 final:
+    Type type;
     ubyte[] data;
     size_t size;
     size_t alignment;
@@ -264,9 +351,9 @@ final:
 
     alias marker this;
 
-    Type type()
+    Symbol type()
     {
-        return cast(Type) parents[$-1];
+        return parents[$-1];
     }
 }
 
