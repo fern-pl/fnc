@@ -343,7 +343,9 @@ enum LineVariety
 
     TaggedDeclaration,
     StructDeclaration,
-    ClassDeclaration
+    ClassDeclaration,
+
+    TaggedUntypedItem
 }
 
 struct VarietyTestPair
@@ -387,11 +389,19 @@ const VarietyTestPair[] FUNCTION_ARGUMENT_PARSE = [
     VarietyTestPair(LineVariety.DeclarationLine, FunctionArgDeclaration),
 ];
 
-// Used in structs / classes / tagged
+// Used in structs / classes
 const VarietyTestPair[] OBJECT_DEFINITION_PARSE = [
     VarietyTestPair(LineVariety.DeclarationLine, DeclarationLine),
     VarietyTestPair(LineVariety.DeclarationAndAssignment, DeclarationAndAssignment),
     VarietyTestPair(LineVariety.FunctionDeclaration, FunctionDeclaration)
+];
+const VarietyTestPair[] TAGGED_DEFINITION_PARS = OBJECT_DEFINITION_PARSE ~ [
+    VarietyTestPair(LineVariety.TaggedUntypedItem, [
+        TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+        TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+            Token(TokenType.Semicolon, [])
+        ])
+    ])
 ];
 
 

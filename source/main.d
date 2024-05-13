@@ -61,12 +61,9 @@ void main()
 
 
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        private struct Element{
-            int kind;
-            short idk;
-            int getKinds(Element other){
-                return => other.kind * kind;
-            }
+        private tagged Element{
+            kind;
+            idk;
         }
         int main(){
             return => add(y : 1, x : 1, offset : 3);

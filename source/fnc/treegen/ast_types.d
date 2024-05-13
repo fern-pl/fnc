@@ -239,7 +239,12 @@ class AstNode
         TypeGenericNodeData typeGenericNodeData; // TypeGeneric
         AstNode voidableType;
     }
-
+    static AstNode VOID_NAMED_UNIT(){
+        AstNode voidNamedUnit = new AstNode;
+        voidNamedUnit.action = AstAction.NamedUnit;
+        voidNamedUnit.namedUnit = NamedUnit(["void".makeUnicodeString]);
+        return voidNamedUnit;
+    }
     void toString(scope void delegate(const(char)[]) sink) const
     {
         import std.conv;

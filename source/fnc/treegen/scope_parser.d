@@ -232,7 +232,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                 index = endingIndex;
             size_t temp;
             auto objScope = parseMultilineScope(
-                OBJECT_DEFINITION_PARSE,
+                lineVariety.lineVariety == LineVariety.TaggedDeclaration ? TAGGED_DEFINITION_PARS :  OBJECT_DEFINITION_PARSE,
                 lineVariety.tokenMatches[OBJECT_BODY].assertAs(TokenGrepMethod.Glob)
                     .tokens,
                     temp,
@@ -319,7 +319,10 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             assignment.assignVariableNodeData.value = result;
 
             parent.instructions ~= assignment;
-
+            break;
+        case LineVariety.TaggedUntypedItem:
+            NamedUnit name = lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.NamedUnit).name;
+            parent.declaredVariables ~= DeclaredVariable(name, AstNode.VOID_NAMED_UNIT);
             break;
         case LineVariety.FunctionDeclaration:
             size_t endingIndex = index + lineVariety.length;
