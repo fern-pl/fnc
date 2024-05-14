@@ -67,10 +67,39 @@ public T->inherits[$-1] __downcast(T)(const T val)
     return __convert!(T->inherits[$-1])(val);
 }
 
-/* public ulong hash(T)(const T val) trusted
+public T[] __iota(T)(T start, T end)
+    if (T->isIntegral)
 {
-    foreach (b; val |> ubyte[T->size])
-    {
+    return = T[end - start];
+    nuint iter;
+    while (start < end)
+        return[iter++] = start++;
+}
 
-    }
-} */
+public T __slice(T)(const T val, nuint start, nuint stop)
+    if (T->isArray)
+{
+    return.length = stop - start;
+    return.ptr = val.ptr + start;
+}
+
+// in void* out void[] from the slice.
+public (T->type)[] __slice(T)(T val, nuint start, nuint stop)
+    if (T->isPointer)
+{
+    return.length = stop - start;
+    return.ptr = val + start;
+}
+
+public T->type pop(T)(ref T val)
+    if (T->isDynamicArray)
+{
+    return = val[$-1];
+    val = val[0..$-1];
+}
+
+public A push(A, B)(ref A val, B elem)
+    if (T->isDynamicArray)
+{
+    return = val ~= elem;
+}

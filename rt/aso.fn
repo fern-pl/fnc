@@ -1,0 +1,15 @@
+module rt.aso;
+
+public struct AsoArray(K, V)
+{
+    K[] keys;
+    V?[] values;
+}
+
+/* public ulong hash(T)(const T val) trusted
+{
+    foreach (b; val |> ubyte[T->size])
+    {
+
+    }
+} */

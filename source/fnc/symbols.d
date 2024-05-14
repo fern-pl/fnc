@@ -443,7 +443,7 @@ final:
     Function[] functions;
 }
 
-public class Glob
+public class Glob : Symbol
 {
 public:
 final:
@@ -454,4 +454,5 @@ final:
     Function[string] functions;
     Alias[string] aliases;
     Function[] unittests;
+    Scope[] context;
 }

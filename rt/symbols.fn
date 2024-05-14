@@ -1,6 +1,6 @@
 module rt.symbols;
 
-public const tagged SymAttr : ^long
+public const tagged __SymAttr : ^long
 {
     // Top-Level Kind
     TYPE = 1 << 0;
@@ -73,4 +73,95 @@ public const tagged SymAttr : ^long
     SIGNED = 1 << 52;
 
     GLOB = 1 << 53;
+    ALIAS = 1L << 54;
+
+    FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD;
+}
+
+public class __Symbol
+{
+public:
+    __Glob glob;
+    __SymAttr symattr;
+    string name;
+    __Symbol[] parents;
+    __Symbol[] children;
+    __Symbol[string] attributes;
+
+    string identifier()
+    {
+        string ret;
+        foreach (parent; parents)
+            ret ~= parent.name~'.';
+        return ret~name;
+    }
+}
+
+public class __Type : __Symbol
+{
+public:
+    __Type[string] inherits;
+    __Variable[] fields;
+    __Function[] functions;
+    ubyte[] data;
+    size_t size;
+    size_t align;
+}
+
+public class __Function : __Symbol
+{
+public:
+    // Will begin with all alias parameters and then subsequently ret-args.
+    __Symbol[] parameters;
+    // Will begin with ret-args and then subsequently all locals.
+    __Symbol[] locals;
+    //Instruction[] instructions;
+    size_t align;
+}
+
+
+public class __Variable : __Symbol
+{
+public:
+    __Type type;
+    ubyte[] data;
+    size_t size;
+    size_t align;
+    size_t offset;
+}
+
+// The tagged is acting like a class here because of kind:heap.
+public tagged kind:heap __Alias : __Symbol
+{
+public:
+    __Symbol single;
+    __Symbol[] many;
+}
+
+public class __Module : __Symbol
+{
+public:
+    __Symbol[] imports;
+    __Type[] types;
+    __Variable[] fields;
+    __Function[] functions;
+}
+
+public class __Glob : __Symbol
+{
+public:
+    __Symbol[string] symbols;
+    __Module[string] modules;
+    __Type[string] types;
+    __Variable[string] variables;
+    __Function[string] functions;
+    __Alias[string] aliases;
+    __Function[] unittests;
+    __Symbol[] context;
+}
+
+public alias __this()
+{
+    // TODO: Add this to the language.
+    return glob->context->prev;
 }
