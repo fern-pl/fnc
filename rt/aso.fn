@@ -1,15 +1,105 @@
 module rt.aso;
 
+/**
+ * Backend for associative arrays.
+ *
+ * Open addressing, with tuple key value bucket array,
+ * a void string means no key and thus no value may exist there.
+ *
+ * Will prod 5 times until deciding that a key doesn't exist or there is no space,
+ * will resize to double the current bucket size if there is no space available.
+ */
 public struct AsoArray(K, V)
 {
-    K[] keys;
-    V?[] values;
+    [K, V][] buckets;
+
+    void rehash(nuint size = buckets.length)
+    {
+        auto aso = this;
+        buckets = [K, V]?[size];
+        foreach (pair; aso.buckets)
+        {
+            if (pair[0] == void)
+                continue;
+
+            this[pair[0]] = pair[1];
+        }
+    }
+
+    V[] values()
+    {
+        foreach (pair; buckets)
+        {
+            if (pair[0] == void)
+                continue;
+
+           return ~= pair[1];
+        }
+    }
+
+    K[] keys()
+    {
+        foreach (pair; buckets)
+        {
+            if (pair[0] == void)
+                continue;
+
+           return ~= pair[0];
+        }
+    }
+
+    V opIndex(K key)
+    {
+        nuint index = key.__hash() % buckets.length;
+        nuint head;
+        while (buckets[index][0] != key)
+        {
+            if (head++ > 5)
+                rehash(buffer.length * 2);
+            index = index.__hash();
+        }
+        return = buckets[index][1];
+    }
+
+    V opIndexAssign(K key, V val)
+    {
+        nuint index = key.__hash() % buckets.length;
+        nuint head;
+        while (buckets[index][0] != key)
+        {
+            if (head++ > 5)
+                rehash(buffer.length * 2);
+            index = index.__hash();
+        }
+        buckets[index] = [key, val];
+        return = val;
+    }
+
+    bool opBinary(string op)(K key)
+        if (op == "in")
+    {
+        nuint index = key.__hash() % buckets.length;
+        foreach (i; 0..6)
+        {
+            if (buckets[index][0] == key)
+                return => true;
+            index = index.__hash();
+        }
+        return = false;
+    }
 }
 
-/* public ulong hash(T)(const T val) trusted
+nuint __hash(uint SEED, T)(const T val)
 {
-    foreach (b; val |> ubyte[T->size])
+    ubyte[nuint->size] buffer;
+    ubyte* ptr = &val |> ubyte*;
+    foreach (i; 0..buffer.length)
     {
-
+        foreach (j; 0..val->size)
+        {
+            buffer[i] ^= buffer[j] += ptr[j] ^ SEED;
+            buffer[(j + i) % 8] += buffer[i] ^= ptr[i] ^ SEED;
+        }
     }
-} */
+    return = buffer |> nuint;
+}
