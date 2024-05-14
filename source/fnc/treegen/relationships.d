@@ -3,7 +3,7 @@ module fnc.treegen.relationships;
 import fnc.tokenizer.tokens;
 import fnc.treegen.ast_types;
 import fnc.treegen.utils;
-import fnc.treegen.type_parser;
+
 import tern.typecons.common : Nullable, nullable;
 
 /+
@@ -286,8 +286,8 @@ const int OBJECT_NAME = 0;
 const int OBJECT_BODY = 1;
 const StructDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-        Token(TokenType.Letter, "struct".makeUnicodeString)
-    ]),
+            Token(TokenType.Letter, "struct".makeUnicodeString)
+        ]),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['{'])
@@ -299,8 +299,8 @@ const StructDeclaration = [
 ];
 const ClassDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-        Token(TokenType.Letter, "class".makeUnicodeString)
-    ]),
+            Token(TokenType.Letter, "class".makeUnicodeString)
+        ]),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['{'])
@@ -313,8 +313,8 @@ const ClassDeclaration = [
 
 const TaggedDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-        Token(TokenType.Letter, "tagged".makeUnicodeString)
-    ]),
+            Token(TokenType.Letter, "tagged".makeUnicodeString)
+        ]),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['{'])
@@ -397,14 +397,12 @@ const VarietyTestPair[] OBJECT_DEFINITION_PARSE = [
 ];
 const VarietyTestPair[] TAGGED_DEFINITION_PARS = OBJECT_DEFINITION_PARSE ~ [
     VarietyTestPair(LineVariety.TaggedUntypedItem, [
-        TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
-        TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
-            Token(TokenType.Semicolon, [])
+            TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+            TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+                    Token(TokenType.Semicolon, [])
+                ])
         ])
-    ])
 ];
-
-
 
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 {
@@ -499,15 +497,13 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 index = commaSearchIndex;
                 break;
             case TokenGrepMethod.Type:
-                size_t potentialSize = prematureTypeLength(tokens, index);
+                import fnc.treegen.expression_parser : prematureSingleTokenGroupLength;
+
+                size_t potentialSize = prematureSingleTokenGroupLength(tokens, index);
                 if (!potentialSize)
                     return tokenGrepBox(null);
-                size_t temp = index;
-                Nullable!AstNode maybeNull = typeFromTokens(tokens, temp);
-                if (maybeNull == null)
-                    return tokenGrepBox(null);
 
-                AstNode type = maybeNull;
+                AstNode type = new AstNode;
                 TokenGrepResult tokenGrep;
                 tokenGrep.method = TokenGrepMethod.Type;
                 tokenGrep.type = type;
@@ -624,6 +620,11 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.Period, [
                     Token(TokenType.Filler), Token(TokenType.Period, ['.']),
+                    Token(TokenType.Filler)
+                ]),
+            OperationPrecedenceEntry(OperationVariety.Arrow, [
+                    Token(TokenType.Filler), Token(TokenType.Operator, ['-']),
+                    Token(TokenType.Operator, ['>']),
                     Token(TokenType.Filler)
                 ]),
         ]),
@@ -888,10 +889,25 @@ trim:
     return true;
 }
 
+void scanAndMergeAttrOp(Array!AstNode nodes)
+{
+    for (size_t index = 0; index < nodes.length; index++)
+    {
+        foreach (entry; operatorPrecedence[0].layer)
+        {
+            if (entry.testAndJoin(nodes, index))
+            {
+                index--;
+                continue;
+            }
+
+        }
+    }
+}
+
 void scanAndMergeOperators(Array!AstNode nodes)
 {
     // OperatorOrder order;
-    auto data = nodes.data;
     static foreach (layer; operatorPrecedence)
     {
         static if (layer.order == OperatorOrder.LeftToRight)
@@ -907,7 +923,6 @@ void scanAndMergeOperators(Array!AstNode nodes)
                     }
 
                 }
-
             }
         }
         static if (layer.order == OperatorOrder.RightToLeft)

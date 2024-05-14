@@ -5,7 +5,6 @@ import fnc.tokenizer.make_tokens;
 import tern.typecons.common : Nullable, nullable;
 import fnc.treegen.scope_parser;
 import fnc.treegen.relationships;
-import fnc.treegen.type_parser;
 
 import std.stdio;
 
@@ -61,19 +60,12 @@ void main()
 
 
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        private tagged Element{
-            kind;
-            idk;
-            int anElmentWithNumber;
-        }
-        int main(){
-            const Element e = Element.idk;
-        }
+        int x = 4;
     ");
     
     newScope.tree;
-    // DeclarationAndAssignment.matchesToken("y=4".tokenizeText).ptr.writeln;
-    // parseLine(FUNCTION_SCOPE_PARSE, "y=4".tokenizeText, index).writeln;
+    // DeclarationAndAssignment.matchesToken("int+1 y=4;".tokenizeText).ptr.writeln;
+    // parseLine(FUNCTION_SCOPE_PARSE, "y=4;".tokenizeText, index).writeln;
 
 
 

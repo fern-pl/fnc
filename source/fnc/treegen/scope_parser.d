@@ -307,9 +307,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION]
                 .assertAs(TokenGrepMethod.Glob)
                 .tokens.expressionNodeFromTokens();
-            lineVariety.tokenMatches[DECLARATION_EXPRESSION]
-                .assertAs(TokenGrepMethod.Glob)
-                .tokens.writeln;
+            
             if (nodes.length != 1)
                 throw new SyntaxError(
                     "Expression node tree could not be parsed properly (Not reducable into single node)",

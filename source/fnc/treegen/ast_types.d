@@ -29,6 +29,7 @@ enum AstAction
     SingleArgumentOperation, // Ex: x++, ++x
     DoubleArgumentOperation, // Ex: 9+10 
 
+    GenericOf, // Not to be confused with TypeGeneric, ex: foo!bar(), foo!(bar)(), or "auto x classFoo!bar";
     Call, // Ex: foo(bar);
 
     // Misc tokens: 
@@ -38,15 +39,6 @@ enum AstAction
     LiteralUnit, // Ex: 6, 6L, "Hello world"
 
     TokenHolder, // A temporary Node that is yet to be parsed 
-
-    // Type tokens
-    TypeTuple, // [int, float]
-    TypeArray, // int[3] OR int[]
-    TypeCall, // const(int) Note: const is ALSO a keyword
-    TypePointer, // *int
-    TypeReference, // &int
-    TypeGeneric, // Result!(int, string)
-    TypeVoidable
 }
 
 bool isExpressionLike(AstAction action)
@@ -61,6 +53,7 @@ bool isCallable(AstAction action)
         || action == AstAction.SingleArgumentOperation
         || action == AstAction.Call
         || action == AstAction.Expression
+        || action == AstAction.GenericOf
         || action == AstAction.LiteralUnit
         || action == AstAction.NamedUnit;
 }
@@ -134,6 +127,7 @@ enum OperationVariety
     NotEqualTo,
 
     Period, // foo.bar
+    Arrow, // foo->bar
     Range, // x..y OR 0..99
 }
 
@@ -201,10 +195,10 @@ struct CallNodeData
 }
 /+++++++/
 
-struct TypeGenericNodeData
+struct GenericNodeData // Generic used in code. Ex: foo.bar!baz
 {
-    AstNode left;
-    AstNode right;
+    AstNode symbolUsedAsGeneric;
+    AstNode genericData;
 }
 
 class AstNode
@@ -229,23 +223,21 @@ class AstNode
         AstNode nodeToReturn; // ReturnStatement
         IndexIntoNodeData indexIntoNodeData; // IndexInto
 
-        struct
-        { // TypeArray
-            AstNode firstNodeOperand; // This might be the thing being indexed
-            bool isIntegerLiteral;
-            AstNode[][] commaSeperatedNodes; // Declaring arrays, array types, typles, etc
-        }
+        GenericNodeData genericNodeData; // GenericOf
 
-        TypeGenericNodeData typeGenericNodeData; // TypeGeneric
         AstNode voidableType;
     }
-    static AstNode VOID_NAMED_UNIT(){
+
+    static AstNode VOID_NAMED_UNIT()
+    {
         AstNode voidNamedUnit = new AstNode();
         voidNamedUnit.action = AstAction.NamedUnit;
         import fnc.tokenizer.tokens : makeUnicodeString;
+
         voidNamedUnit.namedUnit = NamedUnit(["void".makeUnicodeString]);
         return voidNamedUnit;
     }
+
     void toString(scope void delegate(const(char)[]) sink) const
     {
         import std.conv;
@@ -260,12 +252,8 @@ class AstNode
             case AstAction.TokenHolder:
                 sink(tokenBeingHeld.to!string);
                 break;
-            case AstAction.TypePointer:
             case AstAction.Expression:
                 sink(expressionNodeData.components.to!string);
-                break;
-            case AstAction.TypeVoidable:
-                sink(voidableType.to!string);
                 break;
             case AstAction.NamedUnit:
                 sink(namedUnit.names.to!string);
@@ -285,27 +273,6 @@ class AstNode
                 sink(doubleArgumentOperationNodeData.left.to!string);
                 sink(", ");
                 sink(doubleArgumentOperationNodeData.right.to!string);
-                break;
-            case AstAction.TypeArray:
-                bool hasFirstOperand = (cast(void*) firstNodeOperand) != null;
-                if (hasFirstOperand)
-                {
-                    sink("Array of: ");
-                    sink(firstNodeOperand.to!string);
-                    sink(" ");
-                }
-                if (isIntegerLiteral)
-                {
-                    sink("with ");
-                    sink(commaSeperatedNodes[0][0].to!string);
-                    sink(" elements");
-                }
-                else
-                    foreach (const(AstNode[]) containingReductions; commaSeperatedNodes)
-                    {
-                        sink(commaSeperatedNodes.to!string);
-                    }
-
                 break;
             default:
                 break;
@@ -332,46 +299,13 @@ class AstNode
 
         switch (action)
         {
-            case AstAction.TypeGeneric:
+            case AstAction.GenericOf:
                 write(action);
                 writeln(":");
-                typeGenericNodeData.left.tree(tabCount + 1);
-                typeGenericNodeData.right.tree(tabCount + 1);
+                genericNodeData.symbolUsedAsGeneric.tree(tabCount + 1);
+                genericNodeData.genericData.tree(tabCount + 1);
                 break;
-            case AstAction.TypePointer:
-            case AstAction.TypeReference:
-                write(action);
-                writeln(":");
-                foreach (subnode; expressionNodeData.components)
-                {
-                    subnode.tree(tabCount + 1);
-                }
-                break;
-            case AstAction.TypeArray:
-                bool hasFirstOperand = (cast(void*) firstNodeOperand) != null;
-                if (hasFirstOperand && commaSeperatedNodes.length)
-                    writeln("List of N indexed with X");
-                else
-                    writeln("List of X");
-                if (firstNodeOperand)
-                    firstNodeOperand.tree(tabCount + 1);
-                foreach (AstNode[] possibleReducedNodes; commaSeperatedNodes)
-                {
-                    if (possibleReducedNodes.length > 0)
-                        possibleReducedNodes[0].tree(tabCount + 1);
-
-                }
-                break;
-            case AstAction.TypeTuple:
-                write(action);
-                writeln(":");
-                foreach (AstNode[] possibleReducedNodes; commaSeperatedNodes)
-                {
-                    if (possibleReducedNodes.length > 0)
-                        possibleReducedNodes[0].tree(tabCount + 1);
-
-                }
-                break;
+      
             case AstAction.Call:
                 writeln("Calling function resolved from:");
                 callNodeData.func.tree(tabCount + 1);
@@ -485,10 +419,6 @@ void getRelatedTokens(AstNode node, ref Token[] output)
     switch (node.action)
     {
         // TODO: Improve all of this
-        case AstAction.TypePointer:
-        case AstAction.TypeReference:
-            getRelatedTokens(node.firstNodeOperand, output);
-            break;
         case AstAction.SingleArgumentOperation:
             getRelatedTokens(node.singleArgumentOperationNodeData.value, output);
             break;

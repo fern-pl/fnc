@@ -94,23 +94,27 @@ class SyntaxError : Error
         string errorString = msg;
 
         import tern.string : AnsiColor;
+        import core.exception;
+        try{
+            errorString ~= "\n Line: " ~ errData.lineCount.to!string;
+            errorString ~= "\n Col: " ~ errData.afterLineStart.to!string;
+            errorString ~= "\n\t";
 
-        errorString ~= "\n Line: " ~ errData.lineCount.to!string;
-        errorString ~= "\n Col: " ~ errData.afterLineStart.to!string;
-        errorString ~= "\n\t";
 
+            errorString ~= GLOBAL_ERROR_STATE[errData.startOfLine .. start];
 
-        errorString ~= GLOBAL_ERROR_STATE[errData.startOfLine .. start];
+            errorString ~= AnsiColor.BackgroundRed;
 
-        errorString ~= AnsiColor.BackgroundRed;
+            errorString ~= GLOBAL_ERROR_STATE[start .. end];
+            errorString ~= AnsiColor.Reset;
+            import std.algorithm : max;
+            // TODO: Make this better. 
+            errorString ~= GLOBAL_ERROR_STATE[end .. max(errData.endOfProblemLine, end)];
 
-        errorString ~= GLOBAL_ERROR_STATE[start .. end];
-        errorString ~= AnsiColor.Reset;
-        import std.algorithm : max;
-        // TODO: Make this better. 
-        errorString ~= GLOBAL_ERROR_STATE[end .. max(errData.endOfProblemLine, end)];
-
-        return errorString;
+            return errorString;
+        }catch(ArraySliceError e){
+            return msg ~ " (line and col can't be resolved. Please report this as a github issue with code samples)";
+        }
     }
 
     protected this(string msg, string file, size_t line, Throwable next = null) @nogc nothrow pure @safe

@@ -107,15 +107,12 @@ private AstNode[][] splitNodesAtComma(AstNode[] inputNodes)
     nodes ~= current;
     return nodes;
 }
-// Handle function calls and operators
+// Handle function calls, arrays, Generics, and operators
 public void phaseTwo(ref Array!AstNode nodes)
 {
     size_t[] nonWhiteIndexStack;
 
     Array!AstNode newNodesArray;
-
-    scope (exit)
-        nodes = newNodesArray;
 
     AstNode lastNonWhite;
     alias popNonWhiteNode() = {
@@ -125,7 +122,40 @@ public void phaseTwo(ref Array!AstNode nodes)
         lastNonWhite = newNodesArray[lindex];
         newNodesArray.linearRemove(newNodesArray[lindex .. $]);
     };
-
+    scanAndMergeAttrOp(nodes);
+    // TODO: FIX THIS SHIT
+    for (size_t index = 0; index < nodes.length; index++)
+    {
+        AstNode node = nodes[index];
+        if (node.action != AstAction.TokenHolder
+            || node.tokenBeingHeld.tokenVariety != TokenType.ExclamationMark)
+        {
+            GENRIC_ADD:
+            newNodesArray ~= node;
+            if (!node.isWhite)
+                nonWhiteIndexStack ~= newNodesArray.length - 1;
+            continue;
+        }
+        if (!nonWhiteIndexStack.length)
+            throw new SyntaxError("Can't result thing generic of.", node.tokenBeingHeld);
+        popNonWhiteNode();
+        index++;
+        Nullable!AstNode maybeNode = nodes.nextNonWhiteNode(index);
+        index--;
+        if (maybeNode == null)
+            throw new SyntaxError("Trailing exclamation mark is an invalid generic.", node.tokenBeingHeld);
+        AstNode generic = new AstNode;
+        generic.action = AstAction.GenericOf;
+        generic.genericNodeData.symbolUsedAsGeneric = lastNonWhite;
+        generic.genericNodeData.genericData = maybeNode;
+        node = generic;
+        goto GENRIC_ADD;
+    }
+    nodes = newNodesArray;
+    Array!AstNode temp;
+    newNodesArray = temp;
+    nonWhiteIndexStack = new size_t[0];
+    // Handle functions, arrays, and indexing
     for (size_t index = 0; index < nodes.length; index++)
     {
         AstNode node = nodes[index];
@@ -134,6 +164,7 @@ public void phaseTwo(ref Array!AstNode nodes)
             && newNodesArray[nonWhiteIndexStack[$ - 1]].action.isCallable
             )
         {
+
             popNonWhiteNode();
             AstNode functionCall = new AstNode();
             functionCall.action = AstAction.Call;
@@ -171,7 +202,7 @@ public void phaseTwo(ref Array!AstNode nodes)
                     component.source = components[0];
                     continue;
                 }
-                components.writeln;
+                // components.writeln;
                 if (components[1].action != AstAction.TokenHolder)
                     throw new SyntaxError("Function argument parsing error (Must include colon for named arguments)", firstToken);
                 if (components[1].tokenBeingHeld.tokenVariety != TokenType.Colon)
@@ -195,9 +226,6 @@ public void phaseTwo(ref Array!AstNode nodes)
             indexNode.action = AstAction.IndexInto;
             indexNode.indexIntoNodeData.indexInto = lastNonWhite;
 
-            newNodesArray ~= indexNode;
-            nonWhiteIndexStack ~= newNodesArray.length - 1;
-
             Array!AstNode components;
             components ~= node.expressionNodeData.components;
             phaseTwo(components);
@@ -207,6 +235,9 @@ public void phaseTwo(ref Array!AstNode nodes)
             assert(components.length == 1, "Can't have empty [] while indexing");
 
             indexNode.indexIntoNodeData.index = components[0];
+
+            newNodesArray ~= indexNode;
+            nonWhiteIndexStack ~= newNodesArray.length - 1;
 
         }
         else if (node.action.isExpressionLike)
@@ -228,28 +259,8 @@ public void phaseTwo(ref Array!AstNode nodes)
                 nonWhiteIndexStack ~= newNodesArray.length - 1;
 
         }
-
-        //     if (node.action == AstAction.Expression && lastNonWhite != null )
-        //     {
-        //         AstNode functionCall = new AstNode();
-        //         AstNode args = nodes[index + 1];
-
-        //         Array!AstNode components;
-        //         components ~= args.expressionNodeData.components;
-        // phaseTwo(components);
-        // scanAndMergeOperators(components);
-        //         args.expressionNodeData.components.length = components.data.length;
-        //         args.expressionNodeData.components[0 .. $] = components.data[0 .. $];
-
-        //         functionCall.action = AstAction.Call;
-        //         functionCall.callNodeData = CallNodeData(
-        //             node.namedUnit,
-        //             args
-        //         );
-        //         nodes[index] = functionCall;
-        //         nodes.linearRemove(nodes[index + 1 .. index + 2]);
-        //     }
     }
+    nodes = newNodesArray;
 }
 
 void trimAstNodes(ref Array!AstNode nodes)
@@ -301,4 +312,55 @@ size_t findNearestSemiColon(Token[] tokens, size_t index, TokenType stopToken = 
         index++;
     }
     return -1;
+}
+
+// Gets the length of a single "group" of tokens, that can be parsed into a single ASTnode
+size_t prematureSingleTokenGroupLength(Token[] tokens, size_t index)
+{
+    size_t originalIndex = index;
+    int braceCount = 0;
+    bool wasLastFinalToken = false;
+    while (1)
+    {
+        Nullable!Token ntoken = tokens.nextNonWhiteToken(index);
+        if (ntoken == null)
+            break;
+        Token token = ntoken;
+        if (token.tokenVariety == TokenType.OpenBraces)
+        {
+            wasLastFinalToken = true;
+            braceCount++;
+            continue;
+        }
+        else if (token.tokenVariety == TokenType.CloseBraces)
+        {
+            braceCount--;
+            if (braceCount == -1)
+                break;
+            continue;
+        }
+
+        if (braceCount > 0)
+            continue;
+
+        switch (token.tokenVariety)
+        {
+            case TokenType.QuestionMark:
+            case TokenType.Comment:
+            case TokenType.WhiteSpace:
+                break;
+            case TokenType.Operator:
+            case TokenType.Period:
+            case TokenType.ExclamationMark:
+                wasLastFinalToken = false;
+                break;
+            default:
+                if (wasLastFinalToken)
+                    return index - originalIndex - 1;
+                wasLastFinalToken = true;
+                break;
+        }
+
+    }
+    return index - originalIndex - 1;
 }
