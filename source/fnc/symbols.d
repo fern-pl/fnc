@@ -454,5 +454,5 @@ final:
     Function[string] functions;
     Alias[string] aliases;
     Function[] unittests;
-    Scope[] context;
+    Symbol[] context;
 }
