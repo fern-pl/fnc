@@ -6,7 +6,7 @@ module rt.aso;
  * Open addressing, with tuple key value bucket array,
  * a void string means no key and thus no value may exist there.
  *
- * Will prod 5 times until deciding that a key doesn't exist or there is no space,
+ * Will probe 5 times until deciding that a key doesn't exist or there is no space,
  * will resize to double the current bucket size if there is no space available.
  */
 public struct AsoArray(K, V)
@@ -54,8 +54,8 @@ public struct AsoArray(K, V)
         nuint head;
         while (buckets[index][0] != key)
         {
-            if (head++ > 5)
-                rehash(buffer.length * 2);
+            if (++head > 5)
+                rehash(buckets.length * 2);
             index = index.__hash();
         }
         return = buckets[index][1];
@@ -67,8 +67,8 @@ public struct AsoArray(K, V)
         nuint head;
         while (buckets[index][0] != key)
         {
-            if (head++ > 5)
-                rehash(buffer.length * 2);
+            if (++head > 5)
+                rehash(buckets.length * 2);
             index = index.__hash();
         }
         buckets[index] = [key, val];
@@ -79,7 +79,7 @@ public struct AsoArray(K, V)
         if (op == "in")
     {
         nuint index = key.__hash() % buckets.length;
-        foreach (i; 0..6)
+        foreach (i; 0..5)
         {
             if (buckets[index][0] == key)
                 return => true;
@@ -89,17 +89,15 @@ public struct AsoArray(K, V)
     }
 }
 
-nuint __hash(uint SEED, T)(const T val)
+nuint __hash(T)(const T val)
 {
     ubyte[nuint->size] buffer;
     ubyte* ptr = &val |> ubyte*;
-    foreach (i; 0..buffer.length)
+    foreach (i; 0..nuint->size)
+    foreach (j; 0..val->size)
     {
-        foreach (j; 0..val->size)
-        {
-            buffer[i] ^= buffer[j] += ptr[j] ^ SEED;
-            buffer[(j + i) % 8] += buffer[i] ^= ptr[i] ^ SEED;
-        }
+        buffer[i] ^= buffer[j] += ptr[j];
+        buffer[(j + i) % nuint->size] += buffer[i] ^= ptr[i];
     }
     return = buffer |> nuint;
 }

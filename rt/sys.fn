@@ -341,10 +341,59 @@ public const tagged SCID
     pkey_mprotect2;
 }
 
-void __syscall(ARGS...)(SCID id, ARGS args) trusted;
+public:
+alias PMUTEX_INIT = 0;
+alias PMUTEX_LOCK = 1;
+alias PMUTEX_UNLOCK = 2;
+alias PMUTEX_DESTROY = 3;
+
+alias MAP_SHARED = 0x01;
+alias MAP_PRIVATE = 0x02;
+alias MAP_SHARED_VALIDATE = 0x03;
+alias MAP_TYPE = 0x0f;
+alias MAP_FIXED = 0x10;
+alias MAP_ANONYMOUS = 0x20;
+alias MAP_NORESERVE = 0x4000;
+alias MAP_GROWSDOWN = 0x0100;
+alias MAP_DENYWRITE = 0x0800;
+alias MAP_EXECUTABLE = 0x1000;
+alias MAP_LOCKED = 0x2000;
+alias MAP_POPULATE = 0x8000;
+alias MAP_NONBLOCK = 0x10000;
+alias MAP_STACK = 0x20000;
+alias MAP_HUGETLB = 0x40000;
+alias MAP_SYNC = 0x80000;
+alias MAP_FIXED_NOREPLACE = 0x100000;
+alias MAP_FILE = 0;
+alias MAP_UNINITIALIZED = 0x4000000;
+
+alias MAP_HUGE_SHIFT = 26
+alias MAP_HUGE_MASK = 0x3f
+alias MAP_HUGE_16KB = (14 << 26)
+alias MAP_HUGE_64KB = (16 << 26)
+alias MAP_HUGE_512KB = (19 << 26)
+alias MAP_HUGE_1MB = (20 << 26)
+alias MAP_HUGE_2MB = (21 << 26)
+alias MAP_HUGE_8MB = (23 << 26)
+alias MAP_HUGE_16MB = (24 << 26)
+alias MAP_HUGE_32MB = (25 << 26)
+alias MAP_HUGE_256MB = (28 << 26)
+alias MAP_HUGE_512MB = (29 << 26)
+alias MAP_HUGE_1GB = (30 << 26)
+alias MAP_HUGE_2GB = (31 << 26)
+alias MAP_HUGE_16GB = (34U << 26)
+
+alias PROT_NONE = 0;
+alias PROT_READ = 1;
+alias PROT_WRITE = 2;
+alias PROT_EXEC = 4;
+alias PROT_GROWSDOWN = 0x01000000;
+alias PROT_GROWSUP = 0x02000000;
+
+R __syscall(R = void, ARGS...)(SCID id, ARGS args) trusted;
 {
     __asm(
-        syscall(none, id, unroll args);
+        syscall(return, id, unroll args)
     );
     return;
 }

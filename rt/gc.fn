@@ -1,1 +1,113 @@
 module rt.gc;
+
+import rt.sys;
+
+private struct Object
+{
+    void* ptr;
+    nuint size;
+    Object* prev;
+    atomic bool free;
+    // byte[size] data follows this.
+}
+
+public struct Root
+{
+    // TODO: Definitely need some atomics here.
+    void* base;
+    void* tail;
+    nuint size;
+    nuint free;
+}
+
+/**
+ * The Fern garbage collector and allocator.
+ *
+ * Stores a root of the current allocation and a tree of all allocated objects.
+ * The tree is stored in reverse with bytes directly following the object struct with allocation info.
+ */
+public struct GC
+{
+    // 4MB per sector page.
+    alias pageSize = 1024 * 1024 * 4;
+
+    // This will store a count of all living, GC-owned objects.
+    atomic uint living;
+    // Only one root exists at a time but many root allocations may have happened,
+    // we simply don't care about those previous allocations and keep track of all of the 
+    // objects that were allocated in them instead.
+    //
+    // An object should NEVER be completely freed or have its prev pointer invalidated,
+    // as this would lead to potentially all memory being leaked.
+    Root root;
+    Object* tail;
+
+    void bump(Object* obj)
+    {
+        obj.prev = tail;
+        tail = obj;
+    }
+
+    void create(size_t size = pageSize)
+    {
+        // TODO: Not cross platform!
+        void* ptr = __syscall!(void*)(mmap, void, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+        root.base = ptr;
+        root.size = size;
+    }
+
+    // TODO: Alignment
+    void* alloc(nuint size) trusted;
+    {
+        // A freed object is available for allocation.
+        while (true)
+        {
+            Object* obj;
+            if (obj.free && obj.size >= size)
+            {
+                obj.free = false;
+                bump(obj);
+                return => obj.ptr;
+            }
+            obj = tail.prev;
+        }
+        
+        // The root currently has enough space to allocate anew.
+        if (root.free >= size)
+        {
+            Object* ptr = root.tail |> Object*;
+            return = ptr + 1;
+
+            *ptr = Object(return, size);
+            bump(ptr);
+
+            root.free -= size;
+            root.tail = return + size;
+        }
+
+        // The root neither has space nor available objects but is not completely full,
+        // by doing this allocation we avoid potentially leaking a stupidly large amount of memory,
+        // or at least preserve bytes that might end up being useful later.
+        if (root.free != 0)
+        {
+            Object* ptr = root.tail |> Object*;
+            *ptr = Object(ptr, root.free);
+            bump(ptr);
+        }
+
+        // The root neither has space nor available objects, we need to allocate a new root.
+        if (size > pageSize)
+            create(size);
+        else
+            create();
+
+        Object* ptr = root.base |> Object*;
+        return = ptr + 1;
+
+        *ptr = Object(return, size);
+        bump(ptr);
+
+        root.free -= size;
+        root.tail = return + size;
+    }
+}
