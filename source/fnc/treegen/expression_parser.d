@@ -122,39 +122,7 @@ public void phaseTwo(ref Array!AstNode nodes)
         lastNonWhite = newNodesArray[lindex];
         newNodesArray.linearRemove(newNodesArray[lindex .. $]);
     };
-    scanAndMergeAttrOp(nodes);
-    // TODO: FIX THIS SHIT
-    for (size_t index = 0; index < nodes.length; index++)
-    {
-        AstNode node = nodes[index];
-        if (node.action != AstAction.TokenHolder
-            || node.tokenBeingHeld.tokenVariety != TokenType.ExclamationMark)
-        {
-            GENRIC_ADD:
-            newNodesArray ~= node;
-            if (!node.isWhite)
-                nonWhiteIndexStack ~= newNodesArray.length - 1;
-            continue;
-        }
-        if (!nonWhiteIndexStack.length)
-            throw new SyntaxError("Can't result thing generic of.", node.tokenBeingHeld);
-        popNonWhiteNode();
-        index++;
-        Nullable!AstNode maybeNode = nodes.nextNonWhiteNode(index);
-        index--;
-        if (maybeNode == null)
-            throw new SyntaxError("Trailing exclamation mark is an invalid generic.", node.tokenBeingHeld);
-        AstNode generic = new AstNode;
-        generic.action = AstAction.GenericOf;
-        generic.genericNodeData.symbolUsedAsGeneric = lastNonWhite;
-        generic.genericNodeData.genericData = maybeNode;
-        node = generic;
-        goto GENRIC_ADD;
-    }
-    nodes = newNodesArray;
-    Array!AstNode temp;
-    newNodesArray = temp;
-    nonWhiteIndexStack = new size_t[0];
+
     // Handle functions, arrays, and indexing
     for (size_t index = 0; index < nodes.length; index++)
     {

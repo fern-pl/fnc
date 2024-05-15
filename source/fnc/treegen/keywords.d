@@ -23,8 +23,7 @@ const dchar[][] KEYWORDS = [
     "inline".makeUnicodeString,
     "const".makeUnicodeString,
     "ref".makeUnicodeString,
-    "mustuse".makeUnicodeString,
-    "mixin".makeUnicodeString,
+    "mustuse".makeUnicodeString
 ] ~ FUNC_STYLE_KEYWORD;
 
 bool scontains(const(dchar[][]) list, const(dchar[]) str)

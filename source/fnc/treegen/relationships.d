@@ -497,16 +497,18 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 index = commaSearchIndex;
                 break;
             case TokenGrepMethod.Type:
-                import fnc.treegen.expression_parser : prematureSingleTokenGroupLength;
+                import fnc.treegen.expression_parser : prematureSingleTokenGroupLength, expressionNodeFromTokens;
 
                 size_t potentialSize = prematureSingleTokenGroupLength(tokens, index);
                 if (!potentialSize)
                     return tokenGrepBox(null);
+                Array!AstNode type = expressionNodeFromTokens(tokens[index .. index + potentialSize]);
+                type.writeln;
+                assert(type.length == 1, "Token type could not be reduced from a single node, but prematureSingleTokenGroupLength() ensured that it could. (Please report this on github)");
 
-                AstNode type = new AstNode;
                 TokenGrepResult tokenGrep;
                 tokenGrep.method = TokenGrepMethod.Type;
-                tokenGrep.type = type;
+                tokenGrep.type = type[0];
                 returnVal ~= tokenGrep;
                 index += potentialSize;
                 break;
@@ -628,6 +630,17 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                     Token(TokenType.Filler)
                 ]),
         ]),
+    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+        OperationPrecedenceEntry(OperationVariety.Period, [
+                Token(TokenType.Filler), Token(TokenType.Period, ['.']),
+                Token(TokenType.Filler)
+            ]),
+        OperationPrecedenceEntry(OperationVariety.Arrow, [
+                Token(TokenType.Filler), Token(TokenType.Operator, ['-']),
+                Token(TokenType.Operator, ['>']),
+                Token(TokenType.Filler)
+            ]),
+    ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.PreIncrement, [
                     OPR('+'), OPR('+'), Token(TokenType.Filler)
@@ -889,21 +902,7 @@ trim:
     return true;
 }
 
-void scanAndMergeAttrOp(Array!AstNode nodes)
-{
-    for (size_t index = 0; index < nodes.length; index++)
-    {
-        foreach (entry; operatorPrecedence[0].layer)
-        {
-            if (entry.testAndJoin(nodes, index))
-            {
-                index--;
-                continue;
-            }
 
-        }
-    }
-}
 
 void scanAndMergeOperators(Array!AstNode nodes)
 {

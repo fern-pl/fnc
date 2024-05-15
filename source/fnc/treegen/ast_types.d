@@ -39,6 +39,8 @@ enum AstAction
     LiteralUnit, // Ex: 6, 6L, "Hello world"
 
     TokenHolder, // A temporary Node that is yet to be parsed 
+
+    Voidable
 }
 
 bool isExpressionLike(AstAction action)
@@ -487,4 +489,14 @@ Nullable!AstNode nextNonWhiteNode(AstNode[] nodes, ref size_t index)
         break;
     }
     return found;
+}
+
+
+Nullable!AstNode lowerBoundNonWhiteTest(AstNode[] nodes, size_t index){
+    while(1){
+        index--;
+        if (!index) return Nullable!AstNode(null);
+        if (nodes[index].isWhite) continue;
+        return Nullable!AstNode(nodes[index]);
+    }
 }

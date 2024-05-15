@@ -60,7 +60,9 @@ void main()
 
 
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        int x = 4;
+        foo->var()?->a main(){
+
+        }
     ");
     
     newScope.tree;
