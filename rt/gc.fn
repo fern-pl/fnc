@@ -1,23 +1,23 @@
+/// Garbage collector and allocation implementation.
 module rt.gc;
 
 import rt.sys;
 
+// TODO: Make this thread-safe without using so many atomics?
 private struct Object
 {
     void* ptr;
-    nuint size;
-    Object* prev;
+    atomic nuint size;
+    atomic Object* prev;
     atomic bool free;
     // byte[size] data follows this.
 }
 
 public struct Root
 {
-    // TODO: Definitely need some atomics here.
-    void* base;
-    void* tail;
+    atomic Object* tail;
     nuint size;
-    nuint free;
+    atomic nuint free;
 }
 
 /**
@@ -51,12 +51,14 @@ public struct GC
     void create(size_t size = pageSize)
     {
         // TODO: Not cross platform!
+        // TODO: Implement error handling, this should be a critical error upon failure.
         void* ptr = __syscall!(void*)(mmap, void, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-        root.base = ptr;
+        root.tail = ptr;
         root.size = size;
     }
 
     // TODO: Alignment
+    // size should never be 0, no checks are performed to ensure that it isn't and if it is the garbage collector will throw a critical error.
     void* alloc(nuint size) trusted;
     {
         // A freed object is available for allocation.
@@ -65,24 +67,39 @@ public struct GC
             Object* obj;
             if (obj.free && obj.size >= size)
             {
+                // Fragment the object into 2 objects, one of size and the other of the remainder.
+                // This will get merged again later when freeing.
+                if (obj.size != size)
+                {
+                    Object* frag = (tail.ptr + size) |> Object*;
+                    *frag = Object(frag + 1, obj.size - size, obj.prev);
+                    obj.prev = frag;
+                    obj.size = size;
+                }
+
                 obj.free = false;
                 bump(obj);
                 return => obj.ptr;
             }
             obj = tail.prev;
+
+            // There are no objects available to be used.
+            if (obj == void)
+                break;
         }
         
         // The root currently has enough space to allocate anew.
         if (root.free >= size)
         {
-            Object* ptr = root.tail |> Object*;
+            Object* ptr = root.tail;
             return = ptr + 1;
 
             *ptr = Object(return, size);
             bump(ptr);
 
             root.free -= size;
-            root.tail = return + size;
+            root.tail = (return + size) |> Object*;
+            return;
         }
 
         // The root neither has space nor available objects but is not completely full,
@@ -90,7 +107,7 @@ public struct GC
         // or at least preserve bytes that might end up being useful later.
         if (root.free != 0)
         {
-            Object* ptr = root.tail |> Object*;
+            Object* ptr = root.tail;
             *ptr = Object(ptr, root.free);
             bump(ptr);
         }
@@ -101,13 +118,53 @@ public struct GC
         else
             create();
 
-        Object* ptr = root.base |> Object*;
+        Object* ptr = root.base;
         return = ptr + 1;
 
         *ptr = Object(return, size);
         bump(ptr);
 
         root.free -= size;
-        root.tail = return + size;
+        root.tail = (return + size) |> Object*;
+    }
+
+    // ptr should be the start of an allocation, not a part of an allocation.
+    // This is not the same as destroying an object, and is only an optional part of the process.
+    void free(void* ptr)
+    {
+        // TODO: Make object doubly linked so merging can be done.
+        Object* obj = ptr |> Object* - 1;
+        obj.free = true;
+        bump(obj);
+    }
+
+    void destroy(alias O)
+    {
+        // Can't free a field, its a part of an allocation and not the whole thing.
+        if (O->isField)
+            return;
+
+        // We want to iterate over all the objects to see if this is actually a full allocation,
+        // since we can't free invalid memory or an array element obviously.
+        while (true)
+        {            
+            Object* obj;
+            if (ptr == obj.ptr)
+            {
+                free(obj);
+                break;
+            }
+            obj = tail.prev;
+
+            // There are no objects available to be checked.
+            if (obj == void)
+                break;
+        }
+
+        // Run the dtor to finalize the object.
+        // The object may or may not be freed after this.
+        // If the dtor recursively tries to destroy itself this will cause infinite recursion,
+        // but I don't think it matters because theres no scenario where a dtor should destroy itself.
+        O->getFunction("dtor")();
     }
 }
