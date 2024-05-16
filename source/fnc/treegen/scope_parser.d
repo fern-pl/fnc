@@ -605,7 +605,7 @@ void tree(ScopeData scopeData, size_t tabCount)
         "\t".write;
         obj.name.write;
         ":".writeln;
-        
+        tabCount++;
         foreach (var; obj.declaredVariables)
         {
             printTabs();
@@ -613,12 +613,15 @@ void tree(ScopeData scopeData, size_t tabCount)
             "\t".write;
             var.name.writeln;
         }
+        tabCount--;
         printTabs();
         writeln("Functions:");
+        tabCount++;
         foreach (func; obj.declaredFunctions)
         {
             func.ftree(tabCount+1);
         }
+        tabCount--;
         
 
     }

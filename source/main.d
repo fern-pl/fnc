@@ -60,14 +60,19 @@ void main()
     import fnc.treegen.expression_parser;
     import fnc.treegen.ast_types;
     import std.container.array;
+
+    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
+        private tagged Element{
+            kind;
+            minin(foogen()) idk;
+            int anElmentWithNumber;
+        }
+        int main(){
+            const Element e = Element.idk;
+        }
+    ");
     
-    auto phaseOneNodes = phaseOne("[A:1,B:2, C : 3]".tokenizeText);
-    Array!AstNode x;
-    x~=phaseOneNodes;
-    leftToRightTypeGen(x);
-    x[0].tree;
-    // DeclarationAndAssignment.matchesToken("int+1 y=4;".tokenizeText).ptr.writeln;
-    // parseLine(FUNCTION_SCOPE_PARSE, "y=4;".tokenizeText, index).writeln;
+    newScope.tree;
 
 
 
