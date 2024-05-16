@@ -613,23 +613,7 @@ private Token OPR(dchar o)
     return Token(o != '=' ? TokenType.Operator : TokenType.Equals, [o]);
 }
 
-// https://en.cppreference.com/w/c/language/operator_precedence
-// Order of operations in the language. This is broken up
-// into layers, the layers are what is done first. And inside
-// of each layer they are read left to right, or right to left.
-
-const OperatorPrecedenceLayer[] operatorPrecedence = [
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-            OperationPrecedenceEntry(OperationVariety.Period, [
-                    Token(TokenType.Filler), Token(TokenType.Period, ['.']),
-                    Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.Arrow, [
-                    Token(TokenType.Filler), Token(TokenType.Operator, ['-']),
-                    Token(TokenType.Operator, ['>']),
-                    Token(TokenType.Filler)
-                ]),
-        ]),
+const auto SEPERATION_LAYER = 
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
         OperationPrecedenceEntry(OperationVariety.Period, [
                 Token(TokenType.Filler), Token(TokenType.Period, ['.']),
@@ -640,7 +624,20 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                 Token(TokenType.Operator, ['>']),
                 Token(TokenType.Filler)
             ]),
-    ]),
+]);
+const auto SEPERATION_LAYER_WITH_VOIDABLE = OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
+    OperationPrecedenceEntry(OperationVariety.Voidable, [
+            Token(TokenType.Filler), Token(TokenType.Operator, ['?'])
+        ])
+] ~ cast(OperationPrecedenceEntry[])SEPERATION_LAYER.layer);
+
+// https://en.cppreference.com/w/c/language/operator_precedence
+// Order of operations in the language. This is broken up
+// into layers, the layers are what is done first. And inside
+// of each layer they are read left to right, or right to left.
+
+const OperatorPrecedenceLayer[] operatorPrecedence = [
+    SEPERATION_LAYER,
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.PreIncrement, [
                     OPR('+'), OPR('+'), Token(TokenType.Filler)
@@ -822,7 +819,7 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
 ];
 import std.container.array;
 
-private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, size_t startIndex)
+bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, size_t startIndex)
 {
     if (entry.tokens.length > nodes.length)
         return false;
@@ -832,7 +829,7 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
     for (size_t index = 0; index < entry.tokens.length; index++)
     {
         Nullable!AstNode nodeNullable = nodes.nextNonWhiteNode(nodeIndex);
-        if (nodeNullable.ptr == null)
+        if (nodeNullable == null)
             return false;
         AstNode node = nodeNullable;
         switch (entry.tokens[index].tokenVariety)
@@ -845,13 +842,15 @@ private bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNod
                     return false;
                 operands ~= node;
                 break;
+            case TokenType.QuestionMark:
             case TokenType.Equals:
             case TokenType.Operator:
                 if (node.action != AstAction.TokenHolder)
                     return false;
                 Token token = node.tokenBeingHeld;
-                if (token.tokenVariety != TokenType.Equals && token.tokenVariety != TokenType
-                    .Operator)
+                if (token.tokenVariety != TokenType.Equals 
+                    && token.tokenVariety != TokenType.Operator 
+                    && token.tokenVariety != TokenType.QuestionMark)
                     return false;
                 if (token.value != entry.tokens[index].value)
                     return false;

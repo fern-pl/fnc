@@ -58,14 +58,15 @@ void main()
     size_t index = 0;
     // typeFromTokens("".tokenizeText, index);
 
-
-    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        foo->var()?->a main(){
-
-        }
-    ");
+    import fnc.treegen.expression_parser;
+    import fnc.treegen.ast_types;
+    import std.container.array;
     
-    newScope.tree;
+    auto phaseOneNodes = phaseOne("a?".tokenizeText);
+    Array!AstNode x;
+    x~=phaseOneNodes;
+    leftToRightTypeGen(x);
+    x.writeln;
     // DeclarationAndAssignment.matchesToken("int+1 y=4;".tokenizeText).ptr.writeln;
     // parseLine(FUNCTION_SCOPE_PARSE, "y=4;".tokenizeText, index).writeln;
 

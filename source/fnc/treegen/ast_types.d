@@ -3,6 +3,12 @@ module fnc.treegen.ast_types;
 import fnc.tokenizer.tokens : Token;
 import tern.typecons.common : Nullable, nullable;
 
+struct NameValuePair
+{
+    Nullable!AstNode name;
+    AstNode value;
+}
+
 struct NamedUnit
 {
     dchar[][] names;
@@ -131,6 +137,7 @@ enum OperationVariety
     Period, // foo.bar
     Arrow, // foo->bar
     Range, // x..y OR 0..99
+    Voidable, // int?
 }
 
 import fnc.treegen.scope_parser : ScopeData;
@@ -183,17 +190,11 @@ struct IndexIntoNodeData
     AstNode indexInto;
     AstNode index;
 }
-/+++ These are the act of calling a function ++++/
-struct FunctionCallArgument
-{
-    Nullable!(dchar[]) specifiedName = Nullable!(dchar[])(null);
-    AstNode source;
-}
 
 struct CallNodeData
 {
     AstNode func;
-    FunctionCallArgument[] args;
+    NameValuePair[] args;
 }
 /+++++++/
 
@@ -317,15 +318,15 @@ class AstNode
                 writeln(")");
                 foreach (arg; callNodeData.args)
                 {
-                    if (arg.specifiedName != null)
+                    if (arg.name != null)
                     {
                         printTabs();
-                        arg.specifiedName.value.write();
+                        arg.name.value.write();
                         ": ".writeln;
-                        arg.source.tree(tabCount + 2);
+                        arg.value.tree(tabCount + 2);
                     }
                     else
-                        arg.source.tree(tabCount + 1);
+                        arg.value.tree(tabCount + 1);
 
                 }
 
