@@ -99,6 +99,10 @@ final:
     Symbol[] parents;
     Symbol[] children;
     Symbol[string] attributes;
+    // This is not front-facing!
+    Marker marker;
+
+    alias marker this;
 
     string identifier()
     {
@@ -386,12 +390,9 @@ final:
     Type type;
     ubyte[] data;
     size_t size;
+    // The GC doesn't actually allocate on powers of 2, this means alignment can be anything.
     size_t alignment;
     size_t offset;
-    // This is not front-facing!
-    Marker marker;
-
-    alias marker this;
 }
 
 public class Alias : Symbol

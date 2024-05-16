@@ -1,0 +1,599 @@
+module rt.x86;
+
+private const tagged Mode : ^ubyte
+{
+    Memory;
+    MemoryOffset8;
+    MemoryOffsetExt;
+    Register;
+}
+
+private struct ModRM
+{
+    union
+    {
+        struct
+        {
+            ubyte src : 3;
+            ubyte dst : 3;
+            ubyte mod : 2;
+        }
+        ubyte b;
+    }
+}
+
+private:
+// TODO: Instantiate with any of Reg.
+ubyte[] generateModRM(ubyte OP)(Address src, Reg dst)
+{
+    if (src.size == 0)
+        return = generateModRM!OP(dst->type(src.register), dst, Mode.Memory)~0x25~(src.offset |> ubyte[0..uint.sizeof]);
+    else
+    {
+        if (src.offset == 0)
+            return = generateModRM!OP(dst->type(src.register), dst, Mode.Memory);
+        else
+        {
+            if (src.offset >= ubyte.max)
+                return = generateModRM!OP(dst->type(src.register), dst, Mode.MemoryOffset8)~(src.offset |> ubyte);
+            else
+                return = generateModRM!OP(dst->type(src.register), dst, Mode.MemoryOffset8)~(src.offset |> ubyte[0..uint.sizeof]);
+        }
+    }
+}
+
+ubyte[] generateModRM(ubyte OP)(Reg src, Reg dst, Mode mod = Mode.Register)
+{
+    ModRM mrm;
+    mrm.src = src.index & 8;
+    mrm.dst = (dst.index & 8) | OP;
+    mrm.mod = mod;
+    return [mrm];
+}
+
+ubyte[] generateModRM(ubyte OP)(Address src, Address dst)
+{
+    // TODO: Instantiation member of symbols.
+    return = generateModRM!OP(Reg!(dst->type->instantiation)(dst.register), Reg!(src->type->instantiation)(src.register));
+}
+
+ubyte[] generateModRM(ubyte OP)(Reg src, Address dst)
+{
+    return = generateModRM!OP(dst, src);
+}
+
+alias M = 0;
+alias NRM = 1;
+alias NP = 2;
+alias VEX = 3;
+alias VEXI = 4;
+alias EVEX = 5;
+alias MVEX = 6;
+alias SSE = 7;
+
+alias XOP = 0;
+alias DEFAULT = 1;
+alias F38 = 2;
+alias F3A = 3;
+alias MSR = 7;
+
+public struct Reg(short SIZE)
+{
+    ubyte index;
+    bool extended;
+}
+
+public struct Address(short SIZE)
+{
+    short size;
+    ubyte register;
+    uint offset;
+    ubyte segment = ds;
+
+    this(Reg register, ubyte segment, uint offset = 0)
+    {
+        this.size = register->type-instantiation[0];
+        this.register = register.index;
+        this.offset = offset;
+        this.segment = segment;
+    }
+
+    this(Reg register, uint offset = 0)
+    {
+        this.size = register->type-instantiation[0];
+        this.register = register.index;
+        this.offset = offset;
+    }
+
+    this(uint offset, ubyte segment = ds)
+    {
+        // TODO: Why? Is this even correct??
+        this.register = 4;
+        this.offset = offset;
+        this.segment = segment;
+    }
+}
+
+public const tagged CRID
+{
+    VME;
+    PVI;
+    TSD;
+    DE;
+    PSE;
+    PAE;
+    MCE;
+    PGE;
+    PCE;
+    OSFXSR;
+    OSXMMEXCPT;
+    UMIP;
+    // RESERVED
+    VMXE = 13;
+    SMXE;
+    // RESERVED
+    FSGSBASE = 16;
+    PCIDE;
+    OSXSAVE;
+    // RESERVED
+    SMEP = 20;
+    SMAP;
+    PKE;
+    CET;
+    PKS;
+    UINTR;
+}
+
+public const tagged CPUID7_EBX
+{
+    FSGSBASE;
+    TSC_ADJUST;
+    SGX;
+    // LZCNT and TZCNT
+    BMI1;
+    // XACQUIRE, XRELEASE, XTEST
+    HLE;
+    AVX2;
+    FPDP;
+    SMEP;
+    BMI2;
+    ERMS;
+    // INVPCID
+    INVPCID;
+    // XBEGIN, XABORT, XEND and XTEST
+    RTM;
+    PQM;
+    FPCSDS;
+    // BND*/BOUND
+    MPX;
+    PQE;
+    AVX512F;
+    AVX512DQ;
+    // RDSEED
+    RDSEED;
+    // ADCX and ADOX
+    ADX;
+    // CLAC and STAC
+    SMAP;
+    AVX512IFMA;
+    PCOMMIT;
+    // CLFLUSHOPT
+    CLFLUSHOPT;
+    // CLWB
+    CLWB;
+    // PTWRITE 
+    PT; 
+    AVX512PF;
+    AVX512ER;
+    AVX512CD;
+    SHA;
+    AVX512BW;
+    AVX512VL;
+}
+
+public const tagged CPUID7_ECX
+{
+    PREFETCHWT1;
+    AVX512VBMI;
+    UMIP;
+    PKU;
+    OSPKE;
+    AVX512VBMI2 = 6;
+    // INCSSP, RDSSP, SAVESSP, RSTORSSP, SETSSBSY, CLRSSBSY, WRSS, WRUSS, ENDBR64, and ENDBR64
+    CET;
+    GFNI;
+    VAES;
+    VPCL;
+    AVX512VNNI;
+    AVX512BITALG;
+    TME;
+    // VPOPCNT{D,Q}
+    AVX512VP;
+    VA57 = 16;
+    RDPID = 22;
+    SGX_LC = 30
+}
+
+public const tagged CPUID7_EDX
+{
+    AVX512QVNNIW = 2;
+    AVX512QFMA = 3;
+    PCONFIG = 18;
+    IBRS_IBPB = 26;
+    STIBP = 27
+}
+
+public const tagged CPUID1_ECX
+{
+    // FISTTP
+    SSE3;
+    // PCLMULQDQ
+    PCLMUL;
+    DTES64;
+    // MONITOR/MWAIT
+    MON;
+    DSCPL;
+    // VM*
+    VMX;
+    SMX;
+    EST;
+    TM2;
+    SSSE3;
+    CID;
+    SDBG;
+    FMA;
+    // CMPXCHG16B
+    CX16;
+    XTPR;
+    PDCM;
+    PCID;
+    DCA;
+    SSE4_1;
+    SSE4_2;
+    X2APIC;
+    // MOVBE
+    MOVBE;
+    // POPCNT
+    POPCNT;
+    TSCD;
+    // AES*
+    AES;
+    // XGETBV, XSETBV, XSAVEOPT, XSAVE, and XRSTOR
+    XSAVE;
+    OSXSAVE;
+    AVX;
+    // VCVTPH2PS and VCVTPS2PH
+    F16C;
+    // RDRAND
+    RDRAND;
+    HV
+}
+
+public const tagged CPUID1_EDX
+{
+    FPU;
+    VME;
+    DE;
+    PSE;
+    // RDTSC
+    TSC;
+    // RDMSR/WRMSR
+    MSR;
+    PAE;
+    // CMPXCHG8B
+    CX8;
+    APIC;
+    // SYSENTER/SYSEXIT
+    SEP;
+    MTRR;
+    PGE;
+    MCA;
+    // CMOVcc
+    CMOV;
+    PAT;
+    PSE36;
+    PSN;
+    // CLFLUSH
+    CLFL;
+    DS;
+    ACPI;
+    MMX;
+    // FXSAVE/FXRSTOR
+    FXSR;
+    NP;
+    SSE2;
+    SS;
+    HTT;
+    TM;
+    IA64;
+    PBE;
+}
+
+public:
+alias CR = Reg!(-1);
+alias DR = Reg!(-2);
+alias ST = Reg!(-3);
+alias R8 = Reg!8;
+alias R16 = Reg!16;
+alias R32 = Reg!32;
+alias R64 = Reg!64;
+alias MMX = Reg!64;
+alias XMM = Reg!128;
+alias YMM = Reg!256;
+alias ZMM = Reg!512;
+
+alias cr0 = CR(0);
+alias cr2 = CR(2);
+alias cr3 = CR(3);
+alias cr4 = CR(4);
+
+alias dr0 = DR(0);
+alias dr1 = DR(1);
+alias dr2 = DR(2);
+alias dr3 = DR(3);
+alias dr6 = DR(6);
+alias dr7 = DR(7);
+
+alias st0 = ST(0);
+alias st1 = ST(1);
+alias st2 = ST(2);
+alias st3 = ST(3);
+alias st4 = ST(4);
+alias st5 = ST(5);
+alias st6 = ST(6);
+alias st7 = ST(7);
+
+alias al = R8(0);
+alias cl = R8(1);
+alias dl = R8(2);
+alias bl = R8(3);
+alias ah = R8(4);
+alias ch = R8(5);
+alias dh = R8(6);
+alias bh = R8(7);
+alias spl = R8(4, true);
+alias bpl = R8(5, true);
+alias sil = R8(6, true);
+alias dil = R8(7, true);
+alias r8b = R8(8);
+alias r9b = R8(9);
+alias r10b = R8(10);
+alias r11b = R8(11);
+alias r12b = R8(12);
+alias r13b = R8(13);
+alias r14b = R8(14);
+alias r15b = R8(15);
+
+alias ax = R16(0);
+alias cx = R16(1);
+alias dx = R16(2);
+alias bx = R16(3);
+alias sp = R16(4);
+alias bp = R16(5);
+alias si = R16(6);
+alias di = R16(7);
+alias r8w = R16(8);
+alias r9w = R16(9);
+alias r10w = R16(10);
+alias r11w = R16(11);
+alias r12w = R16(12);
+alias r13w = R16(13);
+alias r14w = R16(14);
+alias r15w = R16(15);
+
+alias eax = R32(0);
+alias ecx = R32(1);
+alias edx = R32(2);
+alias ebx = R32(3);
+alias esp = R32(4);
+alias ebp = R32(5);
+alias esi = R32(6);
+alias edi = R32(7);
+alias r8d = R32(8);
+alias r9d = R32(9);
+alias r10d = R32(10);
+alias r11d = R32(11);
+alias r12d = R32(12);
+alias r13d = R32(13);
+alias r14d = R32(14);
+alias r15d = R32(15);
+
+alias rax = R64(0);
+alias rcx = R64(1);
+alias rdx = R64(2);
+alias rbx = R64(3);
+alias rsp = R64(4);
+alias rbp = R64(5);
+alias rsi = R64(6);
+alias rdi = R64(7);
+alias r8 = R64(8);
+alias r9 = R64(9);
+alias r10 = R64(10);
+alias r11 = R64(11);
+alias r12 = R64(12);
+alias r13 = R64(13);
+alias r14 = R64(14);
+alias r15 = R64(15);
+
+alias mm0 = rax;
+alias mm1 = rcx;
+alias mm2 = rdx;
+alias mm3 = rbx;
+alias mm4 = rsp;
+alias mm5 = rbp;
+alias mm6 = rsi;
+alias mm7 = rdi;
+
+alias xmm0 = XMM(0);
+alias xmm1 = XMM(1);
+alias xmm2 = XMM(2);
+alias xmm3 = XMM(3);
+alias xmm4 = XMM(4);
+alias xmm5 = XMM(5);
+alias xmm6 = XMM(6);
+alias xmm7 = XMM(7);
+alias xmm8 = XMM(8);
+alias xmm9 = XMM(9);
+alias xmm10 = XMM(10);
+alias xmm11 = XMM(11);
+alias xmm12 = XMM(12);
+alias xmm13 = XMM(13);
+alias xmm14 = XMM(14);
+alias xmm15 = XMM(15);
+
+alias ymm0 = YMM(0);
+alias ymm1 = YMM(1);
+alias ymm2 = YMM(2);
+alias ymm3 = YMM(3);
+alias ymm4 = YMM(4);
+alias ymm5 = YMM(5);
+alias ymm6 = YMM(6);
+alias ymm7 = YMM(7);
+alias ymm8 = YMM(8);
+alias ymm9 = YMM(9);
+alias ymm10 = YMM(10);
+alias ymm11 = YMM(11);
+alias ymm12 = YMM(12);
+alias ymm13 = YMM(13);
+alias ymm14 = YMM(14);
+alias ymm15 = YMM(15);
+
+alias zmm0 = ZMM(0);
+alias zmm1 = ZMM(1);
+alias zmm2 = ZMM(2);
+alias zmm3 = ZMM(3);
+alias zmm4 = ZMM(4);
+alias zmm5 = ZMM(5);
+alias zmm6 = ZMM(6);
+alias zmm7 = ZMM(7);
+alias zmm8 = ZMM(8);
+alias zmm9 = ZMM(9);
+alias zmm10 = ZMM(10);
+alias zmm11 = ZMM(11);
+alias zmm12 = ZMM(12);
+alias zmm13 = ZMM(13);
+alias zmm14 = ZMM(14);
+alias zmm15 = ZMM(15);
+
+alias ubyte es = 0x26;
+alias ubyte cs = 0x2e;
+alias ubyte ss = 0x36;
+alias ubyte ds = 0x3e;
+alias ubyte fs = 0x64;
+alias ubyte gs = 0x65;
+
+public struct Block(bool X64)
+{
+internal:
+    nint[string] labels;
+    [nint, string, string, bool][] branches;
+    ubyte[] buffer;
+
+public:
+    // comically long function signature
+    size_t emit(ubyte OP, ubyte SELECTOR = M, ubyte SIZE = 128, ubyte MAP = DEFAULT, ubyte PREFIX = 0, ARGS...)(ARGS args)
+    {
+        ubyte[] buffer;
+        bool prefixed;
+        nint ct = 0;
+
+        if (SELECTOR == M || SELECTOR == NRM || SELECTOR == NP || SELECTOR == SSE)
+        void generatePrefix(SRC, DST)(SRC src, DST dst)
+        {
+            prefixed = true;
+            bool hasRex;
+            bool w;
+            bool r;
+            bool x;
+            bool b;
+
+            if (SRC is Reg)
+            {
+                hasRex |= SRC is R64 || (SRC is R8 && src.extended) || src.index >= 8;
+                w = SRC is R64;
+                b = src.index >= 8;
+
+                if (SRC is R16)
+                    buffer = 0x66~buffer;
+            }
+            else if (SRC is Address)
+            {
+                hasRex |= src.register >= 8;
+                w = SRC is Address!64;
+                b = src.register >= 8;
+
+                if (src.segment != ds)
+                    buffer = src.segment~buffer;
+
+                if ((X64 && src.size != 64) || src.size != 32)
+                    buffer = 0x67~buffer;
+            }
+                
+            if (DST is Reg)
+            {
+                hasRex |= DST is R64 || (DST is R8 && dst.extended) || dst.index >= 8;
+                w = DST is R64;
+                b = dst.index >= 8;
+
+                if (DST is R16)
+                    buffer = 0x66~buffer;
+            }
+            else if (DST is Address)
+            {
+                hasRex |= dst.register >= 8;
+                w = DST is Address!64;
+                x = dst.register >= 8;
+
+                if (dst.segment != ds)
+                    buffer = dst.segment~buffer;
+
+                if ((X64 && dst.size != 64) || dst.size != 32)
+                    buffer = 0x67~buffer;
+            }
+
+            if (SELECTOR != NP && SELECTOR != SSE && hasRex)
+            {
+                ubyte rex = 0b01000000;
+                if (w) rex |= (1 << 3);
+                if (r) rex |= (1 << 2);
+                if (x) rex |= (1 << 1);
+                if (b) rex |= (1 << 0);
+                
+                size_t pos = 0;
+                foreach (i; 0..5)
+                {
+                    if (buffer[pos] == 0xf2)
+                        pos++;
+                    else if (buffer[pos] == 0xf3)
+                        pos++;
+                    else if (buffer[pos] == 0xf0)
+                        pos++;
+                    else if (buffer[pos] == 0x66)
+                        pos++;
+                    else if (buffer[pos] == 0x67)
+                        pos++;
+                }
+                buffer = buffer[0..pos]~rex~buffer[pos..$];
+            }
+        }
+
+        if (SELECTOR == VEX || SELECTOR == VEXI)
+        void generatePrefix(SRC, DST, STOR = void)(SRC src, DST dst, STOR stor = void)
+        {
+            prefixed = true;
+            bool r;
+            bool x;
+            bool b;
+            alias map_select = MAP;
+            bool we = SELECTOR == VEX;
+            ubyte vvvv = 0b1111;
+            alias l = SIZE != 128;
+            alias pp = (PREFIX == 0x66) ? 1 : ((PREFIX == 0xf3) ? 2 : ((PREFIX == 0xf2) ? 3 : 0));
+        }
+
+        foreach (i, arg; args)
+        {
+
+        }
+    }
+}

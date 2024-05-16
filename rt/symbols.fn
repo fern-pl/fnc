@@ -1,6 +1,6 @@
 module rt.symbols;
 
-public const tagged __SymAttr : ^long
+public const tagged SymAttr : ^long
 {
     // Top-Level Kind
     TYPE = 1 << 0;
@@ -78,15 +78,14 @@ public const tagged __SymAttr : ^long
     FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD;
 }
 
-public class __Symbol
+public class Symbol
 {
-public:
-    __Glob glob;
-    __SymAttr symattr;
+    Glob glob;
+    SymAttr symattr;
     string name;
-    __Symbol[] parents;
-    __Symbol[] children;
-    __Symbol[string] attributes;
+    Symbol[] parents;
+    Symbol[] children;
+    Symbol[string] attributes;
 
     string identifier()
     {
@@ -97,33 +96,30 @@ public:
     }
 }
 
-public class __Type : __Symbol
+public class Type : Symbol
 {
-public:
-    __Type[string] inherits;
-    __Variable[] fields;
-    __Function[] functions;
+    Type[string] inherits;
+    Variable[] fields;
+    Function[] functions;
     ubyte[] data;
     size_t size;
     size_t align;
 }
 
-public class __Function : __Symbol
+public class Function : Symbol
 {
-public:
     // Will begin with all alias parameters and then subsequently ret-args.
-    __Symbol[] parameters;
+    Symbol[] parameters;
     // Will begin with ret-args and then subsequently all locals.
-    __Symbol[] locals;
+    Symbol[] locals;
     //Instruction[] instructions;
     size_t align;
 }
 
 
-public class __Variable : __Symbol
+public class Variable : Symbol
 {
-public:
-    __Type type;
+    Type type;
     ubyte[] data;
     size_t size;
     size_t align;
@@ -131,36 +127,34 @@ public:
 }
 
 // The tagged is acting like a class here because of kind:heap.
-public tagged kind:heap __Alias : __Symbol
+public tagged kind:heap Alias : Symbol
 {
-public:
-    __Symbol single;
-    __Symbol[] many;
+    Symbol single;
+    Symbol[] many;
 }
 
-public class __Module : __Symbol
+public class Module : Symbol
 {
-public:
-    __Symbol[] imports;
-    __Type[] types;
-    __Variable[] fields;
-    __Function[] functions;
+    Symbol[] imports;
+    Type[] types;
+    Variable[] fields;
+    Function[] functions;
 }
 
-public class __Glob : __Symbol
+public class Glob : Symbol
 {
-public:
-    __Symbol[string] symbols;
-    __Module[string] modules;
-    __Type[string] types;
-    __Variable[string] variables;
-    __Function[string] functions;
-    __Alias[string] aliases;
-    __Function[] unittests;
-    __Symbol[] context;
+    Symbol[string] symbols;
+    Module[string] modules;
+    Type[string] types;
+    Variable[string] variables;
+    Function[string] functions;
+    Alias[string] aliases;
+    Function[] unittests;
+    Symbol[] context;
 }
 
-public alias __this()
+public:
+alias __this()
 {
     // TODO: Add this to the language.
     return glob->context->prev;

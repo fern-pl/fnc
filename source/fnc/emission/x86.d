@@ -942,11 +942,6 @@ final:
 
         assert(0, "Attempted to convert a local not of kind REGISTER or ALLOCATION to a type!");
     }
-
-    this(T)(T val)
-    {
-        locals ~= Variable(val);
-    }
 }
 
 public struct Instruction
@@ -954,7 +949,7 @@ public struct Instruction
 public:
 final:
     OpCode opcode;
-    Variable[] operands;
+    Symbol[] operands;
     Details details;
     int score;
 
@@ -1010,7 +1005,7 @@ final:
         return true;
     }
 
-    this(OpCode opcode, Variable[] operands...)
+    this(OpCode opcode, Symbol[] operands...)
     {
         Details detail(string fmt) pure
         {
@@ -1168,6 +1163,8 @@ final:
             case SIDT:
             case SMSW:
             case INVLPG:
+            case ALLOC:
+            case HRESET:
                 details = detail("r");
                 break;
             case NOP:
@@ -1175,6 +1172,7 @@ final:
                     details = detail("r");
                 break;
             case BSWAP:
+            case FREE:
                 details = detail("x");
                 break;
             case STR:
@@ -1499,7 +1497,7 @@ final:
 {
 public:
 final:
-    Variable[string] locals;
+    Symbol[string] locals;
     Instruction[] instructions;
 
     void init()

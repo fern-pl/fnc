@@ -1,14 +1,15 @@
 /// General purpose object functionality.
 module rt.object;
 
+public:
 /// Shallow clones an object.
-public T dup(T)(const T val) trusted
+T dup(T)(const T val) trusted
 {
     return = val;
 }
 
 /// Deep clones an object by the given depth, a depth of nint.max is default.
-public T ddup(T)(const T val, nint depth = nint.max) trusted
+T ddup(T)(const T val, nint depth = nint.max) trusted
 {
     if (!T->isByRef || depth < 0)
         return val;
@@ -26,7 +27,7 @@ public T ddup(T)(const T val, nint depth = nint.max) trusted
     }
 }
 
-public B __convert(B, A)(const A val)
+B __convert(B, A)(const A val)
 {
     // void[] to ushort[]
     if ((B->isStaticArray || B->isDynamicArray) && (B->isStaticArray || B->isDynamicArray))
@@ -61,13 +62,13 @@ public B __convert(B, A)(const A val)
     // TODO: this hurts my head
 }
 
-public T->inherits[$-1] __downcast(T)(const T val)
+T->inherits[$-1] __downcast(T)(const T val)
     if (T->inherits.length > 0)
 {
     return __convert!(T->inherits[$-1])(val);
 }
 
-public T[] __iota(T)(T start, T end)
+T[] __iota(T)(T start, T end)
     if (T->isIntegral)
 {
     return = T[end - start];
@@ -76,7 +77,7 @@ public T[] __iota(T)(T start, T end)
         return[iter++] = start++;
 }
 
-public T __slice(T)(const T val, nuint start, nuint stop)
+T __slice(T)(const T val, nuint start, nuint stop)
     if (T->isArray)
 {
     return.length = stop - start;
@@ -84,21 +85,21 @@ public T __slice(T)(const T val, nuint start, nuint stop)
 }
 
 // in void* out void[] from the slice.
-public (T->type)[] __slice(T)(T val, nuint start, nuint stop)
+(T->type)[] __slice(T)(T val, nuint start, nuint stop)
     if (T->isPointer)
 {
     return.length = stop - start;
     return.ptr = val + start;
 }
 
-public T->type pop(T)(ref T val)
+T->type pop(T)(ref T val)
     if (T->isDynamicArray)
 {
     return = val[$-1];
     val = val[0..$-1];
 }
 
-public A push(A, B)(ref A val, B elem)
+A push(A, B)(ref A val, B elem)
     if (T->isDynamicArray)
 {
     return = val ~= elem;

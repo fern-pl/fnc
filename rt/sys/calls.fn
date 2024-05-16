@@ -1,4 +1,4 @@
-module rt.sys;
+module rt.sys.calls;
 
 if (__x86 || __x86_64)
 public const tagged SCID

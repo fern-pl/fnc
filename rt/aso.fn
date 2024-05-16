@@ -89,6 +89,7 @@ public struct AsoArray(K, V)
     }
 }
 
+// This is way overkill for an associative array hash algorithm.
 nuint __hash(T)(const T val)
 {
     ubyte[nuint->size] buffer;
