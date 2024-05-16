@@ -139,7 +139,6 @@ NameValuePair[] genCommaSeperatedContents(AstNode expressionLike)
             pair.value = components[0];
             continue;
         }
-        // components.writeln;
         if (components[1].action != AstAction.TokenHolder)
             throw new SyntaxError("Must include colon for named arguments", firstToken);
         if (components[1].tokenBeingHeld.tokenVariety != TokenType.Colon)
@@ -284,112 +283,6 @@ public void phaseTwo(ref Array!AstNode nodes)
         newNodesArray.linearRemove(newNodesArray[lindex .. $]);
     };
     leftToRightTypeGen(nodes);
-
-    // for (size_t index = 0; index < nodes.length; index++)
-    // {
-    //     AstNode node = nodes[index];
-    //     if (node.action == AstAction.Expression
-    //         && nonWhiteIndexStack.length
-    //         && newNodesArray[nonWhiteIndexStack[$ - 1]].action.isCallable
-    //         )
-    //     {
-
-    //         popNonWhiteNode();
-    //         AstNode functionCall = new AstNode();
-    //         functionCall.action = AstAction.Call;
-
-    //         CallNodeData callNodeData;
-
-    //         scope (exit)
-    //             functionCall.callNodeData = callNodeData;
-
-    //         callNodeData.func = lastNonWhite;
-    //         callNodeData.args = new FunctionCallArgument[0];
-
-    //         Array!AstNode components;
-    //         foreach (AstNode[] argumentNodeBatch; splitNodesAtComma(
-    //                 node.expressionNodeData.components))
-    //         {
-    //             if (!argumentNodeBatch.length)
-    //                 continue;
-    //             components.clear();
-    //             components ~= argumentNodeBatch;
-    //             Token firstToken = components[0].tokenBeingHeld;
-    //             phaseTwo(components);
-    //             scanAndMergeOperators(components);
-    //             components.removeAllWhitespace();
-
-    //             if (components.length != 1 && components.length != 3)
-    //                 throw new SyntaxError("Function argument parsing error (node reduction)", firstToken);
-    //             FunctionCallArgument component;
-
-    //             scope (exit)
-    //                 callNodeData.args ~= component;
-
-    //             if (components.length == 1)
-    //             {
-    //                 component.source = components[0];
-    //                 continue;
-    //             }
-    //             // components.writeln;
-    //             if (components[1].action != AstAction.TokenHolder)
-    //                 throw new SyntaxError("Function argument parsing error (Must include colon for named arguments)", firstToken);
-    //             if (components[1].tokenBeingHeld.tokenVariety != TokenType.Colon)
-    //                 throw new SyntaxError("Function argument parsing error (Must include colon for named arguments)", components[1]
-    //                         .tokenBeingHeld);
-    //             if (components[0].action != AstAction.NamedUnit)
-    //                 throw new SyntaxError("Function argument parsing error (Named argument name can't be determined)", firstToken);
-    //             component.specifiedName = Nullable!(dchar[])(components[0].namedUnit.names[0]);
-    //             component.source = components[2];
-    //         }
-    //         newNodesArray ~= functionCall;
-    //         nonWhiteIndexStack ~= newNodesArray.length - 1;
-
-    //     }
-    //     else if (node.action == AstAction.ArrayGrouping
-    //         && nonWhiteIndexStack.length)
-    //     {
-    //         popNonWhiteNode();
-    //         AstNode indexNode = new AstNode;
-
-    //         indexNode.action = AstAction.IndexInto;
-    //         indexNode.arrayOrIndexingNodeData.indexInto = lastNonWhite;
-
-    //         Array!AstNode components;
-    //         components ~= node.expressionNodeData.components;
-    //         phaseTwo(components);
-    //         scanAndMergeOperators(components);
-    //         components.trimAstNodes();
-
-    //         assert(components.length == 1, "Can't have empty [] while indexing");
-
-    //         indexNode.arrayOrIndexingNodeData.index = components[0];
-
-    //         newNodesArray ~= indexNode;
-    //         nonWhiteIndexStack ~= newNodesArray.length - 1;
-
-    //     }
-    //     else if (node.action.isExpressionLike)
-    //     {
-    //         Array!AstNode components;
-    //         components ~= node.expressionNodeData.components;
-    //         phaseTwo(components);
-    //         scanAndMergeOperators(components);
-    //         assert(components.length == 1, "Expression is invalid");
-    //         node = components[0];
-
-    //         goto ADD_NODE;
-    //     }
-    //     else
-    //     {
-    //     ADD_NODE:
-    //         newNodesArray ~= node;
-    //         if (!node.isWhite)
-    //             nonWhiteIndexStack ~= newNodesArray.length - 1;
-
-    //     }
-    // }
-    // nodes = newNodesArray;
 }
 
 void trimAstNodes(ref Array!AstNode nodes)

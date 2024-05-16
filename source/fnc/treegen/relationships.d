@@ -503,7 +503,6 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 if (!potentialSize)
                     return tokenGrepBox(null);
                 Array!AstNode type = expressionNodeFromTokens(tokens[index .. index + potentialSize]);
-                type.writeln;
                 assert(type.length == 1, "Token type could not be reduced from a single node, but prematureSingleTokenGroupLength() ensured that it could. (Please report this on github)");
 
                 TokenGrepResult tokenGrep;

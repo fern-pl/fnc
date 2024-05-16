@@ -62,13 +62,8 @@ void main()
     import std.container.array;
 
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        private tagged Element{
-            kind;
-            minin(foogen()) idk;
-            int anElmentWithNumber;
-        }
-        int main(){
-            const Element e = Element.idk;
+        foo!int() main(){
+
         }
     ");
     
