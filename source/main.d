@@ -56,17 +56,16 @@ public enum GenerationFlags
 void main()
 {
     size_t index = 0;
-    // typeFromTokens("".tokenizeText, index);
 
     import fnc.treegen.expression_parser;
     import fnc.treegen.ast_types;
     import std.container.array;
     
-    auto phaseOneNodes = phaseOne("a?".tokenizeText);
+    auto phaseOneNodes = phaseOne("[A:1,B:2, C : 3]".tokenizeText);
     Array!AstNode x;
     x~=phaseOneNodes;
     leftToRightTypeGen(x);
-    x.writeln;
+    x[0].tree;
     // DeclarationAndAssignment.matchesToken("int+1 y=4;".tokenizeText).ptr.writeln;
     // parseLine(FUNCTION_SCOPE_PARSE, "y=4;".tokenizeText, index).writeln;
 

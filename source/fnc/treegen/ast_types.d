@@ -29,7 +29,8 @@ enum AstAction
     WhileLoop,
 
     AssignVariable, // Ex: x = 5;
-    ArrayGrouping, // [...]
+    ArrayGrouping, // [...] THIS IS A TEMPORATRY NODE THAT IS STILL BEING PARSED AND SHOULD BE RESOLVED TO SOMETHING ELSE
+    Array, // [1, 2, 3]
     IndexInto, // X[N]
 
     SingleArgumentOperation, // Ex: x++, ++x
@@ -185,10 +186,10 @@ struct ExpressionNodeData
     AstNode[] components;
 }
 
-struct IndexIntoNodeData
+struct ArrayOrIndexingNodeData
 {
     AstNode indexInto;
-    AstNode index;
+    AstNode index; // MIGHT BE NULL!
 }
 
 struct CallNodeData
@@ -224,11 +225,11 @@ class AstNode
         Token tokenBeingHeld; // TokenHolder
 
         AstNode nodeToReturn; // ReturnStatement
-        IndexIntoNodeData indexIntoNodeData; // IndexInto
+        ArrayOrIndexingNodeData arrayOrIndexingNodeData; // IndexInto
 
         GenericNodeData genericNodeData; // GenericOf
-
-        AstNode voidableType;
+        NameValuePair[] arrayNodeData; // Array
+        AstNode voidableType; // Voidable
     }
 
     static AstNode VOID_NAMED_UNIT()
@@ -308,7 +309,7 @@ class AstNode
                 genericNodeData.symbolUsedAsGeneric.tree(tabCount + 1);
                 genericNodeData.genericData.tree(tabCount + 1);
                 break;
-      
+
             case AstAction.Call:
                 writeln("Calling function resolved from:");
                 callNodeData.func.tree(tabCount + 1);
@@ -343,14 +344,18 @@ class AstNode
                 singleArgumentOperationNodeData.value.tree(tabCount + 1);
                 break;
             case AstAction.IndexInto:
-                writeln("Index into:");
+                writeln("Index or Array type:");
                 tabCount++;
                 printTabs();
-                writeln("This:");
-                indexIntoNodeData.indexInto.tree(tabCount + 1);
-                printTabs();
-                writeln("With this:");
-                indexIntoNodeData.index.tree(tabCount + 1);
+                writeln("With:");
+                arrayOrIndexingNodeData.indexInto.tree(tabCount + 1);
+                if (false != (arrayOrIndexingNodeData.index !is(null)))
+                {
+                    printTabs();
+                    writeln("Index value of:");
+
+                    arrayOrIndexingNodeData.index.tree(tabCount + 2);
+                }
                 tabCount--;
                 break;
 
@@ -401,6 +406,26 @@ class AstNode
                 }
                 else
                     elseNodeData.elseResultNode.tree(tabCount + 1);
+                break;
+            case AstAction.Array:
+                write(action);
+                write(" of ");
+                write(arrayNodeData.length);
+                writeln(" items:");
+                tabCount++;
+                foreach (NameValuePair pair; arrayNodeData){
+                    if (pair.name != null){
+                        printTabs;
+                        "Name:".writeln;
+                        pair.name.value.tree(tabCount+1);
+                        printTabs;
+                        "Value:".writeln;
+                        pair.value.tree(tabCount+1);
+                    }else{
+                        pair.value.tree(tabCount);
+                    }
+                }
+                tabCount--;
                 break;
             default:
                 writeln(this.to!string);
@@ -492,12 +517,15 @@ Nullable!AstNode nextNonWhiteNode(AstNode[] nodes, ref size_t index)
     return found;
 }
 
-
-Nullable!AstNode lowerBoundNonWhiteTest(AstNode[] nodes, size_t index){
-    while(1){
+Nullable!AstNode lowerBoundNonWhiteTest(AstNode[] nodes, size_t index)
+{
+    while (1)
+    {
         index--;
-        if (!index) return Nullable!AstNode(null);
-        if (nodes[index].isWhite) continue;
+        if (!index)
+            return Nullable!AstNode(null);
+        if (nodes[index].isWhite)
+            continue;
         return Nullable!AstNode(nodes[index]);
     }
 }

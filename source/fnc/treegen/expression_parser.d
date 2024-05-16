@@ -109,13 +109,14 @@ private AstNode[][] splitNodesAtComma(AstNode[] inputNodes)
 }
 
 import std.conv : to;
+
 NameValuePair[] genCommaSeperatedContents(AstNode expressionLike)
 {
     NameValuePair[] ret;
 
     Array!AstNode components;
     foreach (i, argumentNodeBatch; splitNodesAtComma(
-                    expressionLike.expressionNodeData.components))
+            expressionLike.expressionNodeData.components))
     {
         if (!argumentNodeBatch.length)
             continue;
@@ -127,10 +128,11 @@ NameValuePair[] genCommaSeperatedContents(AstNode expressionLike)
         components.removeAllWhitespace();
 
         if (components.length != 1 && components.length != 3)
-            throw new SyntaxError("Invalid item (argument index:"~i.to!string~")", expressionLike);
-        
+            throw new SyntaxError("Invalid item (argument index:" ~ i.to!string ~ ")", expressionLike);
+
         NameValuePair pair;
-        scope (exit) ret ~= pair;
+        scope (exit)
+            ret ~= pair;
 
         if (components.length == 1)
         {
@@ -196,17 +198,44 @@ private bool testAndJoinCall(ref Array!AstNode nodes, size_t nodeIndex)
     callNodeData.args = genCommaSeperatedContents(arguments.value);
 
     functionCall.callNodeData = callNodeData;
-    
+
     nodes[startingIndex] = functionCall;
 
-    nodes.linearRemove(nodes[startingIndex+1..nodeIndex]);
+    nodes.linearRemove(nodes[startingIndex + 1 .. nodeIndex]);
+    return true;
+}
+
+private bool testAndJoinIndexingInto(ref Array!AstNode nodes, size_t nodeIndex)
+{
+    size_t startingIndex = nodeIndex;
+    Nullable!AstNode thingBeingIndexed = nodes.nextNonWhiteNode(nodeIndex);
+    Nullable!AstNode index = nodes.nextNonWhiteNode(nodeIndex);
+    if (thingBeingIndexed == null || index == null)
+        return false;
+    if (index.value.action != AstAction.ArrayGrouping)
+        return false;
+
+    AstNode indexingInto = new AstNode;
+    indexingInto.action = AstAction.IndexInto;
+
+    NameValuePair[] pairs = genCommaSeperatedContents(index.value);
+
+    if (pairs.length > 1)
+        return false;
+
+    indexingInto.arrayOrIndexingNodeData = ArrayOrIndexingNodeData(
+        thingBeingIndexed.value,
+        pairs.length ? pairs[0].value : null
+    );
+
+    nodes[startingIndex] = indexingInto;
+
+    nodes.linearRemove(nodes[startingIndex + 1 .. nodeIndex]);
     return true;
 }
 
 void leftToRightTypeGen(ref Array!AstNode nodes)
 {
-    "Trying ltr".writeln;
-    nodes.writeln;
     for (size_t index = 0; index < nodes.length; index++)
     {
     TOP:
@@ -215,8 +244,27 @@ void leftToRightTypeGen(ref Array!AstNode nodes)
             if (testAndJoin(sepMethod, nodes, index))
                 goto TOP;
         }
+
         if (testAndJoinGeneric(nodes, index))
             goto TOP;
+        if (testAndJoinCall(nodes, index))
+            goto TOP;
+        if (testAndJoinIndexingInto(nodes, index))
+            goto TOP;
+        if (nodes[index].action == AstAction.Expression)
+        {
+            Array!AstNode components;
+            components ~= nodes[index].expressionNodeData.components;
+            phaseTwo(components);
+            scanAndMergeOperators(components);
+            assert(components.length == 1, "Expression is invalid");
+            nodes[index] = components[0];
+        }
+        else if (nodes[index].action == AstAction.ArrayGrouping)
+        {
+            nodes[index].arrayNodeData = genCommaSeperatedContents(nodes[index]);
+            nodes[index].action = AstAction.Array;
+        }
 
     }
 }
@@ -236,7 +284,7 @@ public void phaseTwo(ref Array!AstNode nodes)
         newNodesArray.linearRemove(newNodesArray[lindex .. $]);
     };
     leftToRightTypeGen(nodes);
-    
+
     // for (size_t index = 0; index < nodes.length; index++)
     // {
     //     AstNode node = nodes[index];
@@ -305,7 +353,7 @@ public void phaseTwo(ref Array!AstNode nodes)
     //         AstNode indexNode = new AstNode;
 
     //         indexNode.action = AstAction.IndexInto;
-    //         indexNode.indexIntoNodeData.indexInto = lastNonWhite;
+    //         indexNode.arrayOrIndexingNodeData.indexInto = lastNonWhite;
 
     //         Array!AstNode components;
     //         components ~= node.expressionNodeData.components;
@@ -315,7 +363,7 @@ public void phaseTwo(ref Array!AstNode nodes)
 
     //         assert(components.length == 1, "Can't have empty [] while indexing");
 
-    //         indexNode.indexIntoNodeData.index = components[0];
+    //         indexNode.arrayOrIndexingNodeData.index = components[0];
 
     //         newNodesArray ~= indexNode;
     //         nonWhiteIndexStack ~= newNodesArray.length - 1;
@@ -426,20 +474,20 @@ size_t prematureSingleTokenGroupLength(Token[] tokens, size_t index)
 
         switch (token.tokenVariety)
         {
-        case TokenType.QuestionMark:
-        case TokenType.Comment:
-        case TokenType.WhiteSpace:
-            break;
-        case TokenType.Operator:
-        case TokenType.Period:
-        case TokenType.ExclamationMark:
-            wasLastFinalToken = false;
-            break;
-        default:
-            if (wasLastFinalToken)
-                return index - originalIndex - 1;
-            wasLastFinalToken = true;
-            break;
+            case TokenType.QuestionMark:
+            case TokenType.Comment:
+            case TokenType.WhiteSpace:
+                break;
+            case TokenType.Operator:
+            case TokenType.Period:
+            case TokenType.ExclamationMark:
+                wasLastFinalToken = false;
+                break;
+            default:
+                if (wasLastFinalToken)
+                    return index - originalIndex - 1;
+                wasLastFinalToken = true;
+                break;
         }
 
     }
