@@ -5,7 +5,6 @@ import fnc.tokenizer.make_tokens;
 import tern.typecons.common : Nullable, nullable;
 import fnc.treegen.scope_parser;
 import fnc.treegen.relationships;
-import fnc.treegen.type_parser;
 
 import std.stdio;
 
@@ -57,23 +56,18 @@ public enum GenerationFlags
 void main()
 {
     size_t index = 0;
-    // typeFromTokens("".tokenizeText, index);
 
+    import fnc.treegen.expression_parser;
+    import fnc.treegen.ast_types;
+    import std.container.array;
 
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        private tagged Element{
-            kind;
-            idk;
-            int anElmentWithNumber;
-        }
-        int main(){
-            const Element e = Element.idk;
+        foo!int() main(){
+
         }
     ");
     
     newScope.tree;
-    // DeclarationAndAssignment.matchesToken("y=4".tokenizeText).ptr.writeln;
-    // parseLine(FUNCTION_SCOPE_PARSE, "y=4".tokenizeText, index).writeln;
 
 
 

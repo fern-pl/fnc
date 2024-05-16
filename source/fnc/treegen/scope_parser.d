@@ -307,9 +307,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION]
                 .assertAs(TokenGrepMethod.Glob)
                 .tokens.expressionNodeFromTokens();
-            lineVariety.tokenMatches[DECLARATION_EXPRESSION]
-                .assertAs(TokenGrepMethod.Glob)
-                .tokens.writeln;
+            
             if (nodes.length != 1)
                 throw new SyntaxError(
                     "Expression node tree could not be parsed properly (Not reducable into single node)",
@@ -607,7 +605,7 @@ void tree(ScopeData scopeData, size_t tabCount)
         "\t".write;
         obj.name.write;
         ":".writeln;
-        
+        tabCount++;
         foreach (var; obj.declaredVariables)
         {
             printTabs();
@@ -615,12 +613,15 @@ void tree(ScopeData scopeData, size_t tabCount)
             "\t".write;
             var.name.writeln;
         }
+        tabCount--;
         printTabs();
         writeln("Functions:");
+        tabCount++;
         foreach (func; obj.declaredFunctions)
         {
             func.ftree(tabCount+1);
         }
+        tabCount--;
         
 
     }
