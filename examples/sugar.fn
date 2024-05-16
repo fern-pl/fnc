@@ -1,5 +1,25 @@
 module foo.bar.baz.sugar;
 
+struct A
+{
+    tagged
+    {
+        uint a;
+        long b;
+        struct
+        {
+            ubyte c;
+            ulong d;
+        }
+    }
+    struct
+    {
+        string e;
+        double f;
+    }
+    uint g;
+}
+
 (bool, [int, bool]) bar((int, string) a)
 {
     if (a is string)

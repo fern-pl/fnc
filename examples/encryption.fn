@@ -40,7 +40,7 @@ align (16) long[4] mix16(ulong seed)
         y[k] = j;
     }
 
-    return => [x, y];
+    return = [x, y];
 }
 
 align (32) long[4] mix32(ulong seed)
@@ -48,7 +48,7 @@ align (32) long[4] mix32(ulong seed)
     align (32) long[4] x = [mix16(seed)[0], mix16(seed ^ 0xfee8d23c)[0]];
     align (32) long[4] y = [mix16(seed)[1], mix16(seed ^ 0xfee8d23c)[1]];
 
-    return => [
+    return = [
         x |> long[2],
         y |> long[2],
     ];
@@ -117,18 +117,18 @@ void encrypt(ref ubyte[] data, string key)
     {
         auto g = v.blend8x16(fold[i], s);
         fold[i] = fold[i].blend8x16(v, s);
-        v = g;
+        v[] = g;
         mix(v);
     }
 
     foreach (ref v; pair)
     {
-        v -= R2;
-        v ^= R1;
+        v[] -= R2;
+        v[] ^= R1;
         mix(v);
-        v += S;
-        v += R0;
-        v ^= R3;
+        v[] += S;
+        v[] += R0;
+        v[] ^= R3;
         mix(v);
     }
 }

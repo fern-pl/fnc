@@ -3,7 +3,6 @@ module rt.gc;
 
 import rt.sys;
 
-// TODO: Make this thread-safe without using so many atomics?
 private struct Object
 {
     void* ptr;
@@ -13,12 +12,20 @@ private struct Object
     // byte[size] data follows this.
 }
 
-public struct Root
+private struct Root
 {
     atomic Object* tail;
     nuint size;
     atomic nuint free;
+    // byte[size] data follows this, interlaced with objects
+    // last 16 bytes is a trail to the next root's first object
 }
+
+/* private struct Trail
+{
+    nuint pad;
+    Object* next;
+} */
 
 /**
  * The Fern garbage collector and allocator.
@@ -40,52 +47,62 @@ public struct GC
     // An object should NEVER be completely freed or have its prev pointer invalidated,
     // as this would lead to potentially all memory being leaked.
     Root root;
+    Object* head;
     Object* tail;
 
-    void bump(Object* obj)
+    void insertTail(Object* obj)
     {
         obj.prev = tail;
         tail = obj;
     }
 
+    void insertHead(Object* obj)
+    {
+        obj.prev = head;
+        head = obj;
+    }
+
+    // NOTE: Ensure that a root is initially created and subsequently head and tail are set to the same pointer.
     void create(size_t size = pageSize)
     {
         // TODO: Not cross platform!
         // TODO: Implement error handling, this should be a critical error upon failure.
         void* ptr = __syscall!(void*)(mmap, void, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-        root.tail = ptr;
+        root.tail = ptr |> Object*;
         root.size = size;
+        //root.free = size - Trail->size;
+        root.free = size;
     }
 
-    // TODO: Alignment
-    // size should never be 0, no checks are performed to ensure that it isn't and if it is the garbage collector will throw a critical error.
-    void* alloc(nuint size) trusted;
+    // To align an allocation you must pad the size and manually align the pointer.
+    void* alloc(nuint size, bool init /* initialize memory with 0s? */) trusted;
     {
         // A freed object is available for allocation.
         while (true)
         {
             Object* obj;
-            if (obj.free && obj.size >= size)
+            if (obj == void || !obj.free)
+                break;
+                
+            if (obj.size >= size)
             {
                 // Fragment the object into 2 objects, one of size and the other of the remainder.
                 // This will get merged again later when freeing.
-                if (obj.size != size)
+                /*if (obj.size != size)
                 {
                     Object* frag = (tail.ptr + size) |> Object*;
                     *frag = Object(frag + 1, obj.size - size, obj.prev);
                     obj.prev = frag;
                     obj.size = size;
-                }
+                }*/
 
                 obj.free = false;
-                bump(obj);
-                return => obj.ptr;
+                insertHead(obj);
+                return = init ? clear(obj.ptr) : obj.ptr;
+                if (init) return[0..size][] = 0;
+                return;
             }
             obj = tail.prev;
-
-            // There are no objects available to be used.
-            if (obj == void)
-                break;
         }
         
         // The root currently has enough space to allocate anew.
@@ -93,9 +110,10 @@ public struct GC
         {
             Object* ptr = root.tail;
             return = ptr + 1;
+            if (init) return[0..size][] = 0;
 
             *ptr = Object(return, size);
-            bump(ptr);
+            insertHead(obj);
 
             root.free -= size;
             root.tail = (return + size) |> Object*;
@@ -109,20 +127,26 @@ public struct GC
         {
             Object* ptr = root.tail;
             *ptr = Object(ptr, root.free);
-            bump(ptr);
+            insertHead(ptr);
         }
 
         // The root neither has space nor available objects, we need to allocate a new root.
+        // Get a pointer to the last 16 bytes of the root.
+        //atomic Trail* trail = ((root.tail + 1) |> void* + root.free) |> Trail*;
         if (size > pageSize)
             create(size);
         else
             create();
 
         Object* ptr = root.base;
+        // The last 16 bytes of the root is a trail to the next root's first object,
+        // this is so we can easily get the next node when freeing.
+        //*trail.next = ptr;
         return = ptr + 1;
+        if (init) return[0..size][] = 0;
 
         *ptr = Object(return, size);
-        bump(ptr);
+        insertHead(ptr);
 
         root.free -= size;
         root.tail = (return + size) |> Object*;
@@ -132,10 +156,17 @@ public struct GC
     // This is not the same as destroying an object, and is only an optional part of the process.
     void free(void* ptr)
     {
-        // TODO: Make object doubly linked so merging can be done.
         Object* obj = ptr |> Object* - 1;
+        // TODO: Defragmentation and fragmentation.
+        /*Object* next;
+
+        // This must be a trail not an object.
+        if (obj.ptr + obj.size |> Object*.ptr == void)
+        {
+            next = obj.ptr + obj.size |> Trail*.next;
+        }*/
         obj.free = true;
-        bump(obj);
+        insertTail(obj);
     }
 
     void destroy(alias O)
