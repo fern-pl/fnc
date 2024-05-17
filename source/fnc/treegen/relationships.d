@@ -573,29 +573,33 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                 size_t tempIndex = index;
                 tokenGrepBox optional = packet.packets.matchesToken(tokens, tempIndex);
-                tokenGrepBox restOfLine;
+                
 
                 if (optional == null)
                     goto WITHOUT_OPTIONAL;
+                // NOT PART OF THE IF, this is a workaround untill CETIO FIXES HIS BUG
+                {
+                    tokenGrepBox restOfLine = restToTest.matchesToken(tokens, tempIndex);
+                    
+                    if (restOfLine == null)
+                        goto WITHOUT_OPTIONAL;
 
-                restOfLine = restToTest.matchesToken(tokens, tempIndex);
-                restOfLine.ptr.writeln;
-                if (restOfLine == null)
-                    goto WITHOUT_OPTIONAL;
+                    optinalResult.optional = optional;
+                    index = tempIndex;
 
-                optinalResult.optional = optional;
-                index = tempIndex;
-
-                return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
+                    return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
+                }
 
                 WITHOUT_OPTIONAL:
-                restOfLine = restToTest.matchesToken(tokens, index);
-                if (restOfLine == null)
-                    return tokenGrepBox(null);
+                {
+                    tokenGrepBox restOfLine = restToTest.matchesToken(tokens, index);
+                    if (restOfLine == null)
+                        return tokenGrepBox(null);
 
-                optinalResult.optional.ptr = null; // WTF @Cetio
+                    optinalResult.optional.ptr = null; // WTF @Cetio
 
-                return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
+                    return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
+                }
             case TokenGrepMethod.Glob:
                 size_t temp_index;
                 auto grepMatchGroup = testWith[testIndex + 1 .. $];
