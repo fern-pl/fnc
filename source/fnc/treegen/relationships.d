@@ -52,7 +52,8 @@ struct TokenGrepResult
     pragma(always_inline)
     TokenGrepResult assertAs(TokenGrepMethod test)
     {
-        debug assert(this.method == test);
+        import std.conv;
+        debug assert(this.method == test, this.method.to!string ~ " != " ~ test.to!string);
         return this;
     }
 }
@@ -189,6 +190,17 @@ const TokenGrepPacket[] FunctionArgDeclarationAndDefault = [
 
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
 
+    TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
+            Token(TokenType.Equals, [])
+        ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+];
+
+const TokenGrepPacket[] GenericArgDeclarationTypeless = [
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+];
+const TokenGrepPacket[] GenericArgDeclarationTypelessWithDefault = [
+    TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokenType, [
             Token(TokenType.Equals, [])
         ]),
@@ -373,7 +385,10 @@ enum LineVariety
     StructDeclaration,
     ClassDeclaration,
 
-    TaggedUntypedItem
+    TaggedUntypedItem,
+
+    GenericArgDeclarationTypelessWithDefault,
+    GenericArgDeclarationTypeless
 }
 
 struct VarietyTestPair
@@ -417,6 +432,11 @@ const VarietyTestPair[] FUNCTION_ARGUMENT_PARSE = [
     VarietyTestPair(LineVariety.DeclarationLine, FunctionArgDeclaration),
 ];
 
+const VarietyTestPair[] GENERIC_ARGUMENT_PARSE = [
+    VarietyTestPair(LineVariety.GenericArgDeclarationTypelessWithDefault, GenericArgDeclarationTypelessWithDefault),
+    VarietyTestPair(LineVariety.GenericArgDeclarationTypeless, GenericArgDeclarationTypeless),
+];
+
 // Used in structs / classes
 const VarietyTestPair[] OBJECT_DEFINITION_PARSE = [
     VarietyTestPair(LineVariety.DeclarationLine, DeclarationLine),
@@ -431,6 +451,7 @@ const VarietyTestPair[] TAGGED_DEFINITION_PARS = OBJECT_DEFINITION_PARSE ~ [
                 ])
         ])
 ];
+
 
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 {
@@ -566,7 +587,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     return tokenGrepBox(null);
 
                 optinalResult.optional.ptr = null; // WTF @Cetio
-                
+
                 return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
             case TokenGrepMethod.Glob:
                 size_t temp_index;

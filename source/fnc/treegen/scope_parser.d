@@ -71,7 +71,7 @@ class ScopeData
 
     DeclaredFunction[] declaredFunctions;
     DeclaredVariable[] declaredVariables;
-    
+
     ObjectDeclaration[] declaredObjects;
 
     Array!AstNode instructions;
@@ -152,10 +152,13 @@ NamedUnit[] commaSeperatedNamedUnits(Token[] tokens, ref size_t index)
     return units;
 }
 
-private FunctionArgument[] genFunctionArgs(Token[] tokens)
+private FunctionArgument[] genFunctionArgs(Token[] tokens, bool isGenericArgs = false)
 {
     size_t index;
     FunctionArgument[] args;
+
+    auto argParseStyle = isGenericArgs ? FUNCTION_ARGUMENT_PARSE ~ GENERIC_ARGUMENT_PARSE
+        : FUNCTION_ARGUMENT_PARSE;
 
     while (index < tokens.length)
     {
@@ -165,17 +168,25 @@ private FunctionArgument[] genFunctionArgs(Token[] tokens)
 
         dchar[][] keywords = tokens.skipAndExtractKeywords(index);
 
-        LineVarietyTestResult line = FUNCTION_ARGUMENT_PARSE.getLineVarietyTestResult(tokens, index);
+        LineVarietyTestResult line = argParseStyle.getLineVarietyTestResult(tokens, index);
+        line.lineVariety.writeln;
         if (line.lineVariety == LineVariety.SimpleExpression)
             throw new SyntaxError("Can't parse function arguments", tokens[index]);
         FunctionArgument argument;
         argument.precedingKeywords = keywords;
 
-        argument.type = line.tokenMatches[0].assertAs(TokenGrepMethod.Type).type;
-        argument.name = line.tokenMatches[1].assertAs(TokenGrepMethod.NamedUnit).name;
-        if (LineVariety.DeclarationAndAssignment == line.lineVariety)
+        bool isTypeless = LineVariety.GenericArgDeclarationTypeless == line.lineVariety
+            || LineVariety.GenericArgDeclarationTypelessWithDefault == line.lineVariety;
+        bool hasDefault = LineVariety.DeclarationAndAssignment == line.lineVariety
+            || LineVariety.GenericArgDeclarationTypelessWithDefault == line.lineVariety;
+        if (!isTypeless)
+            argument.type = line.tokenMatches[0].assertAs(TokenGrepMethod.Type).type;
+        else
+            argument.type.ptr = null;
+        argument.name = line.tokenMatches[1 - isTypeless].assertAs(TokenGrepMethod.NamedUnit).name;
+        if (hasDefault)
         {
-            auto nodes = line.tokenMatches[3].assertAs(TokenGrepMethod.Glob)
+            auto nodes = line.tokenMatches[3 - isTypeless].assertAs(TokenGrepMethod.Glob)
                 .tokens.expressionNodeFromTokens();
             if (nodes.length != 1)
                 throw new SyntaxError("Function argument could not parse default value", tokens[index]);
@@ -233,7 +244,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                 index = endingIndex;
             size_t temp;
             auto objScope = parseMultilineScope(
-                lineVariety.lineVariety == LineVariety.TaggedDeclaration ? TAGGED_DEFINITION_PARS :  OBJECT_DEFINITION_PARSE,
+                lineVariety.lineVariety == LineVariety.TaggedDeclaration ? TAGGED_DEFINITION_PARS : OBJECT_DEFINITION_PARSE,
                 lineVariety.tokenMatches[OBJECT_BODY].assertAs(TokenGrepMethod.Glob)
                     .tokens,
                     temp,
@@ -241,12 +252,13 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             );
             ObjectDeclaration object = ObjectDeclaration(
                 nullable!ScopeData(parent),
-                lineVariety.tokenMatches[OBJECT_NAME].assertAs(TokenGrepMethod.NamedUnit).name,
-                [
-                    LineVariety.TaggedDeclaration: ObjectType.Tagged,
-                    LineVariety.StructDeclaration: ObjectType.Struct,
-                    LineVariety.ClassDeclaration: ObjectType.Class,
-                ][lineVariety.lineVariety],
+                lineVariety.tokenMatches[OBJECT_NAME].assertAs(TokenGrepMethod.NamedUnit)
+                    .name,
+                    [
+                        LineVariety.TaggedDeclaration : ObjectType.Tagged,
+                        LineVariety.StructDeclaration : ObjectType.Struct,
+                        LineVariety.ClassDeclaration : ObjectType.Class,
+                    ][lineVariety.lineVariety],
                 objScope.declaredFunctions,
                 objScope.declaredVariables
             );
@@ -308,7 +320,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             auto nodes = lineVariety.tokenMatches[DECLARATION_EXPRESSION]
                 .assertAs(TokenGrepMethod.Glob)
                 .tokens.expressionNodeFromTokens();
-            
+
             if (nodes.length != 1)
                 throw new SyntaxError(
                     "Expression node tree could not be parsed properly (Not reducable into single node)",
@@ -333,16 +345,19 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             scope (exit)
                 index = endingIndex;
             size_t temp;
-            
-            Nullable!(TokenGrepResult[]) genericArgs = lineVariety.tokenMatches[FUNCTION_GENERIC_ARGS].assertAs(TokenGrepMethod.Optional).optional;
+
+            Nullable!(TokenGrepResult[]) genericArgs = lineVariety.tokenMatches[FUNCTION_GENERIC_ARGS].assertAs(
+                TokenGrepMethod.Optional).optional;
             FunctionArgument[] genericArgsList;
-            
+
             if (genericArgs != null)
-                genericArgsList = genFunctionArgs(genericArgs.value[0].assertAs(TokenGrepMethod.Glob).tokens);
-            
+                genericArgsList = genFunctionArgs(
+                    genericArgs.value[0].assertAs(TokenGrepMethod.Glob).tokens, true);
+
             parent.declaredFunctions ~= DeclaredFunction(
                 keywords,
-                genericArgs == null ? nullable!(FunctionArgument[])(null) : nullable!(FunctionArgument[])(genericArgsList),
+                genericArgs == null ? nullable!(FunctionArgument[])(null) : nullable!(
+                    FunctionArgument[])(genericArgsList),
                 genFunctionArgs(lineVariety.tokenMatches[FUNCTION_ARGS].assertAs(TokenGrepMethod.Glob)
                     .tokens),
                 [],
@@ -520,38 +535,57 @@ ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, string 
     );
 }
 
-void ftree(DeclaredFunction func, size_t tabCount){
-        alias printTabs() = {
+void argTree(FunctionArgument arg, size_t tabCount, void delegate() printTabs)
+{
+    printTabs();
+    arg.name.write;
+    if (arg.type != null)
+    {
+        writeln(" as type:");
+        arg.type.value.tree(tabCount + 1);
+    }else
+        "".writeln;
+    if (arg.maybeDefault != null)
+    {
+        printTabs();
+        writeln("With a default value of: ");
+        arg.maybeDefault.value.tree(tabCount + 1);
+    }
+}
+
+void ftree(DeclaredFunction func, size_t tabCount)
+{
+    alias printTabs() = {
         foreach (_; 0 .. tabCount)
             write("|  ");
     };
     printTabs();
-        write(func.precedingKeywords);
-        write(" ");
-        write(func.returnType);
-        write(" ");
-        write(func.name);
-        write("\n");
+    write(func.precedingKeywords);
+    write(" ");
+    write(func.returnType);
+    write(" ");
+    write(func.name);
+    writeln("\n");
+    if (func.genericArgs != null)
+    {
         printTabs();
-        write("With argments(");
-        write(func.args.length);
+        write("With genric argments(");
+        write(func.genericArgs.value.length);
         writeln(")");
         tabCount++;
-        foreach (arg; func.args)
-        {
-            printTabs();
-            arg.name.write;
-            writeln(" as type:");
-            arg.type.value.tree(tabCount + 1);
-            if (arg.maybeDefault != null)
-            {
-                printTabs();
-                writeln("With a default value of: ");
-                arg.maybeDefault.value.tree(tabCount + 1);
-            }
+        foreach (arg; func.genericArgs.value)
+            argTree(arg, tabCount, () { printTabs(); });
+        tabCount--;
+    }
 
-        }
-        func.functionScope.tree(--tabCount);
+    printTabs();
+    write("With argments(");
+    write(func.args.length);
+    writeln(")");
+    tabCount++;
+    foreach (arg; func.args)
+        argTree(arg, tabCount, () { printTabs(); });
+    func.functionScope.tree(--tabCount);
 }
 
 void tree(ScopeData scopeData) => tree(scopeData, 0);
@@ -601,7 +635,6 @@ void tree(ScopeData scopeData, size_t tabCount)
         func.ftree(tabCount);
     }
 
-
     tabCount--;
     printTabs();
     writeln("Objects: ");
@@ -628,10 +661,9 @@ void tree(ScopeData scopeData, size_t tabCount)
         tabCount++;
         foreach (func; obj.declaredFunctions)
         {
-            func.ftree(tabCount+1);
+            func.ftree(tabCount + 1);
         }
         tabCount--;
-        
 
     }
     tabCount--;
