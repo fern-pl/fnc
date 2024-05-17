@@ -6,8 +6,7 @@ import fnc.treegen.scope_parser;
 import fnc.tokenizer.tokens;
 import tern.typecons.common : Nullable, nullable;
 
-unittest
-{
+unittest {
     import fnc.tokenizer.make_tokens;
     import fnc.treegen.scope_parser;
 
@@ -53,8 +52,7 @@ unittest
         ]);
 }
 
-unittest
-{
+unittest {
     import fnc.tokenizer.make_tokens;
 
     size_t index;

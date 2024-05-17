@@ -26,10 +26,8 @@ const dchar[][] KEYWORDS = [
     "mustuse".makeUnicodeString
 ] ~ FUNC_STYLE_KEYWORD;
 
-bool scontains(const(dchar[][]) list, const(dchar[]) str)
-{
-    foreach (const(dchar[]) list_item; list)
-    {
+bool scontains(const(dchar[][]) list, const(dchar[]) str) {
+    foreach (const(dchar[]) list_item; list) {
         if (list_item == str)
             return true;
     }
@@ -39,15 +37,13 @@ bool scontains(const(dchar[][]) list, const(dchar[]) str)
 import std.stdio;
 
 // Keywords break many other parts of parsing, so best to get them out of the way first
-dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
-{
+dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index) {
     while (tokens[index].isWhite && index < tokens.length)
         index++;
 
     dchar[][] keywords;
-    while (index < tokens.length)
-    {
-        
+    while (index < tokens.length) {
+
         dchar[] data = tokens[index].value;
 
         bool isKeyword = KEYWORDS.scontains(data);
@@ -56,8 +52,7 @@ dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
         bool isFucKeyword = FUNC_STYLE_KEYWORD.scontains(data);
         if (!isFucKeyword)
             keywords ~= data;
-        else
-        {
+        else {
 
             if (index + 1 >= tokens.length || tokens[index + 1].tokenVariety != TokenType
                 .OpenBraces)
@@ -65,8 +60,7 @@ dchar[][] skipAndExtractKeywords(ref Token[] tokens, ref size_t index)
 
             dchar[] keyword = new dchar[data.length];
             keyword[0 .. $] = data;
-            while (++index < tokens.length && tokens[index].tokenVariety != TokenType.CloseBraces)
-            {
+            while (++index < tokens.length && tokens[index].tokenVariety != TokenType.CloseBraces) {
                 keyword ~= tokens[index].value;
             }
             if (index >= tokens.length)

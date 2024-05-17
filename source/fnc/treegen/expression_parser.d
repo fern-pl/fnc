@@ -11,16 +11,13 @@ import std.container.array;
 
 // Group letters.letters.letters into NamedUnit s
 // Group Parenthesis and indexing into AstNode.Expression s to be parsed speratly
-public AstNode[] phaseOne(Token[] tokens)
-{
+public AstNode[] phaseOne(Token[] tokens) {
     AstNode[] ret;
     AstNode[] parenthesisStack;
     bool isLastTokenWhite = false;
-    for (size_t index = 0; index < tokens.length; index++)
-    {
+    for (size_t index = 0; index < tokens.length; index++) {
         Token token = tokens[index];
-        if (token.tokenVariety == TokenType.OpenBraces)
-        {
+        if (token.tokenVariety == TokenType.OpenBraces) {
             AstNode newExpression = new AstNode();
             if (token.value == "(" || token.value == "{")
                 newExpression.action = AstAction.Expression;
@@ -34,8 +31,7 @@ public AstNode[] phaseOne(Token[] tokens)
             parenthesisStack ~= newExpression;
             continue;
         }
-        if (token.tokenVariety == TokenType.CloseBraces)
-        {
+        if (token.tokenVariety == TokenType.CloseBraces) {
 
             if (parenthesisStack.length == 0)
                 throw new SyntaxError("Group token(" ~ cast(
@@ -56,8 +52,7 @@ public AstNode[] phaseOne(Token[] tokens)
             continue;
         }
         AstNode tokenToBeParsedLater = new AstNode();
-        if (token.tokenVariety == TokenType.Letter)
-        {
+        if (token.tokenVariety == TokenType.Letter) {
             tokenToBeParsedLater.action = AstAction.NamedUnit;
             size_t old_index = index;
             tokenToBeParsedLater.namedUnit = tokens.genNamedUnit(index);
@@ -65,13 +60,11 @@ public AstNode[] phaseOne(Token[] tokens)
                 index--;
         }
         else if (token.tokenVariety == TokenType.Number || token.tokenVariety == TokenType
-            .Quotation)
-        {
+            .Quotation) {
             tokenToBeParsedLater.action = AstAction.LiteralUnit;
             tokenToBeParsedLater.literalUnitCompenents = [token];
         }
-        else if (token.tokenVariety != TokenType.Comment)
-        {
+        else if (token.tokenVariety != TokenType.Comment) {
             bool isWhite = token.tokenVariety == TokenType.WhiteSpace;
             if (isWhite && isLastTokenWhite)
                 continue;
@@ -89,15 +82,12 @@ public AstNode[] phaseOne(Token[] tokens)
     return ret;
 }
 
-private AstNode[][] splitNodesAtComma(AstNode[] inputNodes)
-{
+private AstNode[][] splitNodesAtComma(AstNode[] inputNodes) {
     AstNode[][] nodes;
     AstNode[] current;
-    foreach (AstNode node; inputNodes)
-    {
+    foreach (AstNode node; inputNodes) {
         if (node.action == AstAction.TokenHolder
-            && node.tokenBeingHeld.tokenVariety == TokenType.Comma)
-        {
+            && node.tokenBeingHeld.tokenVariety == TokenType.Comma) {
             nodes ~= current;
             current = new AstNode[0];
             continue;
@@ -110,15 +100,13 @@ private AstNode[][] splitNodesAtComma(AstNode[] inputNodes)
 
 import std.conv : to;
 
-NameValuePair[] genCommaSeperatedContents(AstNode expressionLike)
-{
+NameValuePair[] genCommaSeperatedContents(AstNode expressionLike) {
     NameValuePair[] ret;
     foreach (i, argumentNodeBatch; splitNodesAtComma(
-            expressionLike.expressionNodeData.components))
-    {
+            expressionLike.expressionNodeData.components)) {
         if (!argumentNodeBatch.length)
             continue;
-        
+
         Array!AstNode components;
         components ~= argumentNodeBatch;
         Token firstToken = components[0].tokenBeingHeld;
@@ -135,8 +123,7 @@ NameValuePair[] genCommaSeperatedContents(AstNode expressionLike)
         scope (exit)
             ret ~= pair;
 
-        if (components.length == 1)
-        {
+        if (components.length == 1) {
             pair.value = components[0];
             continue;
         }
@@ -152,8 +139,7 @@ NameValuePair[] genCommaSeperatedContents(AstNode expressionLike)
     return ret;
 }
 
-private bool testAndJoinGeneric(ref Array!AstNode nodes, size_t nodeIndex)
-{
+private bool testAndJoinGeneric(ref Array!AstNode nodes, size_t nodeIndex) {
     size_t startingIndex = nodeIndex;
     Nullable!AstNode thingToBeMadeAGenericOf = nodes.nextNonWhiteNode(nodeIndex);
     if (thingToBeMadeAGenericOf == null)
@@ -177,8 +163,7 @@ private bool testAndJoinGeneric(ref Array!AstNode nodes, size_t nodeIndex)
     return true;
 }
 
-private bool testAndJoinCall(ref Array!AstNode nodes, size_t nodeIndex)
-{
+private bool testAndJoinCall(ref Array!AstNode nodes, size_t nodeIndex) {
     size_t startingIndex = nodeIndex;
     Nullable!AstNode thingBeingCalled = nodes.nextNonWhiteNode(nodeIndex);
     Nullable!AstNode arguments = nodes.nextNonWhiteNode(nodeIndex);
@@ -205,8 +190,7 @@ private bool testAndJoinCall(ref Array!AstNode nodes, size_t nodeIndex)
     return true;
 }
 
-private bool testAndJoinIndexingInto(ref Array!AstNode nodes, size_t nodeIndex)
-{
+private bool testAndJoinIndexingInto(ref Array!AstNode nodes, size_t nodeIndex) {
     size_t startingIndex = nodeIndex;
     Nullable!AstNode thingBeingIndexed = nodes.nextNonWhiteNode(nodeIndex);
     Nullable!AstNode index = nodes.nextNonWhiteNode(nodeIndex);
@@ -235,13 +219,10 @@ private bool testAndJoinIndexingInto(ref Array!AstNode nodes, size_t nodeIndex)
 }
 
 // Handle function calls, arrays, and Generics
-void phaseTwo(ref Array!AstNode nodes)
-{
-    for (size_t index = 0; index < nodes.length; index++)
-    {
+void phaseTwo(ref Array!AstNode nodes) {
+    for (size_t index = 0; index < nodes.length; index++) {
     TOP:
-        static foreach (sepMethod; SEPERATION_LAYER_WITH_VOIDABLE.layer)
-        {
+        static foreach (sepMethod; SEPERATION_LAYER_WITH_VOIDABLE.layer) {
             if (testAndJoin(sepMethod, nodes, index))
                 goto TOP;
         }
@@ -252,8 +233,7 @@ void phaseTwo(ref Array!AstNode nodes)
             goto TOP;
         if (testAndJoinIndexingInto(nodes, index))
             goto TOP;
-        if (nodes[index].action == AstAction.Expression)
-        {
+        if (nodes[index].action == AstAction.Expression) {
             Array!AstNode components;
             components ~= nodes[index].expressionNodeData.components;
             phaseTwo(components);
@@ -261,8 +241,7 @@ void phaseTwo(ref Array!AstNode nodes)
             assert(components.length == 1, "Expression is invalid");
             nodes[index] = components[0];
         }
-        else if (nodes[index].action == AstAction.ArrayGrouping)
-        {
+        else if (nodes[index].action == AstAction.ArrayGrouping) {
             nodes[index].arrayNodeData = genCommaSeperatedContents(nodes[index]);
             nodes[index].action = AstAction.Array;
         }
@@ -270,9 +249,7 @@ void phaseTwo(ref Array!AstNode nodes)
     }
 }
 
-
-void trimAstNodes(ref Array!AstNode nodes)
-{
+void trimAstNodes(ref Array!AstNode nodes) {
     // Remove starting whitespace
     while (nodes.length && nodes[0].isWhite)
         nodes.linearRemove(nodes[0 .. 1]);
@@ -282,20 +259,17 @@ void trimAstNodes(ref Array!AstNode nodes)
         nodes.linearRemove(nodes[$ - 1 .. $]);
 }
 
-void removeAllWhitespace(ref Array!AstNode nodes)
-{
+void removeAllWhitespace(ref Array!AstNode nodes) {
     Array!AstNode newNodes;
     scope (exit)
         nodes = newNodes;
-    foreach (AstNode node; nodes)
-    {
+    foreach (AstNode node; nodes) {
         if (!node.isWhite)
             newNodes ~= node;
     }
 }
 
-Array!AstNode expressionNodeFromTokens(Token[] tokens)
-{
+Array!AstNode expressionNodeFromTokens(Token[] tokens) {
     AstNode[] phaseOneNodes = phaseOne(tokens);
     Array!AstNode nodes;
     nodes ~= phaseOneNodes;
@@ -305,11 +279,9 @@ Array!AstNode expressionNodeFromTokens(Token[] tokens)
     return nodes;
 }
 
-size_t findNearestSemiColon(Token[] tokens, size_t index, TokenType stopToken = TokenType.Semicolon)
-{
+size_t findNearestSemiColon(Token[] tokens, size_t index, TokenType stopToken = TokenType.Semicolon) {
     int parCount = 0;
-    while (index < tokens.length)
-    {
+    while (index < tokens.length) {
         Token token = tokens[index];
         if (token.tokenVariety == TokenType.OpenBraces)
             parCount++;
@@ -323,25 +295,21 @@ size_t findNearestSemiColon(Token[] tokens, size_t index, TokenType stopToken = 
 }
 
 // Gets the length of a single "group" of tokens, that can be parsed into a single ASTnode
-size_t prematureSingleTokenGroupLength(Token[] tokens, size_t index)
-{
+size_t prematureSingleTokenGroupLength(Token[] tokens, size_t index) {
     size_t originalIndex = index;
     int braceCount = 0;
     bool wasLastFinalToken = false;
-    while (1)
-    {
+    while (1) {
         Nullable!Token ntoken = tokens.nextNonWhiteToken(index);
         if (ntoken == null)
             break;
         Token token = ntoken;
-        if (token.tokenVariety == TokenType.OpenBraces)
-        {
+        if (token.tokenVariety == TokenType.OpenBraces) {
             wasLastFinalToken = true;
             braceCount++;
             continue;
         }
-        else if (token.tokenVariety == TokenType.CloseBraces)
-        {
+        else if (token.tokenVariety == TokenType.CloseBraces) {
             braceCount--;
             if (braceCount == -1)
                 break;
@@ -351,8 +319,7 @@ size_t prematureSingleTokenGroupLength(Token[] tokens, size_t index)
         if (braceCount > 0)
             continue;
 
-        switch (token.tokenVariety)
-        {
+        switch (token.tokenVariety) {
             case TokenType.QuestionMark:
             case TokenType.Comment:
             case TokenType.WhiteSpace:

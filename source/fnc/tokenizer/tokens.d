@@ -4,8 +4,7 @@ import std.ascii : isASCII, isDigit, isAlpha, isAlphaNum, isWhite;
 import std.algorithm : find, min;
 import std.string : indexOf;
 
-enum TokenType
-{
+enum TokenType {
     Number,
     Operator,
     OpenBraces,
@@ -49,28 +48,23 @@ const dchar[][] validSingleLineCommentStyles = [
     ['\\', '\\']
 ];
 
-dchar[] makeUnicodeString(in string input)
-{
+dchar[] makeUnicodeString(in string input) {
     import std.algorithm : map;
     import std.array : array;
 
     return (cast(char[]) input).map!(x => cast(dchar) x).array();
 }
 
-const(dchar[]) testMultiLineStyle(dchar first, dchar secound)
-{
-    foreach (const(dchar[][]) style; validMultiLineCommentStyles)
-    {
+const(dchar[]) testMultiLineStyle(dchar first, dchar secound) {
+    foreach (const(dchar[][]) style; validMultiLineCommentStyles) {
         if (style[0][0] == first && style[0][1] == secound)
             return style[1];
     }
     return [];
 }
 
-bool isSingleLineComment(dchar first, dchar secound)
-{
-    static foreach (const dchar[] style; validSingleLineCommentStyles)
-    {
+bool isSingleLineComment(dchar first, dchar secound) {
+    static foreach (const dchar[] style; validSingleLineCommentStyles) {
         if (style[0] == first && style[0] == secound)
             return true;
     }
@@ -81,8 +75,7 @@ bool isSingleLineComment(dchar first, dchar secound)
 // \n    -  Linux
 // \r\n  -  Windows
 // \r    -  Old MacOS versions (although this is not the ascii deffinition of carriage return)
-size_t findFirstNewLine(in dchar[] input)
-{
+size_t findFirstNewLine(in dchar[] input) {
     size_t carriageReturn = input.indexOf('\r');
     size_t newline = input.indexOf('\n');
 
@@ -98,15 +91,13 @@ size_t findFirstNewLine(in dchar[] input)
     return min(carriageReturn, newline);
 }
 
-TokenType getVarietyOfLetter(dchar symbol)
-{
+TokenType getVarietyOfLetter(dchar symbol) {
     // We do not (yet) support unicode source code. 
     // But using dchar to allow for easy integration
     if (!isASCII(symbol))
         return TokenType.Unknown;
 
-    switch (symbol)
-    {
+    switch (symbol) {
         case '=':
             return TokenType.Equals;
         case ';':
@@ -145,8 +136,7 @@ TokenType getVarietyOfLetter(dchar symbol)
 
 }
 
-struct Token
-{
+struct Token {
     TokenType tokenVariety;
     dchar[] value;
     size_t startingIndex;
@@ -154,8 +144,7 @@ struct Token
 
 import tern.typecons.common : Nullable, nullable;
 
-Nullable!Token nextToken(Token[] tokens, ref size_t index)
-{
+Nullable!Token nextToken(Token[] tokens, ref size_t index) {
     Nullable!Token found = null;
     if (tokens.length <= index + 1)
         return found;
@@ -163,12 +152,12 @@ Nullable!Token nextToken(Token[] tokens, ref size_t index)
     found = tokens[++index];
     return found;
 }
-bool isWhite(Token token) => token.tokenVariety == TokenType.WhiteSpace || token.tokenVariety == TokenType.Comment;
-Nullable!Token nextNonWhiteToken(ref Token[] tokens, ref size_t index)
-{
+
+bool isWhite(Token token) => token.tokenVariety == TokenType.WhiteSpace || token
+    .tokenVariety == TokenType.Comment;
+Nullable!Token nextNonWhiteToken(ref Token[] tokens, ref size_t index) {
     Nullable!Token found;
-    while (tokens.length > index)
-    {
+    while (tokens.length > index) {
         Token token = tokens[index++];
         if (token.isWhite)
             continue;

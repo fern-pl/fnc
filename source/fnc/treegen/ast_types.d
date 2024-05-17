@@ -3,19 +3,16 @@ module fnc.treegen.ast_types;
 import fnc.tokenizer.tokens : Token;
 import tern.typecons.common : Nullable, nullable;
 
-struct NameValuePair
-{
+struct NameValuePair {
     Nullable!AstNode name;
     AstNode value;
 }
 
-struct NamedUnit
-{
+struct NamedUnit {
     dchar[][] names;
 }
 
-enum AstAction
-{
+enum AstAction {
     // Typical code actions:
 
     Keyword, // Standalong keywords Ex: import std.std.io;
@@ -50,14 +47,12 @@ enum AstAction
     Voidable
 }
 
-bool isExpressionLike(AstAction action)
-{
+bool isExpressionLike(AstAction action) {
     return action == AstAction.Expression
         || action == AstAction.ArrayGrouping;
 }
 
-bool isCallable(AstAction action)
-{
+bool isCallable(AstAction action) {
     return action == AstAction.DoubleArgumentOperation
         || action == AstAction.SingleArgumentOperation
         || action == AstAction.Call
@@ -67,21 +62,18 @@ bool isCallable(AstAction action)
         || action == AstAction.NamedUnit;
 }
 
-struct KeywordNodeData
-{
+struct KeywordNodeData {
     dchar[] keywordName;
     dchar[][] possibleExtras;
     Token[] keywardArgs;
 }
 
-struct AssignVariableNodeData
-{
+struct AssignVariableNodeData {
     AstNode[] name; // Name of variable(s) to assign Ex: x = y = z = 5;
     AstNode value;
 }
 
-enum OperationVariety
-{
+enum OperationVariety {
     PreIncrement,
     PostIncrement,
     PreDecrement,
@@ -143,57 +135,48 @@ enum OperationVariety
 
 import fnc.treegen.scope_parser : ScopeData;
 
-struct ConditionNodeData
-{
+struct ConditionNodeData {
     dchar[][] precedingKeywords;
     bool isScope;
     AstNode condition;
-    union
-    {
+    union {
         ScopeData conditionScope;
         AstNode conditionResultNode;
     }
 }
 
-struct ElseNodeData
-{
+struct ElseNodeData {
     dchar[][] precedingKeywords;
     bool isScope;
-    union
-    {
+    union {
         ScopeData elseScope;
         AstNode elseResultNode;
     }
 }
 
-struct SingleArgumentOperationNodeData
-{
+struct SingleArgumentOperationNodeData {
     OperationVariety operationVariety;
     AstNode value;
 }
 
-struct DoubleArgumentOperationNodeData
-{
+struct DoubleArgumentOperationNodeData {
     OperationVariety operationVariety;
     AstNode left;
     AstNode right;
 }
 
-struct ExpressionNodeData
-{
+struct ExpressionNodeData {
     dchar opener;
     dchar closer;
     AstNode[] components;
 }
 
-struct ArrayOrIndexingNodeData
-{
+struct ArrayOrIndexingNodeData {
     AstNode indexInto;
     AstNode index; // MIGHT BE NULL!
 }
 
-struct CallNodeData
-{
+struct CallNodeData {
     AstNode func;
     NameValuePair[] args;
 }
@@ -205,11 +188,9 @@ struct GenericNodeData // Generic used in code. Ex: foo.bar!baz
     AstNode genericData;
 }
 
-class AstNode
-{
+class AstNode {
     AstAction action;
-    union
-    {
+    union {
         KeywordNodeData keywordNodeData; // Keyword
         AssignVariableNodeData assignVariableNodeData; // AssignVariable
 
@@ -232,8 +213,7 @@ class AstNode
         AstNode voidableType; // Voidable
     }
 
-    static AstNode VOID_NAMED_UNIT()
-    {
+    static AstNode VOID_NAMED_UNIT() {
         AstNode voidNamedUnit = new AstNode();
         voidNamedUnit.action = AstAction.NamedUnit;
         import fnc.tokenizer.tokens : makeUnicodeString;
@@ -242,14 +222,12 @@ class AstNode
         return voidNamedUnit;
     }
 
-    void toString(scope void delegate(const(char)[]) sink) const
-    {
+    void toString(scope void delegate(const(char)[]) sink) const {
         import std.conv;
 
         sink(action.to!string);
         sink("{");
-        switch (action)
-        {
+        switch (action) {
             case AstAction.Keyword:
                 sink(keywordNodeData.to!string);
                 break;
@@ -286,14 +264,12 @@ class AstNode
 
     void tree() => tree(-1);
 
-    void tree(size_t tabCount)
-    {
+    void tree(size_t tabCount) {
         import std.stdio;
         import std.conv;
 
         alias printTabs() = {
-            if (tabCount != -1)
-            {
+            if (tabCount != -1) {
                 foreach (i; 0 .. tabCount)
                     write("|  ");
                 write("┼ ");
@@ -301,8 +277,7 @@ class AstNode
         };
         printTabs();
 
-        switch (action)
-        {
+        switch (action) {
             case AstAction.GenericOf:
                 write(action);
                 writeln(":");
@@ -317,10 +292,8 @@ class AstNode
                 write("With Params (");
                 write(callNodeData.args.length);
                 writeln(")");
-                foreach (arg; callNodeData.args)
-                {
-                    if (arg.name != null)
-                    {
+                foreach (arg; callNodeData.args) {
+                    if (arg.name != null) {
                         printTabs();
                         arg.name.value.write();
                         ": ".writeln;
@@ -349,8 +322,7 @@ class AstNode
                 printTabs();
                 writeln("With:");
                 arrayOrIndexingNodeData.indexInto.tree(tabCount + 1);
-                if (false != (arrayOrIndexingNodeData.index !is(null)))
-                {
+                if (false != (arrayOrIndexingNodeData.index !is(null))) {
                     printTabs();
                     writeln("Index value of:");
 
@@ -362,8 +334,7 @@ class AstNode
             case AstAction.Expression:
                 writeln(
                     "Result of expression with " ~ expressionNodeData.components.length.to!string ~ " components:");
-                foreach (subnode; expressionNodeData.components)
-                {
+                foreach (subnode; expressionNodeData.components) {
                     subnode.tree(tabCount + 1);
                 }
                 break;
@@ -383,8 +354,7 @@ class AstNode
                 writeln(" hasScope = " ~ conditionNodeData.isScope.to!string ~ " keywords = " ~ conditionNodeData
                         .precedingKeywords.to!string);
                 conditionNodeData.condition.tree(tabCount + 1);
-                if (conditionNodeData.isScope)
-                {
+                if (conditionNodeData.isScope) {
                     import fnc.treegen.scope_parser : tree;
 
                     conditionNodeData.conditionScope.tree(tabCount + 1);
@@ -398,8 +368,7 @@ class AstNode
                 write(action);
                 writeln(" hasScope = " ~ elseNodeData.isScope.to!string ~ " keywords = " ~ elseNodeData
                         .precedingKeywords.to!string);
-                if (elseNodeData.isScope)
-                {
+                if (elseNodeData.isScope) {
                     import fnc.treegen.scope_parser : tree;
 
                     elseNodeData.elseScope.tree(tabCount + 1);
@@ -413,17 +382,18 @@ class AstNode
                 write(arrayNodeData.length);
                 writeln(" items:");
                 tabCount++;
-                foreach (NameValuePair pair; arrayNodeData){
-                    if (pair.name != null){
+                foreach (NameValuePair pair; arrayNodeData) {
+                    if (pair.name != null) {
                         printTabs;
                         "Name:".writeln;
-                        pair.name.value.tree(tabCount+1);
+                        pair.name.value.tree(tabCount + 1);
                         printTabs;
                         "Value:".writeln;
-                        pair.value.tree(tabCount+1);
-                    }else{
-                        pair.value.tree(tabCount);
+                        pair.value.tree(tabCount + 1);
                     }
+                    else
+                        pair.value.tree(tabCount);
+
                 }
                 tabCount--;
                 break;
@@ -434,18 +404,14 @@ class AstNode
     }
 }
 
-private void getRelatedTokensFromNodes(AstNode[] nodes, ref Token[] output)
-{
-    foreach (AstNode node; nodes)
-    {
+private void getRelatedTokensFromNodes(AstNode[] nodes, ref Token[] output) {
+    foreach (AstNode node; nodes) {
         getRelatedTokens(node, output);
     }
 }
 
-void getRelatedTokens(AstNode node, ref Token[] output)
-{
-    switch (node.action)
-    {
+void getRelatedTokens(AstNode node, ref Token[] output) {
+    switch (node.action) {
         // TODO: Improve all of this
         case AstAction.SingleArgumentOperation:
             getRelatedTokens(node.singleArgumentOperationNodeData.value, output);
@@ -465,12 +431,10 @@ void getRelatedTokens(AstNode node, ref Token[] output)
     }
 }
 
-void getMinMax(AstNode node, ref size_t minV, ref size_t maxV)
-{
+void getMinMax(AstNode node, ref size_t minV, ref size_t maxV) {
     Token[] tokens;
     getRelatedTokens(node, tokens);
-    foreach (Token token; tokens)
-    {
+    foreach (Token token; tokens) {
         import std.algorithm : min, max;
 
         minV = min(minV, token.startingIndex);
@@ -480,8 +444,7 @@ void getMinMax(AstNode node, ref size_t minV, ref size_t maxV)
 
 import std.container.array;
 
-bool isWhite(const AstNode node)
-{
+bool isWhite(const AstNode node) {
     import fnc.tokenizer.tokens : TokenType;
 
     return node.action == AstAction.TokenHolder &&
@@ -489,11 +452,9 @@ bool isWhite(const AstNode node)
                 || node.tokenBeingHeld.tokenVariety == TokenType.Comment);
 }
 
-Nullable!AstNode nextNonWhiteNode(Array!AstNode nodes, ref size_t index)
-{
+Nullable!AstNode nextNonWhiteNode(Array!AstNode nodes, ref size_t index) {
     Nullable!AstNode found;
-    while (nodes.length > index)
-    {
+    while (nodes.length > index) {
         AstNode node = nodes[index++];
         if (node.isWhite)
             continue;
@@ -503,11 +464,9 @@ Nullable!AstNode nextNonWhiteNode(Array!AstNode nodes, ref size_t index)
     return found;
 }
 
-Nullable!AstNode nextNonWhiteNode(AstNode[] nodes, ref size_t index)
-{
+Nullable!AstNode nextNonWhiteNode(AstNode[] nodes, ref size_t index) {
     Nullable!AstNode found;
-    while (nodes.length > index)
-    {
+    while (nodes.length > index) {
         AstNode node = nodes[index++];
         if (node.isWhite)
             continue;
@@ -517,10 +476,8 @@ Nullable!AstNode nextNonWhiteNode(AstNode[] nodes, ref size_t index)
     return found;
 }
 
-Nullable!AstNode lowerBoundNonWhiteTest(AstNode[] nodes, size_t index)
-{
-    while (1)
-    {
+Nullable!AstNode lowerBoundNonWhiteTest(AstNode[] nodes, size_t index) {
+    while (1) {
         index--;
         if (!index)
             return Nullable!AstNode(null);

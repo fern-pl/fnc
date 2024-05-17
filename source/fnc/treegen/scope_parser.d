@@ -11,23 +11,20 @@ import tern.typecons.common : Nullable, nullable;
 import std.container.array;
 import fnc.errors;
 
-struct ImportStatement
-{
+struct ImportStatement {
     dchar[][] keywordExtras;
     NamedUnit namedUnit;
     NamedUnit[] importSelection; // empty for importing everything
 }
 
-struct FunctionArgument
-{
+struct FunctionArgument {
     dchar[][] precedingKeywords;
     Nullable!AstNode type;
     NamedUnit name;
     Nullable!AstNode maybeDefault;
 }
 
-struct DeclaredFunction
-{
+struct DeclaredFunction {
     dchar[][] precedingKeywords;
     Nullable!(FunctionArgument[]) genericArgs;
     FunctionArgument[] args;
@@ -38,21 +35,18 @@ struct DeclaredFunction
     ScopeData functionScope;
 }
 
-struct DeclaredVariable
-{
+struct DeclaredVariable {
     NamedUnit name;
     AstNode type;
 }
 
-enum ObjectType
-{
+enum ObjectType {
     Struct,
     Class,
     Tagged
 }
 
-struct ObjectDeclaration
-{
+struct ObjectDeclaration {
     Nullable!ScopeData parent;
     NamedUnit name;
     ObjectType type;
@@ -61,8 +55,7 @@ struct ObjectDeclaration
     DeclaredVariable[] declaredVariables;
 }
 
-class ScopeData
-{
+class ScopeData {
     Nullable!ScopeData parent; // Could be the global scope
 
     bool isPartialModule = false;
@@ -76,8 +69,7 @@ class ScopeData
 
     Array!AstNode instructions;
 
-    void toString(scope void delegate(const(char)[]) sink) const
-    {
+    void toString(scope void delegate(const(char)[]) sink) const {
         import std.conv;
 
         sink("ScopeData{isPartialModule = ");
@@ -100,23 +92,19 @@ class ScopeData
     }
 }
 
-struct LineVarietyTestResult
-{
+struct LineVarietyTestResult {
     LineVariety lineVariety;
     size_t length;
     TokenGrepResult[] tokenMatches;
 }
 
 LineVarietyTestResult getLineVarietyTestResult(
-    const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, size_t index)
-{
+    const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, size_t index) {
     size_t temp_index = index;
 
-    foreach (method; scopeParseMethod)
-    {
+    foreach (method; scopeParseMethod) {
         Nullable!(TokenGrepResult[]) grepResults = method.test.matchesToken(tokens, temp_index);
-        if (null != grepResults)
-        {
+        if (null != grepResults) {
             return LineVarietyTestResult(
                 method.variety, temp_index - index, grepResults.value
             );
@@ -127,24 +115,20 @@ LineVarietyTestResult getLineVarietyTestResult(
     return LineVarietyTestResult(LineVariety.SimpleExpression, -1);
 }
 
-NamedUnit[] commaSeperatedNamedUnits(Token[] tokens, ref size_t index)
-{
+NamedUnit[] commaSeperatedNamedUnits(Token[] tokens, ref size_t index) {
     NamedUnit[] units;
-    while (true)
-    {
+    while (true) {
         NamedUnit name = tokens.genNamedUnit(index);
         if (name.names.length == 0)
             break;
         units ~= name;
         Nullable!Token mightBeACommaN = tokens.nextNonWhiteToken(index);
-        if (mightBeACommaN.ptr == null)
-        {
+        if (mightBeACommaN.ptr == null) {
             index--;
             break;
         }
         Token mightBeAComma = mightBeACommaN;
-        if (mightBeAComma.tokenVariety != TokenType.Comma)
-        {
+        if (mightBeAComma.tokenVariety != TokenType.Comma) {
             index--;
             break;
         }
@@ -152,16 +136,14 @@ NamedUnit[] commaSeperatedNamedUnits(Token[] tokens, ref size_t index)
     return units;
 }
 
-private FunctionArgument[] genFunctionArgs(Token[] tokens, bool isGenericArgs = false)
-{
+private FunctionArgument[] genFunctionArgs(Token[] tokens, bool isGenericArgs = false) {
     size_t index;
     FunctionArgument[] args;
 
     auto argParseStyle = isGenericArgs ? FUNCTION_ARGUMENT_PARSE ~ GENERIC_ARGUMENT_PARSE
         : FUNCTION_ARGUMENT_PARSE;
 
-    while (index < tokens.length)
-    {
+    while (index < tokens.length) {
         if (tokens.nextNonWhiteToken(index) == null)
             break;
         index--;
@@ -183,8 +165,7 @@ private FunctionArgument[] genFunctionArgs(Token[] tokens, bool isGenericArgs = 
         else
             argument.type.ptr = null;
         argument.name = line.tokenMatches[1 - isTypeless].assertAs(TokenGrepMethod.NamedUnit).name;
-        if (hasDefault)
-        {
+        if (hasDefault) {
             auto nodes = line.tokenMatches[3 - isTypeless].assertAs(TokenGrepMethod.Glob)
                 .tokens.expressionNodeFromTokens();
             if (nodes.length != 1)
@@ -199,8 +180,7 @@ private FunctionArgument[] genFunctionArgs(Token[] tokens, bool isGenericArgs = 
 
         if (index - 1 < tokens.length && tokens[index - 1].tokenVariety == TokenType.Comma)
             continue;
-        if (index < tokens.length && tokens[index].tokenVariety == TokenType.Comma)
-        {
+        if (index < tokens.length && tokens[index].tokenVariety == TokenType.Comma) {
             index++;
             continue;
         }
@@ -219,13 +199,11 @@ private FunctionArgument[] genFunctionArgs(Token[] tokens, bool isGenericArgs = 
 
 import std.stdio;
 
-LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, ref size_t index, ScopeData parent)
-{
+LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, ref size_t index, ScopeData parent) {
     dchar[][] keywords = tokens.skipAndExtractKeywords(index);
 
     LineVarietyTestResult lineVariety = getLineVarietyTestResult(scopeParseMethod, tokens, index);
-    switch (lineVariety.lineVariety)
-    {
+    switch (lineVariety.lineVariety) {
         case LineVariety.ModuleDeclaration:
             tokens.nextNonWhiteToken(index); // Skip 'module' keyword
             parent.moduleName = tokens.genNamedUnit(index);
@@ -304,8 +282,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                 .assertAs(TokenGrepMethod.PossibleCommaSeperated)
                 .commaSeperated.collectNamedUnits();
             AstNode[] nameNodes;
-            foreach (NamedUnit name; declarationNames)
-            {
+            foreach (NamedUnit name; declarationNames) {
                 parent.declaredVariables ~= DeclaredVariable(name, declarationType);
                 AstNode nameNode = new AstNode();
                 nameNode.action = AstAction.NamedUnit;
@@ -348,7 +325,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             Nullable!(TokenGrepResult[]) genericArgs = lineVariety.tokenMatches[FUNCTION_GENERIC_ARGS].assertAs(
                 TokenGrepMethod.Optional).optional;
             FunctionArgument[] genericArgsList;
-            
+
             if (genericArgs != null)
                 genericArgsList = genFunctionArgs(
                     genericArgs.value[0].assertAs(TokenGrepMethod.Glob).tokens, true);
@@ -408,8 +385,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             ConditionNodeData conditionNodeData;
             conditionNodeData.precedingKeywords = keywords;
             conditionNodeData.condition = conditionNodes[0];
-            if (lineVariety.lineVariety == LineVariety.IfStatementWithScope)
-            {
+            if (lineVariety.lineVariety == LineVariety.IfStatementWithScope) {
                 conditionNodeData.isScope = true;
                 conditionNodeData.conditionScope
                     = parseMultilineScope(
@@ -420,8 +396,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                             nullable!ScopeData(parent)
                     );
             }
-            else
-            {
+            else {
                 conditionNodeData.isScope = false;
                 auto conditionLineNode = expressionNodeFromTokens(
                     lineVariety.tokenMatches[1].assertAs(TokenGrepMethod.Glob).tokens
@@ -453,8 +428,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
 
             ElseNodeData elseNodeData;
             elseNodeData.precedingKeywords = keywords;
-            if (lineVariety.lineVariety == LineVariety.ElseStatementWithScope)
-            {
+            if (lineVariety.lineVariety == LineVariety.ElseStatementWithScope) {
                 size_t temp;
                 elseNodeData.isScope = true;
                 elseNodeData.elseScope
@@ -466,8 +440,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                             nullable!ScopeData(parent)
                     );
             }
-            else
-            {
+            else {
                 elseNodeData.isScope = false;
                 auto lineNode = expressionNodeFromTokens(
                     lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.Glob).tokens
@@ -503,12 +476,10 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
     return lineVariety;
 }
 
-ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, ref size_t index, Nullable!ScopeData parent)
-{
+ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, Token[] tokens, ref size_t index, Nullable!ScopeData parent) {
     ScopeData scopeData = new ScopeData;
     scopeData.parent = parent;
-    while (index < tokens.length)
-    {
+    while (index < tokens.length) {
         LineVarietyTestResult lineData = parseLine(scopeParseMethod, tokens, index, scopeData);
         Nullable!Token testToken = tokens.nextNonWhiteToken(index);
         if (testToken == null)
@@ -520,8 +491,7 @@ ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, Token[]
     return scopeData;
 }
 
-ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, string data)
-{
+ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, string data) {
     import fnc.tokenizer.make_tokens;
 
     size_t index;
@@ -534,27 +504,23 @@ ScopeData parseMultilineScope(const(VarietyTestPair[]) scopeParseMethod, string 
     );
 }
 
-void argTree(FunctionArgument arg, size_t tabCount, void delegate() printTabs)
-{
+void argTree(FunctionArgument arg, size_t tabCount, void delegate() printTabs) {
     printTabs();
     arg.name.write;
-    if (arg.type != null)
-    {
+    if (arg.type != null) {
         writeln(" as type:");
         arg.type.value.tree(tabCount + 1);
     }
     else
         "".writeln;
-    if (arg.maybeDefault != null)
-    {
+    if (arg.maybeDefault != null) {
         printTabs();
         writeln("With a default value of: ");
         arg.maybeDefault.value.tree(tabCount + 1);
     }
 }
 
-void ftree(DeclaredFunction func, size_t tabCount)
-{
+void ftree(DeclaredFunction func, size_t tabCount) {
     alias printTabs() = {
         foreach (_; 0 .. tabCount)
             write("|  ");
@@ -566,8 +532,7 @@ void ftree(DeclaredFunction func, size_t tabCount)
     write(" ");
     write(func.name);
     writeln("\n");
-    if (func.genericArgs != null)
-    {
+    if (func.genericArgs != null) {
         printTabs();
         write("With genric argments(");
         write(func.genericArgs.value.length);
@@ -589,8 +554,7 @@ void ftree(DeclaredFunction func, size_t tabCount)
 }
 
 void tree(ScopeData scopeData) => tree(scopeData, 0);
-void tree(ScopeData scopeData, size_t tabCount)
-{
+void tree(ScopeData scopeData, size_t tabCount) {
     import std.conv;
 
     alias printTabs() = {
@@ -607,20 +571,17 @@ void tree(ScopeData scopeData, size_t tabCount)
 
     printTabs();
     write("Variables: ");
-    foreach (var; scopeData.declaredVariables)
-    {
+    foreach (var; scopeData.declaredVariables) {
         write(var.name.to!string ~ " as " ~ var.type.to!string);
         write(", ");
     }
     write("\n");
     printTabs();
     write("Imports: ");
-    foreach (imported; scopeData.imports)
-    {
+    foreach (imported; scopeData.imports) {
         write(imported.namedUnit);
         write(": (");
-        foreach (selection; imported.importSelection)
-        {
+        foreach (selection; imported.importSelection) {
             selection.write;
             write(", ");
         }
@@ -630,8 +591,7 @@ void tree(ScopeData scopeData, size_t tabCount)
     printTabs();
     writeln("Functions: ");
     tabCount++;
-    foreach (func; scopeData.declaredFunctions)
-    {
+    foreach (func; scopeData.declaredFunctions) {
         func.ftree(tabCount);
     }
 
@@ -640,16 +600,14 @@ void tree(ScopeData scopeData, size_t tabCount)
     writeln("Objects: ");
     tabCount++;
 
-    foreach (obj; scopeData.declaredObjects)
-    {
+    foreach (obj; scopeData.declaredObjects) {
         printTabs();
         obj.type.write;
         "\t".write;
         obj.name.write;
         ":".writeln;
         tabCount++;
-        foreach (var; obj.declaredVariables)
-        {
+        foreach (var; obj.declaredVariables) {
             printTabs();
             var.type.write;
             "\t".write;
@@ -659,8 +617,7 @@ void tree(ScopeData scopeData, size_t tabCount)
         printTabs();
         writeln("Functions:");
         tabCount++;
-        foreach (func; obj.declaredFunctions)
-        {
+        foreach (func; obj.declaredFunctions) {
             func.ftree(tabCount + 1);
         }
         tabCount--;
@@ -669,8 +626,7 @@ void tree(ScopeData scopeData, size_t tabCount)
     tabCount--;
     printTabs();
     writeln("AST nodes(" ~ scopeData.instructions.length.to!string ~ "):");
-    foreach (AstNode node; scopeData.instructions)
-    {
+    foreach (AstNode node; scopeData.instructions) {
         node.tree(tabCount);
     }
 

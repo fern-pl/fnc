@@ -8,8 +8,7 @@ import tern.typecons.common : Nullable, nullable;
 
 import fnc.tokenizer.tokens;
 
-dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index)
-{
+dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index) {
     if (index + 1 >= input.length)
         return [];
     const(dchar[]) endingSymbols = testMultiLineStyle(input[index], input[index + 1]);
@@ -27,8 +26,7 @@ dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index)
     return comment;
 }
 
-dchar[] handleSinglelineCommentsAtIndex(dchar[] input, ref size_t index)
-{
+dchar[] handleSinglelineCommentsAtIndex(dchar[] input, ref size_t index) {
     if (index + 1 >= input.length)
         return [];
     bool isSingleLineComment = isSingleLineComment(input[index], input[index + 1]);
@@ -45,34 +43,28 @@ dchar[] handleSinglelineCommentsAtIndex(dchar[] input, ref size_t index)
     return comment;
 }
 
-private Token[] protoTokenize(string input)
-{
+private Token[] protoTokenize(string input) {
     Token[] tokens;
     dchar[] chars;
 
     size_t index = 0;
 
-    while (index < input.length)
-    {
+    while (index < input.length) {
         chars ~= input.decode(index);
     }
-    for (index = 0; index < chars.length; index++)
-    {
+    for (index = 0; index < chars.length; index++) {
         dchar symbol = chars[index];
         // Two char special tokens (comments)
-        if (index + 1 < chars.length)
-        {
+        if (index + 1 < chars.length) {
             size_t startingIndex = index;
             dchar[] comment = handleMultilineCommentsAtIndex(chars, index);
-            if (comment.length != 0)
-            {
+            if (comment.length != 0) {
                 index--;
                 tokens ~= Token(TokenType.Comment, comment, startingIndex);
                 continue;
             }
             comment = handleSinglelineCommentsAtIndex(chars, index);
-            if (comment.length != 0)
-            {
+            if (comment.length != 0) {
                 tokens ~= Token(TokenType.Comment, comment, startingIndex);
                 continue;
             }
@@ -80,12 +72,10 @@ private Token[] protoTokenize(string input)
         }
         TokenType tokenType = getVarietyOfLetter(symbol);
         Token token = Token(tokenType, [symbol], index);
-        if (tokenType == TokenType.Quotation)
-        {
+        if (tokenType == TokenType.Quotation) {
             dchar last = symbol;
             index++;
-            while (index < chars.length)
-            {
+            while (index < chars.length) {
                 dchar symbol2 = chars[index];
                 token.value ~= symbol2;
                 if (symbol2 == symbol && last != '\\')
@@ -107,44 +97,39 @@ const TokenType[] groupableTokens = [
     TokenType.Equals
 ];
 
-private Token[] groupTokens(Token[] tokens)
-{
+private Token[] groupTokens(Token[] tokens) {
     Token[] groupedTokens;
-    foreach (index, Token token; tokens)
-    {
+    foreach (index, Token token; tokens) {
         // Handles numbers with decimals
         if (token.tokenVariety == TokenType.Period
             && groupedTokens.length
             && groupedTokens[$ - 1].tokenVariety == TokenType.Number
             && !( // Don't confuse ranges with numbers
-                index+1 < tokens.length
+                index + 1 < tokens.length
                 &&
-                tokens[index+1].tokenVariety == TokenType.Period
-            ))
-        {
+                tokens[index + 1].tokenVariety == TokenType.Period
+            )) {
             groupedTokens[$ - 1].value ~= token.value;
             continue;
         }
 
-        if (!groupedTokens.length)
-        {
+        if (!groupedTokens.length) {
             groupedTokens ~= token;
             continue;
         }
 
         if (groupedTokens[$ - 1].tokenVariety == token.tokenVariety && groupableTokens.find(
-                token.tokenVariety).length)
-        {
+                token.tokenVariety).length) {
             groupedTokens[$ - 1].value ~= token.value;
             continue;
         }
         if (groupedTokens[$ - 1].tokenVariety == TokenType.Letter && token.tokenVariety == TokenType
-            .Number)
-        {
+            .Number) {
             groupedTokens[$ - 1].value ~= token.value;
             continue;
         }
-        if (groupedTokens[$ - 1].tokenVariety == TokenType.Period && token.tokenVariety == TokenType.Period){
+        if (groupedTokens[$ - 1].tokenVariety == TokenType.Period && token.tokenVariety == TokenType
+            .Period) {
             groupedTokens[$ - 1].value ~= token.value;
             continue;
         }
@@ -154,8 +139,7 @@ private Token[] groupTokens(Token[] tokens)
     return groupedTokens;
 }
 
-Token[] tokenizeText(string input)
-{
+Token[] tokenizeText(string input) {
     Token[] protoTokens = protoTokenize(input);
     Token[] grouped = groupTokens(protoTokens);
     return grouped;

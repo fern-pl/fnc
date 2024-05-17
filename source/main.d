@@ -8,8 +8,7 @@ import fnc.treegen.relationships;
 
 import std.stdio;
 
-public enum GenerationFlags
-{
+public enum GenerationFlags {
     /// `--rwx`
     /// All code is RWX instead of RX, allowing for polymorphism.
     RWX,
@@ -50,11 +49,10 @@ public enum GenerationFlags
 
     // Feature sets
     Common,
-    Native,// Remaining features may be toggled, sourced from gallinule ID enums (not CR)
+    Native, // Remaining features may be toggled, sourced from gallinule ID enums (not CR)
 }
 
-void main()
-{
+void main() {
     size_t index = 0;
 
     import fnc.treegen.expression_parser;
@@ -70,9 +68,7 @@ void main()
             int? x = add!int(3, 3);
         }
     ");
-    
+
     newScope.tree;
-
-
 
 }

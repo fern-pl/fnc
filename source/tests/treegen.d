@@ -27,8 +27,7 @@ import fnc.treegen.relationships;
 
 // }
 
-unittest
-{
+unittest {
     import fnc.tokenizer.make_tokens;
 
     size_t s = 0;
@@ -43,8 +42,7 @@ unittest
             ]);
 }
 
-unittest
-{
+unittest {
     import std.stdio;
     import fnc.tokenizer.make_tokens;
 
@@ -74,8 +72,7 @@ unittest
     );
 }
 
-unittest
-{
+unittest {
     import fnc.tokenizer.make_tokens;
     import fnc.treegen.keywords;
 
@@ -90,8 +87,7 @@ unittest
     assert(tokens[index].value == "int".makeUnicodeString);
 }
 
-unittest
-{
+unittest {
     import fnc.tokenizer.make_tokens;
 
     auto nodes = expressionNodeFromTokens("(p[t++]<<<=1) + 10 / x[9]++".tokenizeText);
@@ -101,8 +97,7 @@ unittest
     // nodes[0].tree(-1);
 }
 
-unittest
-{
+unittest {
     import fnc.tokenizer.make_tokens;
     import fnc.treegen.scope_parser;
 
@@ -119,8 +114,7 @@ unittest
         ]);
 }
 
-unittest
-{
+unittest {
     import fnc.tokenizer.make_tokens;
     import fnc.treegen.scope_parser;
     import std.stdio;

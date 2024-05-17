@@ -2,8 +2,7 @@ module tests.tokenizer;
 import fnc.tokenizer.tokens;
 import fnc.tokenizer.make_tokens;
 
-unittest
-{
+unittest {
     foreach (example; [
             ["/*An example of a comment*/", "An example of a comment", ""],
             ["/*An example of a comment", "An example of a comment", ""],
@@ -12,8 +11,7 @@ unittest
                 "An example of a comment", "Some test text"
             ],
             ["Text without a comment", "", "Text without a comment"]
-        ])
-    {
+        ]) {
         dchar[] stringWithComment = makeUnicodeString(example[0]);
         dchar[] commentFromString = makeUnicodeString(example[1]);
         dchar[] afterComment = makeUnicodeString(example[2]);
@@ -29,8 +27,7 @@ unittest
     }
 }
 
-unittest
-{
+unittest {
     foreach (example; [
             [
                 "// Hello world comment\r\n\tint main()", "Hello world comment",
@@ -38,8 +35,7 @@ unittest
             ],
             ["// Hello world", "Hello world", ""],
             ["// Hello world\n", "Hello world", "\n"]
-        ])
-    {
+        ]) {
         dchar[] stringWithComment = makeUnicodeString(example[0]);
         dchar[] commentFromString = makeUnicodeString(example[1]);
         dchar[] afterComment = makeUnicodeString(example[2]);
@@ -52,10 +48,8 @@ unittest
     }
 }
 
-unittest
-{
-    with (TokenType)
-    {
+unittest {
+    with (TokenType) {
         size_t index = 0;
         Token[] tokens = tokenizeText("int main(){ float x = -99.99; return 1;}");
         foreach (Token testToken; [
@@ -77,8 +71,7 @@ unittest
                 Token(Number, "1".makeUnicodeString),
                 Token(Semicolon, ";".makeUnicodeString),
                 Token(CloseBraces, "}".makeUnicodeString),
-            ])
-        {
+            ]) {
             Token token = tokens.nextNonWhiteToken(index);
             assert(token.value == testToken.value);
             assert(token.tokenVariety == testToken.tokenVariety);

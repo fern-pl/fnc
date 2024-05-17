@@ -5,26 +5,22 @@ import fnc.treegen.ast_types;
 import fnc.tokenizer.tokens;
 import tern.typecons.common : Nullable, nullable;
 
-NamedUnit genNamedUnit(Token[] tokens, ref size_t index)
-{
+NamedUnit genNamedUnit(Token[] tokens, ref size_t index) {
     dchar[][] nameData = new dchar[][0];
     // NamedUnit ret = NamedUnit(new dchar[][]);
 
     bool hasLastPeriod = true;
-    while (1)
-    {
+    while (1) {
         Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
         if (tokenNullable == null)
             return NamedUnit(nameData);
         Token token = tokenNullable;
-        if (token.tokenVariety == TokenType.Period){
+        if (token.tokenVariety == TokenType.Period) {
             hasLastPeriod = true;
             continue;
         }
-        if (token.tokenVariety == TokenType.Letter)
-        {
-            if (!hasLastPeriod)
-            {
+        if (token.tokenVariety == TokenType.Letter) {
+            if (!hasLastPeriod) {
                 index--;
                 return NamedUnit(nameData);
             }
@@ -35,5 +31,5 @@ NamedUnit genNamedUnit(Token[] tokens, ref size_t index)
         index--;
         return NamedUnit(nameData);
     }
-    
+
 }

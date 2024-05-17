@@ -12,8 +12,7 @@ import tern.typecons.common : Nullable, nullable;
         2. The order of operation used for grouping
 +/
 
-enum TokenGrepMethod
-{
+enum TokenGrepMethod {
     Glob,
     Whitespace,
     MatchesTokens,
@@ -26,21 +25,17 @@ enum TokenGrepMethod
     Optional
 }
 
-struct TokenGrepPacket
-{
+struct TokenGrepPacket {
     TokenGrepMethod method;
-    union
-    {
+    union {
         Token[] tokens;
         TokenGrepPacket[] packets;
     }
 }
 
-struct TokenGrepResult
-{
+struct TokenGrepResult {
     TokenGrepMethod method;
-    union
-    {
+    union {
         TokenGrepResult[] commaSeperated;
         Nullable!(TokenGrepResult[]) optional;
         Token[] tokens; // Glob
@@ -50,8 +45,7 @@ struct TokenGrepResult
     }
 
     pragma(always_inline)
-    TokenGrepResult assertAs(TokenGrepMethod test)
-    {
+    TokenGrepResult assertAs(TokenGrepMethod test) {
         import std.conv;
 
         debug assert(this.method == test, this.method.to!string ~ " != " ~ test.to!string);
@@ -59,16 +53,14 @@ struct TokenGrepResult
     }
 }
 
-TokenGrepPacket TokenGrepPacketToken(TokenGrepMethod method, Token[] list)
-{
+TokenGrepPacket TokenGrepPacketToken(TokenGrepMethod method, Token[] list) {
     TokenGrepPacket ret;
     ret.method = method;
     ret.tokens = list;
     return ret;
 }
 
-TokenGrepPacket TokenGrepPacketRec(TokenGrepMethod method, TokenGrepPacket[] list)
-{
+TokenGrepPacket TokenGrepPacketRec(TokenGrepMethod method, TokenGrepPacket[] list) {
     TokenGrepPacket ret;
     ret.method = method;
     ret.packets = list;
@@ -366,8 +358,7 @@ const TaggedDeclaration = [
         ]),
 ];
 
-enum LineVariety
-{
+enum LineVariety {
     TotalImport,
     SelectiveImport,
     ModuleDeclaration,
@@ -392,8 +383,7 @@ enum LineVariety
     GenericArgDeclarationTypeless
 }
 
-struct VarietyTestPair
-{
+struct VarietyTestPair {
     LineVariety variety;
     const(TokenGrepPacket[]) test;
 }
@@ -460,8 +450,7 @@ const VarietyTestPair[] TAGGED_DEFINITION_PARS = OBJECT_DEFINITION_PARSE ~ [
         ])
 ];
 
-Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
-{
+Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens) {
     size_t index = 0;
     return matchesToken(testWith, tokens, index);
 }
@@ -469,13 +458,10 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 import std.stdio;
 
 alias tokenGrepBox = Nullable!(TokenGrepResult[]);
-Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index)
-{
+Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index) {
     TokenGrepResult[] returnVal;
-    foreach (testIndex, packet; testWith)
-    {
-        switch (packet.method)
-        {
+    foreach (testIndex, packet; testWith) {
+        switch (packet.method) {
             case TokenGrepMethod.NamedUnit:
                 if (index >= tokens.length)
                     return tokenGrepBox(null);
@@ -490,8 +476,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
             case TokenGrepMethod.MatchesTokenType:
                 Token[] found;
 
-                foreach (const(Token) potentialMatch; packet.tokens)
-                {
+                foreach (const(Token) potentialMatch; packet.tokens) {
                     Nullable!Token potential = tokens.nextNonWhiteToken(index);
                     if (potential.ptr == null)
                         return tokenGrepBox(null);
@@ -506,8 +491,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 returnVal ~= res;
                 break;
             case TokenGrepMethod.MatchesTokens:
-                foreach (const(Token) testToken; packet.tokens)
-                {
+                foreach (const(Token) testToken; packet.tokens) {
                     Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
                     if (tokenNullable.ptr == null)
                         return tokenGrepBox(null);
@@ -525,8 +509,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 commaSeperatedGroup.method = TokenGrepMethod.PossibleCommaSeperated;
                 commaSeperatedGroup.commaSeperated = new TokenGrepResult[0];
                 size_t commaSearchIndex = index;
-                while (commaSearchIndex < tokens.length)
-                {
+                while (commaSearchIndex < tokens.length) {
                     size_t matchSize;
                     auto itemTestResult = packet.packets.matchesToken(tokens[commaSearchIndex .. $], matchSize);
                     if (itemTestResult == null)
@@ -538,8 +521,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                     auto possibleNext = tokens.nextNonWhiteToken(commaSearchIndex);
 
-                    if (possibleNext == null || possibleNext.value.tokenVariety != TokenType.Comma)
-                    {
+                    if (possibleNext == null || possibleNext.value.tokenVariety != TokenType.Comma) {
                         commaSearchIndex--;
                         break;
                     }
@@ -589,8 +571,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
                 }
 
-        WITHOUT_OPTIONAL:
-                {
+        WITHOUT_OPTIONAL: {
                     tokenGrepBox restOfLine = restToTest.matchesToken(tokens, index);
                     if (restOfLine == null)
                         return tokenGrepBox(null);
@@ -609,14 +590,12 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 globResult.method = TokenGrepMethod.Glob;
                 globResult.tokens = [];
 
-                if (!grepMatchGroup.length)
-                {
+                if (!grepMatchGroup.length) {
                     globResult.tokens = tokens[index .. $];
                     index = tokens.length;
                     return tokenGrepBox(returnVal ~ globResult);
                 }
-                if (firstGlob.ptr)
-                {
+                if (firstGlob.ptr) {
                     index += temp_index;
                     return tokenGrepBox(returnVal ~ globResult ~ firstGlob.value);
                 }
@@ -624,8 +603,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 int braceDeph = 0;
                 size_t startingIndex = index;
                 index--;
-                while (true)
-                {
+                while (true) {
                     Nullable!Token tokenNullable = tokens.nextToken(index);
                     if (tokenNullable == null)
                         return tokenGrepBox(null);
@@ -637,12 +615,10 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     if (token.tokenVariety == TokenType.CloseBraces)
                         braceDeph--;
 
-                    if (braceDeph == 0)
-                    {
+                    if (braceDeph == 0) {
                         size_t index_inc = 0;
                         auto res = grepMatchGroup.matchesToken(tokens[index + 1 .. $], index_inc);
-                        if (res != null)
-                        {
+                        if (res != null) {
                             globResult.tokens = tokens[startingIndex .. index + 1];
                             index += index_inc + 1;
                             return tokenGrepBox(returnVal ~ globResult ~ res.value);
@@ -660,31 +636,26 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
     return tokenGrepBox(returnVal);
 }
 
-NamedUnit[] collectNamedUnits(TokenGrepResult[] greps)
-{
+NamedUnit[] collectNamedUnits(TokenGrepResult[] greps) {
     NamedUnit[] ret;
-    foreach (TokenGrepResult grepResult; greps)
-    {
+    foreach (TokenGrepResult grepResult; greps) {
         assert(grepResult.method == TokenGrepMethod.NamedUnit);
         ret ~= grepResult.name;
     }
     return ret;
 }
 
-enum OperatorOrder
-{
+enum OperatorOrder {
     LeftToRight,
     RightToLeft
 }
 
-struct OperatorPrecedenceLayer
-{
+struct OperatorPrecedenceLayer {
     OperatorOrder order;
     OperationPrecedenceEntry[] layer;
 }
 
-struct OperationPrecedenceEntry
-{
+struct OperationPrecedenceEntry {
     OperationVariety operation;
 
     // These tokens are just the template used for
@@ -695,8 +666,7 @@ struct OperationPrecedenceEntry
     const(Token[]) tokens;
 }
 
-private Token OPR(dchar o)
-{
+private Token OPR(dchar o) {
     return Token(o != '=' ? TokenType.Operator : TokenType.Equals, [o]);
 }
 
@@ -907,21 +877,18 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
 ];
 import std.container.array;
 
-bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, size_t startIndex)
-{
+bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes, size_t startIndex) {
     if (entry.tokens.length > nodes.length)
         return false;
     size_t nodeIndex = startIndex;
     AstNode[] operands;
 
-    for (size_t index = 0; index < entry.tokens.length; index++)
-    {
+    for (size_t index = 0; index < entry.tokens.length; index++) {
         Nullable!AstNode nodeNullable = nodes.nextNonWhiteNode(nodeIndex);
         if (nodeNullable == null)
             return false;
         AstNode node = nodeNullable;
-        switch (entry.tokens[index].tokenVariety)
-        {
+        switch (entry.tokens[index].tokenVariety) {
 
             case TokenType.Filler:
 
@@ -954,8 +921,7 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
         }
     }
     AstNode oprNode = new AstNode();
-    if (entry.operation == OperationVariety.Assignment)
-    {
+    if (entry.operation == OperationVariety.Assignment) {
         oprNode.action = AstAction.AssignVariable;
         oprNode.assignVariableNodeData = AssignVariableNodeData(
             [operands[0]],
@@ -967,13 +933,11 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
     oprNode.action = AstAction.DoubleArgumentOperation;
     if (operands.length == 0)
         assert(0);
-    if (operands.length == 1 && entry.operation == OperationVariety.Voidable)
-    {
+    if (operands.length == 1 && entry.operation == OperationVariety.Voidable) {
         oprNode.action = AstAction.Voidable;
         oprNode.voidableType = operands[0];
     }
-    else if (operands.length == 1)
-    {
+    else if (operands.length == 1) {
 
         oprNode.action = AstAction.SingleArgumentOperation;
         oprNode.singleArgumentOperationNodeData = SingleArgumentOperationNodeData(
@@ -996,19 +960,13 @@ trim:
     return true;
 }
 
-void scanAndMergeOperators(ref Array!AstNode nodes)
-{
+void scanAndMergeOperators(ref Array!AstNode nodes) {
     // OperatorOrder order;
-    static foreach (layer; operatorPrecedence)
-    {
-        static if (layer.order == OperatorOrder.LeftToRight)
-        {
-            for (size_t index = 0; index < nodes.length; index++)
-            {
-                foreach (entry; layer.layer)
-                {
-                    if (entry.testAndJoin(nodes, index))
-                    {
+    static foreach (layer; operatorPrecedence) {
+        static if (layer.order == OperatorOrder.LeftToRight) {
+            for (size_t index = 0; index < nodes.length; index++) {
+                foreach (entry; layer.layer) {
+                    if (entry.testAndJoin(nodes, index)) {
                         index--;
                         continue;
                     }
@@ -1016,14 +974,10 @@ void scanAndMergeOperators(ref Array!AstNode nodes)
                 }
             }
         }
-        static if (layer.order == OperatorOrder.RightToLeft)
-        {
-            for (size_t index = nodes.length; index != -1; index--)
-            {
-                foreach (entry; layer.layer)
-                {
-                    if (entry.testAndJoin(nodes, index))
-                    {
+        static if (layer.order == OperatorOrder.RightToLeft) {
+            for (size_t index = nodes.length; index != -1; index--) {
+                foreach (entry; layer.layer) {
+                    if (entry.testAndJoin(nodes, index)) {
                         index++;
                         continue;
                     }
