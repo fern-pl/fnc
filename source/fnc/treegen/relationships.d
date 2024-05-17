@@ -573,14 +573,13 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                 size_t tempIndex = index;
                 tokenGrepBox optional = packet.packets.matchesToken(tokens, tempIndex);
-                
 
                 if (optional == null)
                     goto WITHOUT_OPTIONAL;
                 // NOT PART OF THE IF, this is a workaround untill CETIO FIXES HIS BUG
                 {
                     tokenGrepBox restOfLine = restToTest.matchesToken(tokens, tempIndex);
-                    
+
                     if (restOfLine == null)
                         goto WITHOUT_OPTIONAL;
 
@@ -590,7 +589,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
                 }
 
-                WITHOUT_OPTIONAL:
+        WITHOUT_OPTIONAL:
                 {
                     tokenGrepBox restOfLine = restToTest.matchesToken(tokens, index);
                     if (restOfLine == null)
@@ -968,13 +967,20 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
     oprNode.action = AstAction.DoubleArgumentOperation;
     if (operands.length == 0)
         assert(0);
-    if (operands.length == 1)
+    if (operands.length == 1 && entry.operation == OperationVariety.Voidable)
     {
+        oprNode.action = AstAction.Voidable;
+        oprNode.voidableType = operands[0];
+    }
+    else if (operands.length == 1)
+    {
+
         oprNode.action = AstAction.SingleArgumentOperation;
         oprNode.singleArgumentOperationNodeData = SingleArgumentOperationNodeData(
             entry.operation,
             operands[0],
         );
+
     }
     if (operands.length == 2)
         oprNode.doubleArgumentOperationNodeData = DoubleArgumentOperationNodeData(
