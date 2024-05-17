@@ -169,7 +169,6 @@ private FunctionArgument[] genFunctionArgs(Token[] tokens, bool isGenericArgs = 
         dchar[][] keywords = tokens.skipAndExtractKeywords(index);
 
         LineVarietyTestResult line = argParseStyle.getLineVarietyTestResult(tokens, index);
-        line.lineVariety.writeln;
         if (line.lineVariety == LineVariety.SimpleExpression)
             throw new SyntaxError("Can't parse function arguments", tokens[index]);
         FunctionArgument argument;
@@ -349,7 +348,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             Nullable!(TokenGrepResult[]) genericArgs = lineVariety.tokenMatches[FUNCTION_GENERIC_ARGS].assertAs(
                 TokenGrepMethod.Optional).optional;
             FunctionArgument[] genericArgsList;
-
+            
             if (genericArgs != null)
                 genericArgsList = genFunctionArgs(
                     genericArgs.value[0].assertAs(TokenGrepMethod.Glob).tokens, true);
@@ -543,7 +542,8 @@ void argTree(FunctionArgument arg, size_t tabCount, void delegate() printTabs)
     {
         writeln(" as type:");
         arg.type.value.tree(tabCount + 1);
-    }else
+    }
+    else
         "".writeln;
     if (arg.maybeDefault != null)
     {

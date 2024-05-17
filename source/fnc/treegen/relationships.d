@@ -53,6 +53,7 @@ struct TokenGrepResult
     TokenGrepResult assertAs(TokenGrepMethod test)
     {
         import std.conv;
+
         debug assert(this.method == test, this.method.to!string ~ " != " ~ test.to!string);
         return this;
     }
@@ -433,6 +434,13 @@ const VarietyTestPair[] FUNCTION_ARGUMENT_PARSE = [
 ];
 
 const VarietyTestPair[] GENERIC_ARGUMENT_PARSE = [
+    VarietyTestPair(LineVariety.GenericArgDeclarationTypelessWithDefault,
+        GenericArgDeclarationTypelessWithDefault ~ TokenGrepPacketToken(
+            TokenGrepMethod.MatchesTokenType,
+            [
+                Token(TokenType.Comma, [])
+            ]
+    )),
     VarietyTestPair(LineVariety.GenericArgDeclarationTypelessWithDefault, GenericArgDeclarationTypelessWithDefault),
     VarietyTestPair(LineVariety.GenericArgDeclarationTypeless, GenericArgDeclarationTypeless),
 ];
@@ -451,7 +459,6 @@ const VarietyTestPair[] TAGGED_DEFINITION_PARS = OBJECT_DEFINITION_PARSE ~ [
                 ])
         ])
 ];
-
 
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens)
 {
@@ -566,23 +573,23 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                 size_t tempIndex = index;
                 tokenGrepBox optional = packet.packets.matchesToken(tokens, tempIndex);
+                tokenGrepBox restOfLine;
 
                 if (optional == null)
                     goto WITHOUT_OPTIONAL;
-                // NOT IN THE IF! Used to seperate scope to work around bug in Tern Nullable
-                {
-                    tokenGrepBox restOfLine = restToTest.matchesToken(tokens, tempIndex);
-                    if (restOfLine == null)
-                        goto WITHOUT_OPTIONAL;
 
-                    optinalResult.optional = optional;
-                    index = tempIndex;
-                    
-                    return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
-                }
+                restOfLine = restToTest.matchesToken(tokens, tempIndex);
+                restOfLine.ptr.writeln;
+                if (restOfLine == null)
+                    goto WITHOUT_OPTIONAL;
 
-        WITHOUT_OPTIONAL:
-                tokenGrepBox restOfLine = restToTest.matchesToken(tokens, index);
+                optinalResult.optional = optional;
+                index = tempIndex;
+
+                return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
+
+                WITHOUT_OPTIONAL:
+                restOfLine = restToTest.matchesToken(tokens, index);
                 if (restOfLine == null)
                     return tokenGrepBox(null);
 
