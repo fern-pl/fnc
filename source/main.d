@@ -60,8 +60,12 @@ void main() {
     import std.container.array;
 
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        T add(T = int)(T a, T b){
-            return => a + b;
+        T add(T)(T a, T b);
+        T add(T a, T b);
+
+        struct Pair(T, V){
+            T first;
+            V secound;
         }
         
         int main(){

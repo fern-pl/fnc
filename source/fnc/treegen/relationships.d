@@ -243,6 +243,17 @@ const TokenGrepPacket[] ModuleDeclaration = [
         ])
 ];
 
+private const auto OPTIONAL_GENERIC_ARGUMENTS =
+    TokenGrepPacketRec(TokenGrepMethod.Optional, [
+            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+                    Token(TokenType.OpenBraces, ['('])
+                ]),
+            TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+                    Token(TokenType.CloseBraces, [')'])
+                ]),
+        ]);
+
 const FUNCTION_RETURN_TYPE = 0;
 const FUNCTION_NAME = 1;
 const FUNCTION_GENERIC_ARGS = 2;
@@ -256,16 +267,7 @@ const TokenGrepPacket[] AbstractFunctionDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
 
     // Generic
-    TokenGrepPacketRec(TokenGrepMethod.Optional, [
-
-            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-                    Token(TokenType.OpenBraces, ['('])
-                ]),
-            TokenGrepPacketToken(TokenGrepMethod.Glob, []),
-            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-                    Token(TokenType.CloseBraces, [')'])
-                ]),
-        ]),
+    OPTIONAL_GENERIC_ARGUMENTS,
 
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['('])
@@ -281,21 +283,12 @@ const TokenGrepPacket[] AbstractFunctionDeclaration = [
             Token(TokenType.Semicolon, [])
         ])
 ];
+
 const TokenGrepPacket[] FunctionDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.Type, []),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
 
-    // Generic
-    TokenGrepPacketRec(TokenGrepMethod.Optional, [
-
-            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-                    Token(TokenType.OpenBraces, ['('])
-                ]),
-            TokenGrepPacketToken(TokenGrepMethod.Glob, []),
-            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
-                    Token(TokenType.CloseBraces, [')'])
-                ]),
-        ]),
+    OPTIONAL_GENERIC_ARGUMENTS,
     // Parameters
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['('])
@@ -316,12 +309,14 @@ const TokenGrepPacket[] FunctionDeclaration = [
         ]),
 ];
 const int OBJECT_NAME = 0;
-const int OBJECT_BODY = 1;
+const int OBJECT_GENERIC = 1;
+const int OBJECT_BODY = 2;
 const StructDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.Letter, "struct".makeUnicodeString)
         ]),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    OPTIONAL_GENERIC_ARGUMENTS,
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['{'])
         ]),
@@ -335,6 +330,7 @@ const ClassDeclaration = [
             Token(TokenType.Letter, "class".makeUnicodeString)
         ]),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    OPTIONAL_GENERIC_ARGUMENTS,
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['{'])
         ]),
@@ -349,6 +345,7 @@ const TaggedDeclaration = [
             Token(TokenType.Letter, "tagged".makeUnicodeString)
         ]),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+    OPTIONAL_GENERIC_ARGUMENTS,
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['{'])
         ]),
@@ -380,7 +377,8 @@ enum LineVariety {
     TaggedUntypedItem,
 
     GenericArgDeclarationTypelessWithDefault,
-    GenericArgDeclarationTypeless
+    GenericArgDeclarationTypeless,
+    AbstractFunctionDeclaration
 }
 
 struct VarietyTestPair {
@@ -400,6 +398,7 @@ const VarietyTestPair[] GLOBAL_SCOPE_PARSE = [
     VarietyTestPair(LineVariety.StructDeclaration, StructDeclaration),
     VarietyTestPair(LineVariety.ClassDeclaration, ClassDeclaration),
     VarietyTestPair(LineVariety.TaggedDeclaration, TaggedDeclaration),
+    VarietyTestPair(LineVariety.AbstractFunctionDeclaration, AbstractFunctionDeclaration),
     VarietyTestPair(LineVariety.FunctionDeclaration, FunctionDeclaration)
 ] ~ ABSTRACT_SCOPE_PARSE;
 

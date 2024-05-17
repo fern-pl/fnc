@@ -32,7 +32,7 @@ struct DeclaredFunction {
     NamedUnit name;
     AstNode returnType;
 
-    ScopeData functionScope;
+    Nullable!ScopeData functionScope;
 }
 
 struct DeclaredVariable {
@@ -53,6 +53,7 @@ struct ObjectDeclaration {
 
     DeclaredFunction[] declaredFunctions;
     DeclaredVariable[] declaredVariables;
+    Nullable!(FunctionArgument[]) genericArgs;
 }
 
 class ScopeData {
@@ -219,6 +220,15 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             size_t endingIndex = index + lineVariety.length;
             scope (exit)
                 index = endingIndex;
+
+            Nullable!(TokenGrepResult[]) genericArgs = lineVariety.tokenMatches[OBJECT_GENERIC].assertAs(
+                TokenGrepMethod.Optional).optional;
+            FunctionArgument[] genericArgsList;
+
+            if (genericArgs != null)
+                genericArgsList = genFunctionArgs(
+                    genericArgs.value[0].assertAs(TokenGrepMethod.Glob).tokens, true);
+
             size_t temp;
             auto objScope = parseMultilineScope(
                 lineVariety.lineVariety == LineVariety.TaggedDeclaration ? TAGGED_DEFINITION_PARS : OBJECT_DEFINITION_PARSE,
@@ -237,7 +247,9 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                         LineVariety.ClassDeclaration : ObjectType.Class,
                     ][lineVariety.lineVariety],
                 objScope.declaredFunctions,
-                objScope.declaredVariables
+                objScope.declaredVariables,
+                genericArgs != null ? nullable(genericArgsList) : nullable!(
+                    FunctionArgument[])(null)
             );
             parent.declaredObjects ~= object;
             break;
@@ -316,6 +328,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             NamedUnit name = lineVariety.tokenMatches[0].assertAs(TokenGrepMethod.NamedUnit).name;
             parent.declaredVariables ~= DeclaredVariable(name, AstNode.VOID_NAMED_UNIT);
             break;
+        case LineVariety.AbstractFunctionDeclaration:
         case LineVariety.FunctionDeclaration:
             size_t endingIndex = index + lineVariety.length;
             scope (exit)
@@ -330,6 +343,16 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                 genericArgsList = genFunctionArgs(
                     genericArgs.value[0].assertAs(TokenGrepMethod.Glob).tokens, true);
 
+            // TODO: Once @cetio fixes tern nullables (for real this time) we can make this readable.
+            Nullable!ScopeData scopeData =
+                LineVariety.AbstractFunctionDeclaration == lineVariety.lineVariety ? nullable!(ScopeData)(null) : nullable!(ScopeData)(
+                    parseMultilineScope(
+                        FUNCTION_SCOPE_PARSE,
+                        lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob)
+                        .tokens,
+                        temp,
+                        nullable!ScopeData(parent)
+                ));
             parent.declaredFunctions ~= DeclaredFunction(
                 keywords,
                 genericArgs == null ? nullable!(FunctionArgument[])(null) : nullable!(
@@ -339,15 +362,10 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
                 [],
                 lineVariety.tokenMatches[FUNCTION_NAME].assertAs(TokenGrepMethod.NamedUnit)
                     .name,
-                    lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(TokenGrepMethod.Type)
+                    lineVariety.tokenMatches[FUNCTION_RETURN_TYPE].assertAs(
+                        TokenGrepMethod.Type)
                     .type,
-                    parseMultilineScope(
-                        FUNCTION_SCOPE_PARSE,
-                        lineVariety.tokenMatches[FUNCTION_SCOPE].assertAs(TokenGrepMethod.Glob)
-                        .tokens,
-                        temp,
-                        nullable!ScopeData(parent)
-                    )
+                    scopeData
             );
 
             break;
@@ -512,7 +530,7 @@ void argTree(FunctionArgument arg, size_t tabCount, void delegate() printTabs) {
         arg.type.value.tree(tabCount + 1);
     }
     else
-        "".writeln;
+        "\n".write;
     if (arg.maybeDefault != null) {
         printTabs();
         writeln("With a default value of: ");
@@ -530,8 +548,8 @@ void ftree(DeclaredFunction func, size_t tabCount) {
     write(" ");
     write(func.returnType);
     write(" ");
-    write(func.name);
-    writeln("\n");
+    writeln(func.name);
+    tabCount++;
     if (func.genericArgs != null) {
         printTabs();
         write("With genric argments(");
@@ -550,7 +568,14 @@ void ftree(DeclaredFunction func, size_t tabCount) {
     tabCount++;
     foreach (arg; func.args)
         argTree(arg, tabCount, () { printTabs(); });
-    func.functionScope.tree(--tabCount);
+    if (func.functionScope != null) {
+        func.functionScope.value.tree(--tabCount);
+    }
+    else {
+        tabCount--;
+        printTabs();
+        writeln("Is abstract function: true");
+    }
 }
 
 void tree(ScopeData scopeData) => tree(scopeData, 0);
@@ -607,6 +632,17 @@ void tree(ScopeData scopeData, size_t tabCount) {
         obj.name.write;
         ":".writeln;
         tabCount++;
+        if (obj.genericArgs != null) {
+            printTabs();
+            write("With genric argments(");
+            write(obj.genericArgs.value.length);
+            writeln(")");
+            tabCount++;
+            foreach (arg; obj.genericArgs.value)
+                argTree(arg, tabCount, () { printTabs(); });
+            tabCount--;
+        }
+
         foreach (var; obj.declaredVariables) {
             printTabs();
             var.type.write;
