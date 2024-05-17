@@ -22,7 +22,8 @@ enum TokenGrepMethod
     NamedUnit,
     Type,
     PossibleCommaSeperated,
-    Letter
+    Letter,
+    Optional
 }
 
 struct TokenGrepPacket
@@ -41,6 +42,7 @@ struct TokenGrepResult
     union
     {
         TokenGrepResult[] commaSeperated;
+        Nullable!(TokenGrepResult[]) optional;
         Token[] tokens; // Glob
         NamedUnit name;
         AstNode type;
@@ -238,13 +240,27 @@ const TokenGrepPacket[] ModuleDeclaration = [
 
 const FUNCTION_RETURN_TYPE = 0;
 const FUNCTION_NAME = 1;
-const FUNCTION_ARGS = 2;
-const FUNCTION_SCOPE = 3;
+const FUNCTION_GENERIC_ARGS = 2;
+const FUNCTION_ARGS = 3;
+const FUNCTION_ATTRIBUTES = 4;
+const FUNCTION_SCOPE = 5;
 
 // void main();
 const TokenGrepPacket[] AbstractFunctionDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.Type, []),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
+
+    // Generic
+    TokenGrepPacketRec(TokenGrepMethod.Optional, [
+
+            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+                    Token(TokenType.OpenBraces, ['('])
+                ]),
+            TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+                    Token(TokenType.CloseBraces, [')'])
+                ]),
+        ]),
 
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['('])
@@ -264,14 +280,26 @@ const TokenGrepPacket[] FunctionDeclaration = [
     TokenGrepPacketToken(TokenGrepMethod.Type, []),
     TokenGrepPacketToken(TokenGrepMethod.NamedUnit, []),
 
+    // Generic
+    TokenGrepPacketRec(TokenGrepMethod.Optional, [
+
+            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+                    Token(TokenType.OpenBraces, ['('])
+                ]),
+            TokenGrepPacketToken(TokenGrepMethod.Glob, []),
+            TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
+                    Token(TokenType.CloseBraces, [')'])
+                ]),
+        ]),
+    // Parameters
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['('])
         ]),
-    // Parameters
     TokenGrepPacketToken(TokenGrepMethod.Glob, []),
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.CloseBraces, [')'])
         ]),
+    TokenGrepPacketToken(TokenGrepMethod.Glob, []),
     // Body
     TokenGrepPacketToken(TokenGrepMethod.MatchesTokens, [
             Token(TokenType.OpenBraces, ['{'])
@@ -432,25 +460,22 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 returnVal ~= result;
                 break;
             case TokenGrepMethod.MatchesTokenType:
-                Nullable!Token potential = tokens.nextNonWhiteToken(index);
-                if (potential.ptr == null)
-                    return tokenGrepBox(null);
-                Token token = potential;
-                bool doRet = true;
                 Token[] found;
 
                 foreach (const(Token) potentialMatch; packet.tokens)
                 {
-                    if (potentialMatch.tokenVariety == token.tokenVariety)
-                        doRet = false;
+                    Nullable!Token potential = tokens.nextNonWhiteToken(index);
+                    if (potential.ptr == null)
+                        return tokenGrepBox(null);
+                    Token token = potential;
+                    if (potentialMatch.tokenVariety != token.tokenVariety)
+                        return tokenGrepBox(null);
                     found ~= token;
                 }
                 TokenGrepResult res;
                 res.method = TokenGrepMethod.Letter;
                 res.tokens = found;
                 returnVal ~= res;
-                if (doRet)
-                    return tokenGrepBox(null);
                 break;
             case TokenGrepMethod.MatchesTokens:
                 foreach (const(Token) testToken; packet.tokens)
@@ -511,6 +536,38 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 returnVal ~= tokenGrep;
                 index += potentialSize;
                 break;
+
+            case TokenGrepMethod.Optional:
+                TokenGrepResult optinalResult;
+                optinalResult.method = TokenGrepMethod.Optional;
+
+                auto restToTest = testWith[testIndex + 1 .. $];
+
+                size_t tempIndex = index;
+                tokenGrepBox optional = packet.packets.matchesToken(tokens, tempIndex);
+
+                if (optional == null)
+                    goto WITHOUT_OPTIONAL;
+                // NOT IN THE IF! Used to seperate scope to work around bug in Tern Nullable
+                {
+                    tokenGrepBox restOfLine = restToTest.matchesToken(tokens, tempIndex);
+                    if (restOfLine == null)
+                        goto WITHOUT_OPTIONAL;
+
+                    optinalResult.optional = optional;
+                    index = tempIndex;
+                    
+                    return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
+                }
+
+        WITHOUT_OPTIONAL:
+                tokenGrepBox restOfLine = restToTest.matchesToken(tokens, index);
+                if (restOfLine == null)
+                    return tokenGrepBox(null);
+
+                optinalResult.optional.ptr = null; // WTF @Cetio
+                
+                return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
             case TokenGrepMethod.Glob:
                 size_t temp_index;
                 auto grepMatchGroup = testWith[testIndex + 1 .. $];
@@ -612,23 +669,23 @@ private Token OPR(dchar o)
     return Token(o != '=' ? TokenType.Operator : TokenType.Equals, [o]);
 }
 
-const auto SEPERATION_LAYER = 
+const auto SEPERATION_LAYER =
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry(OperationVariety.Period, [
-                Token(TokenType.Filler), Token(TokenType.Period, ['.']),
-                Token(TokenType.Filler)
-            ]),
-        OperationPrecedenceEntry(OperationVariety.Arrow, [
-                Token(TokenType.Filler), Token(TokenType.Operator, ['-']),
-                Token(TokenType.Operator, ['>']),
-                Token(TokenType.Filler)
-            ]),
-]);
+            OperationPrecedenceEntry(OperationVariety.Period, [
+                    Token(TokenType.Filler), Token(TokenType.Period, ['.']),
+                    Token(TokenType.Filler)
+                ]),
+            OperationPrecedenceEntry(OperationVariety.Arrow, [
+                    Token(TokenType.Filler), Token(TokenType.Operator, ['-']),
+                    Token(TokenType.Operator, ['>']),
+                    Token(TokenType.Filler)
+                ]),
+        ]);
 const auto SEPERATION_LAYER_WITH_VOIDABLE = OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-    OperationPrecedenceEntry(OperationVariety.Voidable, [
-            Token(TokenType.Filler), Token(TokenType.Operator, ['?'])
-        ])
-] ~ cast(OperationPrecedenceEntry[])SEPERATION_LAYER.layer);
+        OperationPrecedenceEntry(OperationVariety.Voidable, [
+                Token(TokenType.Filler), Token(TokenType.Operator, ['?'])
+            ])
+    ] ~ cast(OperationPrecedenceEntry[]) SEPERATION_LAYER.layer);
 
 // https://en.cppreference.com/w/c/language/operator_precedence
 // Order of operations in the language. This is broken up
@@ -717,7 +774,8 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                     Token(TokenType.Filler)
                 ]),
             OperationPrecedenceEntry(OperationVariety.EqualTo, [
-                    Token(TokenType.Filler), OPR('='), OPR('='),
+                    Token(TokenType.Filler),
+                    Token(TokenType.Equals, "==".makeUnicodeString),
                     Token(TokenType.Filler)
                 ]),
         ]),
@@ -847,8 +905,8 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
                 if (node.action != AstAction.TokenHolder)
                     return false;
                 Token token = node.tokenBeingHeld;
-                if (token.tokenVariety != TokenType.Equals 
-                    && token.tokenVariety != TokenType.Operator 
+                if (token.tokenVariety != TokenType.Equals
+                    && token.tokenVariety != TokenType.Operator
                     && token.tokenVariety != TokenType.QuestionMark)
                     return false;
                 if (token.value != entry.tokens[index].value)
@@ -864,7 +922,6 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
 
         }
     }
-
     AstNode oprNode = new AstNode();
     if (entry.operation == OperationVariety.Assignment)
     {
@@ -895,14 +952,13 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
         );
 
 trim:
+
     nodes[startIndex] = oprNode;
     nodes.linearRemove(nodes[startIndex + 1 .. nodeIndex]);
     return true;
 }
 
-
-
-void scanAndMergeOperators(Array!AstNode nodes)
+void scanAndMergeOperators(ref Array!AstNode nodes)
 {
     // OperatorOrder order;
     static foreach (layer; operatorPrecedence)

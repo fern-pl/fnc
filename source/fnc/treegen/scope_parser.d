@@ -21,7 +21,7 @@ struct ImportStatement
 struct FunctionArgument
 {
     dchar[][] precedingKeywords;
-    AstNode type;
+    Nullable!AstNode type;
     NamedUnit name;
     Nullable!AstNode maybeDefault;
 }
@@ -29,6 +29,7 @@ struct FunctionArgument
 struct DeclaredFunction
 {
     dchar[][] precedingKeywords;
+    Nullable!(FunctionArgument[]) genericArgs;
     FunctionArgument[] args;
     dchar[][] suffixKeywords;
     NamedUnit name;
@@ -332,8 +333,16 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             scope (exit)
                 index = endingIndex;
             size_t temp;
+            
+            Nullable!(TokenGrepResult[]) genericArgs = lineVariety.tokenMatches[FUNCTION_GENERIC_ARGS].assertAs(TokenGrepMethod.Optional).optional;
+            FunctionArgument[] genericArgsList;
+            
+            if (genericArgs != null)
+                genericArgsList = genFunctionArgs(genericArgs.value[0].assertAs(TokenGrepMethod.Glob).tokens);
+            
             parent.declaredFunctions ~= DeclaredFunction(
                 keywords,
+                genericArgs == null ? nullable!(FunctionArgument[])(null) : nullable!(FunctionArgument[])(genericArgsList),
                 genFunctionArgs(lineVariety.tokenMatches[FUNCTION_ARGS].assertAs(TokenGrepMethod.Glob)
                     .tokens),
                 [],
@@ -533,7 +542,7 @@ void ftree(DeclaredFunction func, size_t tabCount){
             printTabs();
             arg.name.write;
             writeln(" as type:");
-            arg.type.tree(tabCount + 1);
+            arg.type.value.tree(tabCount + 1);
             if (arg.maybeDefault != null)
             {
                 printTabs();

@@ -62,8 +62,9 @@ void main()
     import std.container.array;
 
     auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        foo!int() main(){
-
+        int main(){
+            T t = 2;
+            T x = assert(x == 1);
         }
     ");
     

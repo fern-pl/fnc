@@ -113,19 +113,20 @@ import std.conv : to;
 NameValuePair[] genCommaSeperatedContents(AstNode expressionLike)
 {
     NameValuePair[] ret;
-
-    Array!AstNode components;
     foreach (i, argumentNodeBatch; splitNodesAtComma(
             expressionLike.expressionNodeData.components))
     {
         if (!argumentNodeBatch.length)
             continue;
-        components.clear();
+        
+        Array!AstNode components;
         components ~= argumentNodeBatch;
         Token firstToken = components[0].tokenBeingHeld;
         phaseTwo(components);
         scanAndMergeOperators(components);
         components.removeAllWhitespace();
+        // components.length.writeln;
+        // components.writeln;
 
         if (components.length != 1 && components.length != 3)
             throw new SyntaxError("Invalid item (argument index:" ~ i.to!string ~ ")", expressionLike);
@@ -233,7 +234,8 @@ private bool testAndJoinIndexingInto(ref Array!AstNode nodes, size_t nodeIndex)
     return true;
 }
 
-void leftToRightTypeGen(ref Array!AstNode nodes)
+// Handle function calls, arrays, and Generics
+void phaseTwo(ref Array!AstNode nodes)
 {
     for (size_t index = 0; index < nodes.length; index++)
     {
@@ -267,23 +269,7 @@ void leftToRightTypeGen(ref Array!AstNode nodes)
 
     }
 }
-// Handle function calls, arrays, Generics, and operators
-public void phaseTwo(ref Array!AstNode nodes)
-{
-    size_t[] nonWhiteIndexStack;
 
-    Array!AstNode newNodesArray;
-
-    AstNode lastNonWhite;
-    alias popNonWhiteNode() = {
-        size_t lindex = nonWhiteIndexStack[$ - 1];
-        nonWhiteIndexStack.length--;
-
-        lastNonWhite = newNodesArray[lindex];
-        newNodesArray.linearRemove(newNodesArray[lindex .. $]);
-    };
-    leftToRightTypeGen(nodes);
-}
 
 void trimAstNodes(ref Array!AstNode nodes)
 {

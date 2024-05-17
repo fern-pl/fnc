@@ -12,7 +12,7 @@ void foo([bool, bool] a = [true, true])()
 
 void bar()
 {
-    foo!([false, true]); [false, true], 3, int
+    foo!([false, true]);  // [false, true], 3, int
     foo(); // [true, true], 3, int
     (int, string) a = "abc";
     assert(a is string);
