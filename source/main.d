@@ -72,7 +72,8 @@ void main() {
             int? x = add!int(3, 3);
         }
     ");
-
     newScope.tree;
 
+    auto match = IfStatementWithoutScope.matchesToken(tokenizeText("if (2) testText;"));
+    (match == null).writeln;
 }
