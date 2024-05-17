@@ -1,11 +1,12 @@
 {
 	"authors": [
-		"cet"
+		"cet",
+		"HeronErin"
 	],
-	"copyright": "Copyright © 2024, cet",
+	"copyright": "Copyright © 2024, Fern developers",
 	"dependencies": {
 		"gallinule": "~>0.0.1",
-		"tern": "0.2.12"
+		"tern": "0.2.15"
 	},
 	"description": "The Fern programming language",
 	"license": "AGPL-3.0-only",

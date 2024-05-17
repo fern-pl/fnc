@@ -59,20 +59,6 @@ void main() {
     import fnc.treegen.ast_types;
     import std.container.array;
 
-    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        T add(T)(T a, T b);
-        T add(T a, T b);
-
-        struct Pair(T, V){
-            T first;
-            V secound;
-        }
-        
-        int main(){
-            int? x = add!int(3, 3);
-        }
-    ");
-
-    newScope.tree;
-
+    auto match = IfStatementWithoutScope.matchesToken(tokenizeText("if () testText;"));
+    (match == null).writeln;
 }

@@ -124,7 +124,7 @@ NamedUnit[] commaSeperatedNamedUnits(Token[] tokens, ref size_t index) {
             break;
         units ~= name;
         Nullable!Token mightBeACommaN = tokens.nextNonWhiteToken(index);
-        if (mightBeACommaN.ptr == null) {
+        if (mightBeACommaN == null) {
             index--;
             break;
         }
@@ -164,7 +164,7 @@ private FunctionArgument[] genFunctionArgs(Token[] tokens, bool isGenericArgs = 
         if (!isTypeless)
             argument.type = line.tokenMatches[0].assertAs(TokenGrepMethod.Type).type;
         else
-            argument.type.ptr = null;
+            argument.type = nullable!AstNode(null);
         argument.name = line.tokenMatches[1 - isTypeless].assertAs(TokenGrepMethod.NamedUnit).name;
         if (hasDefault) {
             auto nodes = line.tokenMatches[3 - isTypeless].assertAs(TokenGrepMethod.Glob)
@@ -338,7 +338,7 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             Nullable!(TokenGrepResult[]) genericArgs = lineVariety.tokenMatches[FUNCTION_GENERIC_ARGS].assertAs(
                 TokenGrepMethod.Optional).optional;
             FunctionArgument[] genericArgsList;
-
+            
             if (genericArgs != null)
                 genericArgsList = genFunctionArgs(
                     genericArgs.value[0].assertAs(TokenGrepMethod.Glob).tokens, true);
