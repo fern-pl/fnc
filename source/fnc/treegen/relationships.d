@@ -458,9 +458,6 @@ import std.stdio;
 
 alias tokenGrepBox = Nullable!(TokenGrepResult[]);
 Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[] tokens, ref size_t index) {
-    "Call matchesToken with: ".write;
-    testWith.writeln;
-
     TokenGrepResult[] returnVal;
     foreach (testIndex, packet; testWith) {
         switch (packet.method) {
@@ -480,7 +477,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                 foreach (const(Token) potentialMatch; packet.tokens) {
                     Nullable!Token potential = tokens.nextNonWhiteToken(index);
-                    if (potential == null)
+                    if (potential.ptr == null)
                         return tokenGrepBox(null);
                     Token token = potential;
                     if (potentialMatch.tokenVariety != token.tokenVariety)
@@ -495,11 +492,9 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
             case TokenGrepMethod.MatchesTokens:
                 foreach (const(Token) testToken; packet.tokens) {
                     Nullable!Token tokenNullable = tokens.nextNonWhiteToken(index);
-                    if (tokenNullable == null)
+                    if (tokenNullable.ptr == null)
                         return tokenGrepBox(null);
-
                     Token token = tokenNullable;
-
                     if (token.tokenVariety != testToken.tokenVariety || token.value != testToken
                         .value)
                         return tokenGrepBox(null);
@@ -558,7 +553,6 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 auto restToTest = testWith[testIndex + 1 .. $];
 
                 size_t tempIndex = index;
-
                 tokenGrepBox optional = packet.packets.matchesToken(tokens, tempIndex);
 
                 if (optional == null)
@@ -581,7 +575,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     if (restOfLine == null)
                         return tokenGrepBox(null);
 
-                    optinalResult.optional = Nullable!tokenGrepBox(null);
+                    optinalResult.optional.ptr = null; // WTF @Cetio
 
                     return tokenGrepBox(returnVal ~ optinalResult ~ restOfLine.value);
                 }
@@ -600,10 +594,11 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     index = tokens.length;
                     return tokenGrepBox(returnVal ~ globResult);
                 }
-                if (firstGlob != null) {
+                if (firstGlob.ptr) {
                     index += temp_index;
                     return tokenGrepBox(returnVal ~ globResult ~ firstGlob.value);
                 }
+
                 int braceDeph = 0;
                 size_t startingIndex = index;
                 index--;
@@ -612,7 +607,6 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                     if (tokenNullable == null)
                         return tokenGrepBox(null);
                     Token token = tokenNullable;
-
                     globResult.tokens ~= token;
 
                     if (token.tokenVariety == TokenType.OpenBraces)
@@ -622,11 +616,8 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
                     if (braceDeph == 0) {
                         size_t index_inc = 0;
-                        "\nTest: ".writeln;
-                        tokenGrepBox res = grepMatchGroup.matchesToken(tokens[index + 1 .. $], index_inc);
-                        (res != null).writeln;
+                        auto res = grepMatchGroup.matchesToken(tokens[index + 1 .. $], index_inc);
                         if (res != null) {
-
                             globResult.tokens = tokens[startingIndex .. index + 1];
                             index += index_inc + 1;
                             return tokenGrepBox(returnVal ~ globResult ~ res.value);
@@ -640,7 +631,7 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
 
         }
     }
-    "Returning a NON NULL VALUE!".writeln;
+
     return tokenGrepBox(returnVal);
 }
 

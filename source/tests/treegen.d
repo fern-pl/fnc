@@ -48,7 +48,7 @@ unittest {
 
     assert(DeclarationLine.matchesToken(
             tokenizeText("mod.type.submod x,r,q,a, A_variable  \n\r\t ;")
-    ) != null);
+    ).ptr);
     assert(null != DeclarationLine.matchesToken(tokenizeText("mod.type.submod x, a, e ,y;")));
     assert(null == DeclarationLine.matchesToken(tokenizeText(";mod.type x;")));
     assert(null == DeclarationLine.matchesToken(tokenizeText("123 mod.type x;")));
