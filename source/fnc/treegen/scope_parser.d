@@ -589,8 +589,13 @@ void tree(ScopeData scopeData, size_t tabCount) {
     alias printTabsV() = { printTabs(); write("┼ "); };
 
     printTabsV();
-    write("Scope: ");
-    write("isPartialModule = ");
+    write("Scope:");
+    if (scopeData.moduleName != null){
+        write(" Name = ");
+        write(scopeData.moduleName.value.to!string);
+
+    }
+    write(" isPartialModule = ");
     writeln(scopeData.isPartialModule);
     tabCount++;
 
