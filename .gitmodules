@@ -1,0 +1,6 @@
+[submodule "std"]
+	path = std
+	url = https://github.com/fern-pl/standard-library.git
+[submodule "rt"]
+	path = rt
+	url = https://github.com/fern-pl/runtime.git
