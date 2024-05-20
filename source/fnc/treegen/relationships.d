@@ -891,8 +891,7 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
 
             case TokenType.Filler:
 
-                if (node.action == AstAction.TokenHolder || node.action == AstAction.Keyword || node.action == AstAction
-                    .Scope)
+                if (node.action == AstAction.TokenHolder)
                     return false;
                 operands ~= node;
                 break;

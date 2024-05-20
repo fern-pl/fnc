@@ -1,11 +1,5 @@
 module main;
 
-import fnc.tokenizer.tokens;
-import fnc.tokenizer.make_tokens;
-import tern.typecons.common : Nullable, nullable;
-import fnc.treegen.scope_parser;
-import fnc.treegen.relationships;
-
 import std.stdio;
 
 public enum GenerationFlags {
@@ -53,27 +47,15 @@ public enum GenerationFlags {
 }
 
 void main() {
-    size_t index = 0;
+    import fnc.treegen.scope_parser : parseMultilineScope, ScopeData, tree;
+    import fnc.treegen.relationships : GLOBAL_SCOPE_PARSE;
 
-    import fnc.treegen.expression_parser;
-    import fnc.treegen.ast_types;
-    import std.container.array;
-
-    auto newScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        T add(T)(T a, T b);
-        T add(T a, T b);
-
-        struct Pair(T, V){
-            T first;
-            V secound;
-        }
-        
+    ScopeData globalScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
+        public module foo.bar;
         int main(){
-            int? x = add!int(3, 3);
+            return = 69;
+            writeln(\"Hello World\");
         }
     ");
-    newScope.tree;
-
-    auto match = IfStatementWithoutScope.matchesToken(tokenizeText("if (2) testText;"));
-    (match == null).writeln;
+    globalScope.tree;
 }

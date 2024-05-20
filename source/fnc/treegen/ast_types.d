@@ -15,9 +15,6 @@ struct NamedUnit {
 enum AstAction {
     // Typical code actions:
 
-    Keyword, // Standalong keywords Ex: import std.std.io;
-    Scope,
-
     IfStatement,
     ElseIfStatement,
     ElseStatement,
@@ -60,12 +57,6 @@ bool isCallable(AstAction action) {
         || action == AstAction.GenericOf
         || action == AstAction.LiteralUnit
         || action == AstAction.NamedUnit;
-}
-
-struct KeywordNodeData {
-    dchar[] keywordName;
-    dchar[][] possibleExtras;
-    Token[] keywardArgs;
 }
 
 struct AssignVariableNodeData {
@@ -191,7 +182,6 @@ struct GenericNodeData // Generic used in code. Ex: foo.bar!baz
 class AstNode {
     AstAction action;
     union {
-        KeywordNodeData keywordNodeData; // Keyword
         AssignVariableNodeData assignVariableNodeData; // AssignVariable
 
         ConditionNodeData conditionNodeData; // IfStatement
@@ -228,9 +218,6 @@ class AstNode {
         sink(action.to!string);
         sink("{");
         switch (action) {
-            case AstAction.Keyword:
-                sink(keywordNodeData.to!string);
-                break;
             case AstAction.TokenHolder:
                 sink(tokenBeingHeld.to!string);
                 break;
