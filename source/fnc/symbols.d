@@ -109,6 +109,8 @@ final:
     Symbol[string] attributes;
     // This is not front-facing!
     Marker marker;
+    size_t refcount;
+    bool evaluated;
 
     alias marker this;
 
@@ -454,7 +456,10 @@ final:
 
     string type()
     {
-        return "alias";
+        if (isAliasSeq)
+            return "alias[]";
+        else
+            return "alias";
     }
 }
 

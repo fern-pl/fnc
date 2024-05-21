@@ -1009,8 +1009,8 @@ final:
         Symbol[] operands;
         foreach (arg; args)
         {
-            static if (is(typeof(arg) == Symbol))
-                operands ~= arg;
+            static if (is(Unqual!(typeof(arg)) == Symbol))
+                operands ~= cast(Symbol)arg;
             else
             {
                 SymAttr attr = SymAttr.LITERAL;
