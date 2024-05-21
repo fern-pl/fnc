@@ -536,8 +536,11 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 size_t potentialSize = prematureSingleTokenGroupLength(tokens, index);
                 if (!potentialSize)
                     return tokenGrepBox(null);
+                tokens[index .. index + potentialSize].writeln;
                 Array!AstNode type = expressionNodeFromTokens(tokens[index .. index + potentialSize]);
-                assert(type.length == 1, "Token type could not be reduced from a single node, but prematureSingleTokenGroupLength() ensured that it could. (Please report this on github)");
+
+                if (type.length != 1)
+                    return tokenGrepBox(null);
 
                 TokenGrepResult tokenGrep;
                 tokenGrep.method = TokenGrepMethod.Type;
@@ -709,11 +712,9 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                 ]),
 
             OperationPrecedenceEntry(OperationVariety.LogicalNot, [
-                    Token(TokenType.ExclamationMark, "!".makeUnicodeString), Token(TokenType.Filler)
-                ]),
-            OperationPrecedenceEntry(OperationVariety.Concatenate, [
-                    OPR('~'), Token(TokenType.Filler)
-                ]),
+                    Token(TokenType.ExclamationMark, "!".makeUnicodeString),
+                    Token(TokenType.Filler)
+                ])
         ]),
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.Multiply, [
@@ -811,6 +812,9 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                     Token(TokenType.Filler), Token(TokenType.Period, ['.', '.']),
                     Token(TokenType.Filler)
                 ]),
+            OperationPrecedenceEntry(OperationVariety.Concatenate, [
+                    Token(TokenType.Filler), OPR('~'), Token(TokenType.Filler)
+                ]),
         ]),
     OperatorPrecedenceLayer(OperatorOrder.RightToLeft, [
             OperationPrecedenceEntry(OperationVariety.Assignment, [
@@ -902,10 +906,7 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
                 if (node.action != AstAction.TokenHolder)
                     return false;
                 Token token = node.tokenBeingHeld;
-                if (token.tokenVariety != TokenType.Equals
-                    && token.tokenVariety != TokenType.Operator
-                    && token.tokenVariety != TokenType.QuestionMark
-                    && token.tokenVariety != TokenType.ExclamationMark)
+                if (!token.isLikeOpr)
                     return false;
                 if (token.value != entry.tokens[index].value)
                     return false;

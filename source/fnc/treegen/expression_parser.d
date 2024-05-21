@@ -254,10 +254,11 @@ private bool testAndJoinIndexingInto(ref Array!AstNode nodes, size_t nodeIndex) 
     Nullable!AstNode index = nodes.nextNonWhiteNode(nodeIndex);
     if (thingBeingIndexed == null || index == null)
         return false;
-
     if (index.value.action != AstAction.ArrayGrouping)
         return false;
-
+    if (thingBeingIndexed.value.action == AstAction.TokenHolder)
+        if (thingBeingIndexed.value.tokenBeingHeld.isLikeOpr)
+            return false;
     AstNode indexingInto = new AstNode;
     indexingInto.action = AstAction.IndexInto;
 

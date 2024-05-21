@@ -157,6 +157,10 @@ Nullable!Token nextToken(Token[] tokens, ref size_t index) {
 
 bool isWhite(Token token) => token.tokenVariety == TokenType.WhiteSpace || token
     .tokenVariety == TokenType.Comment;
+bool isLikeOpr(Token token) => token.tokenVariety == TokenType.Operator 
+        || token.tokenVariety == TokenType.Equals
+        || token.tokenVariety == TokenType.ExclamationMark
+        || token.tokenVariety == TokenType.QuestionMark;
 Nullable!Token nextNonWhiteToken(ref Token[] tokens, ref size_t index) {
     Nullable!Token found;
     while (tokens.length > index) {
