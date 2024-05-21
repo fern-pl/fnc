@@ -1,6 +1,6 @@
 module a;
 
-kind:xmmword struct A 
+@xmmword struct A 
 {
     uint a;
     ushort b; 
