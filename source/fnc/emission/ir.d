@@ -82,6 +82,7 @@ public enum OpCode : ushort
     IDPKU,
     IDAVX512VBMI2,
     IDCET,
+    IDOSPKE,
     IDGFNI,
     IDVAES,
     IDVPCL,
@@ -1369,6 +1370,7 @@ final:
             case IDBMI1:
             case IDBMI2:
             case IDCET:
+            case IDOSPKE:
             case IDCID:
             case IDCLFL:
             case IDCLFLUSHOPT:
