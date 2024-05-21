@@ -139,6 +139,50 @@ NameValuePair[] genCommaSeperatedContents(AstNode expressionLike) {
     return ret;
 }
 
+private bool testAndJoinConversionPipe(ref Array!AstNode nodes, size_t nodeIndex) {
+    size_t startingIndex = nodeIndex;
+    Nullable!AstNode op1 = nodes.nextNonWhiteNode(nodeIndex);
+    Nullable!AstNode op2 = nodes.nextNonWhiteNode(nodeIndex);
+
+    if (op1 == null || op2 == null)
+        return false;
+    if (op1.value.action != AstAction.TokenHolder || op2.value.action != AstAction.TokenHolder)
+        return false;
+    if (op1.value.tokenBeingHeld.tokenVariety != TokenType.Pipe || op2.value
+        .tokenBeingHeld.value != ">".makeUnicodeString)
+        return false;
+
+    Nullable!AstNode typeToBeConverted = nodes.nextNonWhiteNode(nodeIndex);
+    if (typeToBeConverted == null)
+        return false;
+    // We must split up this named unit
+    // if (typeToBeConverted.value.action == AstAction.NamedUnit && typeToBeConverted.value.namedUnit.names.length > 1){
+        // AstNode node = typeToBeConverted.value;
+        // NamedUnit realType = NamedUnit([node.namedUnit[0]]);
+
+        // nodes.insert(nodeIndex, node);
+    // }
+    Nullable!AstNode potentialCall = nodes.nextNonWhiteNode(nodeIndex);
+    bool hasCall = potentialCall != null && potentialCall.value.action == AstAction.Expression;
+    AstNode typeToConvertTo = typeToBeConverted.value;
+    if (potentialCall != null && potentialCall.value.action != AstAction.Expression)
+        nodeIndex--;
+    if (hasCall) {
+        AstNode callingWith = new AstNode;
+        callingWith.action = AstAction.Call;
+        callingWith.callNodeData.func = typeToBeConverted.value;
+        callingWith.callNodeData.args = genCommaSeperatedContents(potentialCall.value);
+        typeToConvertTo = callingWith;
+    }
+    AstNode protoConversion = new AstNode;
+    protoConversion.action = AstAction.ProtoConversionPipe;
+    protoConversion.protoConversionPipeNodeData = typeToConvertTo;
+    nodes[startingIndex] = protoConversion;
+    nodes[startingIndex + 1 .. nodeIndex].writeln;
+    nodes.linearRemove(nodes[startingIndex + 1 .. nodeIndex]);
+    return true;
+}
+
 private bool testAndJoinGeneric(ref Array!AstNode nodes, size_t nodeIndex) {
     size_t startingIndex = nodeIndex;
     Nullable!AstNode thingToBeMadeAGenericOf = nodes.nextNonWhiteNode(nodeIndex);
@@ -226,7 +270,8 @@ void phaseTwo(ref Array!AstNode nodes) {
             if (testAndJoin(sepMethod, nodes, index))
                 goto TOP;
         }
-
+        if (testAndJoinConversionPipe(nodes, index))
+            goto TOP;
         if (testAndJoinGeneric(nodes, index))
             goto TOP;
         if (testAndJoinCall(nodes, index))

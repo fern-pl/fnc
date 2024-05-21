@@ -40,7 +40,9 @@ enum AstAction {
     LiteralUnit, // Ex: 6, 6L, "Hello world"
 
     TokenHolder, // A temporary Node that is yet to be parsed 
+    ProtoConversionPipe, // A temporary Node used before operators are handled
 
+    ConversionPipe,
     Voidable
 }
 
@@ -122,6 +124,8 @@ enum OperationVariety {
     Arrow, // foo->bar
     Range, // x..y OR 0..99
     Voidable, // int?
+
+    ConversionPipe
 }
 
 import fnc.treegen.scope_parser : ScopeData;
@@ -178,6 +182,10 @@ struct GenericNodeData // Generic used in code. Ex: foo.bar!baz
     AstNode symbolUsedAsGeneric;
     AstNode genericData;
 }
+struct ConversionPipeNodeData{
+    AstNode convertFrom;
+    AstNode convertTo;
+}
 
 class AstNode {
     AstAction action;
@@ -201,6 +209,9 @@ class AstNode {
         GenericNodeData genericNodeData; // GenericOf
         NameValuePair[] arrayNodeData; // Array
         AstNode voidableType; // Voidable
+
+        AstNode protoConversionPipeNodeData; // ProtoConversionPipe
+        ConversionPipeNodeData conversionPipeNodeData; // ConversionPipe
     }
 
     static AstNode VOID_NAMED_UNIT() {
@@ -292,6 +303,16 @@ class AstNode {
                 }
 
                 // callNodeData.args.tree(tabCount + 1);
+                break;
+            case AstAction.ConversionPipe:
+                writeln("Conversion Pipe: ");
+                tabCount++;
+                printTabs();
+                writeln("With:");
+                conversionPipeNodeData.convertFrom.tree(tabCount+1);
+                printTabs();
+                writeln("To:");
+                conversionPipeNodeData.convertTo.tree(tabCount+1);
                 break;
             case AstAction.DoubleArgumentOperation:
                 write("opr ");
