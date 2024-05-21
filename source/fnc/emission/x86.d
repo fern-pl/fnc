@@ -581,16 +581,198 @@ final:
     }
 
     ptrdiff_t label(string name) => labels[name] = buffer.length;
-    
-    // These categories are intended to separate instructions based on their corresponding flag,
-    // however, they do not accurately reflect this and are more whimsical than logical.
-
-    /* ====== PSEUDO/CUSTOM ====== */
 
     size_t stage(Instruction instr)
     {
         with (OpCode) switch (instr.opcode)
         {
+            case CRIDVME:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.VME));
+            case CRIDPVI:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PVI));
+            case CRIDTSD:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.TSD));
+            case CRIDDE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.DE));
+            case CRIDPSE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PSE));
+            case CRIDPAE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PAE));
+            case CRIDMCE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.MCE));
+            case CRIDPGE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PGE));
+            case CRIDPCE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PCE));
+            case CRIDOSFXSR:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.OSFXSR));
+            case CRIDOSXMMEXCPT:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.OSXMMEXCPT));
+            case CRIDUMIP:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.UMIP));
+            case CRIDVMXE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.VMXE));
+            case CRIDSMXE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.SMXE));
+            case CRIDFSGSBASE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.FSGSBASE));
+            case CRIDPCIDE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PCIDE));
+            case CRIDOSXSAVE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.OSXSAVE));
+            case CRIDSMEP:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.SMEP));
+            case CRIDSMAP:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.SMAP));
+            case CRIDPKE:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PKE));
+            case CRIDCET:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.CET));
+            case CRIDPKS:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PKS));
+            case CRIDUINTR:
+                return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
+                stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.UINTR));
+
+            case IDAVX512VL:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512VL)) +
+                // NOTE: This would have problems depending on what marker is the first operand.
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDAVX512BW:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512BW)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDSHA:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SHA)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDAVX512CD:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512CD)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDAVX512ER:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512ER)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDAVX512PF:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512PF)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDPT:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.PT)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDCLWB:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.CLWB)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDCLFLUSHOPT:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.CLFLUSHOPT)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDPCOMMIT:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.PCOMMIT)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDAVX512IFMA:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512IFMA)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDSMAP:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SMAP)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDADX:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.ADX)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDRDSEED:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.RDSEED)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDAVX512DQ:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512DQ)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDAVX512F:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512F)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDPQE:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.PQE)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDRTM:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.RTM)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDINVPCID:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.INVPCID)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDERMS:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.ERMS)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDBMI2:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.BMI2)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDSMEP:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SMEP)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDFPDP:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.FPDP)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDAVX2:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX2)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDHLE:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.HLE)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDBMI1:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.BMI1)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDSGX:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SGX)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDTSCADJ:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.TSC_ADJUST)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
+            case IDFSGSBASE:
+                return stage(Instruction(OpCode.CPUID, 7)) +
+                stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.FSGSBASE)) +
+                stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             default:
                 assert(0, "Invalid instruction staging!");
         }

@@ -6,7 +6,15 @@ import tern.state;
 import tern.algorithm.mutation : insert, alienate;
 import tern.algorithm.searching : contains, indexOf;
 
-// All symbols may have their children accessed at comptime using `->` followed by the Child name, alignment is internally align and marker is not visible.
+// All symbols may have their children accessed at comptime using `->` followed by the child name, alignment is internally align and marker is not visible.
+
+/// The global glob from which all symbols should originate.
+public static Glob glob;
+
+shared static this()
+{
+    glob = new Glob();
+}
 
 public enum SymAttr : ulong
 {
@@ -110,6 +118,22 @@ final:
         foreach (parent; parents)
             ret ~= parent.name~'.';
         return ret~name;
+    }
+
+    this()
+    {
+        // stupid ass language forces an explicit default constructor to be written
+    }
+    
+    this(Glob glob, SymAttr symattr, string name, Symbol[] parents, Symbol[] children, Symbol[string] attributes, Marker marker)
+    {
+        this.glob = glob;
+        this.symattr = symattr;
+        this.name = name;
+        this.parents = parents;
+        this.children = children;
+        this.attributes = attributes;
+        this.marker = marker;
     }
 
     bool isType() => (symattr & SymAttr.TYPE) != 0;
