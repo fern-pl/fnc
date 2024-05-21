@@ -7,7 +7,169 @@ import fnc.emission.ir;
 import fnc.symbols;
 import std.traits;
 
-public struct Stager
+public:
+enum cr0 = Marker(-1, 0, false);
+enum cr2 = Marker(-1, 2, false);
+enum cr3 = Marker(-1, 3, false);
+enum cr4 = Marker(-1, 4, false);
+
+enum dr0 = Marker(-2, 0, false);
+enum dr1 = Marker(-2, 1, false);
+enum dr2 = Marker(-2, 2, false);
+enum dr3 = Marker(-2, 3, false);
+enum dr6 = Marker(-2, 6, false);
+enum dr7 = Marker(-2, 7, false);
+
+enum st0 = Marker(-3, 0, false);
+enum st1 = Marker(-3, 1, false);
+enum st2 = Marker(-3, 2, false);
+enum st3 = Marker(-3, 3, false);
+enum st4 = Marker(-3, 4, false);
+enum st5 = Marker(-3, 5, false);
+enum st6 = Marker(-3, 6, false);
+enum st7 = Marker(-3, 7, false);
+
+enum al = Marker(8, 0, false);
+enum cl = Marker(8, 1, false);
+enum dl = Marker(8, 2, false);
+enum bl = Marker(8, 3, false);
+enum ah = Marker(8, 4, false);
+enum ch = Marker(8, 5, false);
+enum dh = Marker(8, 6, false);
+enum bh = Marker(8, 7, false);
+enum spl = Marker(8, 4, true);
+enum bpl = Marker(8, 5, true);
+enum sil = Marker(8, 6, true);
+enum dil = Marker(8, 7, true);
+enum r8b = Marker(8, 8, false);
+enum r9b = Marker(8, 9, false);
+enum r10b = Marker(8, 10, false);
+enum r11b = Marker(8, 11, false);
+enum r12b = Marker(8, 12, false);
+enum r13b = Marker(8, 13, false);
+enum r14b = Marker(8, 14, false);
+enum r15b = Marker(8, 15, false);
+
+enum ax = Marker(16, 0, false);
+enum cx = Marker(16, 1, false);
+enum dx = Marker(16, 2, false);
+enum bx = Marker(16, 3, false);
+enum sp = Marker(16, 4, false);
+enum bp = Marker(16, 5, false);
+enum si = Marker(16, 6, false);
+enum di = Marker(16, 7, false);
+enum r8w = Marker(16, 8, false);
+enum r9w = Marker(16, 9, false);
+enum r10w = Marker(16, 10, false);
+enum r11w = Marker(16, 11, false);
+enum r12w = Marker(16, 12, false);
+enum r13w = Marker(16, 13, false);
+enum r14w = Marker(16, 14, false);
+enum r15w = Marker(16, 15, false);
+
+enum eax = Marker(32, 0, false);
+enum ecx = Marker(32, 1, false);
+enum edx = Marker(32, 2, false);
+enum ebx = Marker(32, 3, false);
+enum esp = Marker(32, 4, false);
+enum ebp = Marker(32, 5, false);
+enum esi = Marker(32, 6, false);
+enum edi = Marker(32, 7, false);
+enum r8d = Marker(32, 8, false);
+enum r9d = Marker(32, 9, false);
+enum r10d = Marker(32, 10, false);
+enum r11d = Marker(32, 11, false);
+enum r12d = Marker(32, 12, false);
+enum r13d = Marker(32, 13, false);
+enum r14d = Marker(32, 14, false);
+enum r15d = Marker(32, 15, false);
+
+enum rax = Marker(64, 0, false);
+enum rcx = Marker(64, 1, false);
+enum rdx = Marker(64, 2, false);
+enum rbx = Marker(64, 3, false);
+enum rsp = Marker(64, 4, false);
+enum rbp = Marker(64, 5, false);
+enum rsi = Marker(64, 6, false);
+enum rdi = Marker(64, 7, false);
+enum r8 = Marker(64, 8, false);
+enum r9 = Marker(64, 9, false);
+enum r10 = Marker(64, 10, false);
+enum r11 = Marker(64, 11, false);
+enum r12 = Marker(64, 12, false);
+enum r13 = Marker(64, 13, false);
+enum r14 = Marker(64, 14, false);
+enum r15 = Marker(64, 15, false);
+
+// TODO: MM and first 8 R64 can be used interchangably, this is bad!
+enum mm0 = Marker(64, 0, false);
+enum mm1 = Marker(64, 1, false);
+enum mm2 = Marker(64, 2, false);
+enum mm3 = Marker(64, 3, false);
+enum mm4 = Marker(64, 4, false);
+enum mm5 = Marker(64, 5, false);
+enum mm6 = Marker(64, 6, false);
+enum mm7 = Marker(64, 7, false);
+
+enum xmm0 = Marker(128, 0, false);
+enum xmm1 = Marker(128, 1, false);
+enum xmm2 = Marker(128, 2, false);
+enum xmm3 = Marker(128, 3, false);
+enum xmm4 = Marker(128, 4, false);
+enum xmm5 = Marker(128, 5, false);
+enum xmm6 = Marker(128, 6, false);
+enum xmm7 = Marker(128, 7, false);
+enum xmm8 = Marker(128, 8, false);
+enum xmm9 = Marker(128, 9, false);
+enum xmm10 = Marker(128, 10, false);
+enum xmm11 = Marker(128, 11, false);
+enum xmm12 = Marker(128, 12, false);
+enum xmm13 = Marker(128, 13, false);
+enum xmm14 = Marker(128, 14, false);
+enum xmm15 = Marker(128, 15, false);
+
+enum ymm0 = Marker(256, 0, false);
+enum ymm1 = Marker(256, 1, false);
+enum ymm2 = Marker(256, 2, false);
+enum ymm3 = Marker(256, 3, false);
+enum ymm4 = Marker(256, 4, false);
+enum ymm5 = Marker(256, 5, false);
+enum ymm6 = Marker(256, 6, false);
+enum ymm7 = Marker(256, 7, false);
+enum ymm8 = Marker(256, 8, false);
+enum ymm9 = Marker(256, 9, false);
+enum ymm10 = Marker(256, 10, false);
+enum ymm11 = Marker(256, 11, false);
+enum ymm12 = Marker(256, 12, false);
+enum ymm13 = Marker(256, 13, false);
+enum ymm14 = Marker(256, 14, false);
+enum ymm15 = Marker(256, 15, false);
+
+enum zmm0 = Marker(512, 0, false);
+enum zmm1 = Marker(512, 1, false);
+enum zmm2 = Marker(512, 2, false);
+enum zmm3 = Marker(512, 3, false);
+enum zmm4 = Marker(512, 4, false);
+enum zmm5 = Marker(512, 5, false);
+enum zmm6 = Marker(512, 6, false);
+enum zmm7 = Marker(512, 7, false);
+enum zmm8 = Marker(512, 8, false);
+enum zmm9 = Marker(512, 9, false);
+enum zmm10 = Marker(512, 10, false);
+enum zmm11 = Marker(512, 11, false);
+enum zmm12 = Marker(512, 12, false);
+enum zmm13 = Marker(512, 13, false);
+enum zmm14 = Marker(512, 14, false);
+enum zmm15 = Marker(512, 15, false);
+
+enum ubyte es = 0x26;
+enum ubyte cs = 0x2e;
+enum ubyte ss = 0x36;
+enum ubyte ds = 0x3e;
+enum ubyte fs = 0x64;
+enum ubyte gs = 0x65;
+
+public class Stager : IStager
 {
 public:
 final:
@@ -15,116 +177,424 @@ final:
     Tuple!(ptrdiff_t, string, string, bool)[] branches;
     ubyte[] buffer;
     bool is64Bit;
-}
-
-package template emit(ubyte OP, ubyte SELECTOR = M, ubyte SIZE = 128, ubyte MAP = DEFAULT, ubyte PREFIX = 0)
-{
-    size_t emit(ARGS...)(ARGS args)
+    
+    template emit(ubyte OP, ubyte SELECTOR = M, ubyte SIZE = 128, ubyte MAP = DEFAULT, ubyte PREFIX = 0)
     {
-        ubyte[] buffer;
-        bool prefixed;
-        ptrdiff_t skip;
-
-        static if (SELECTOR == M || SELECTOR == NRM || SELECTOR == NP || SELECTOR == SSE)
-        void generatePrefix(Marker src, Marker dst, Marker stor = Marker.init)
+        size_t emit(ARGS...)(ARGS args)
         {
-            prefixed = true;
-            bool hasRex;
-            bool w;
-            bool r;
-            bool x;
-            bool b;
+            ubyte[] buffer;
+            bool prefixed;
+            ptrdiff_t skip;
 
-            if (src.kind == Kind.REGISTER)
+            static if (SELECTOR == M || SELECTOR == NRM || SELECTOR == NP || SELECTOR == SSE)
+            void generatePrefix(Marker src, Marker dst, Marker stor = Marker.init)
             {
-                hasRex |= src.size == 64 || (src.size == 8 && src.extended) || src.index >= 8;
-                w = src.size == 64;
-                b = src.index >= 8;
+                prefixed = true;
+                bool hasRex;
+                bool w;
+                bool r;
+                bool x;
+                bool b;
+
+                if (src.kind == Kind.REGISTER)
+                {
+                    hasRex |= src.size == 64 || (src.size == 8 && src.extended) || src.index >= 8;
+                    w = src.size == 64;
+                    b = src.index >= 8;
+                }
+                else if (src.kind = Kind.ALLOCATION)
+                {
+                    hasRex |= src.register >= 8;
+                    w = src.size == 64;
+                    b = src.register >= 8;
+
+                    if (src.segment != ds)
+                        buffer = src.segment~buffer;
+                }
+
+                if (dst.kind == Kind.REGISTER)
+                {
+                    hasRex |= dst.size == 64 || (dst.size == 8 && dst.extended) || dst.index >= 8;
+                    w = dst.size == 64;
+                    b = dst.index >= 8;
+                }
+                else if (dst.kind = Kind.ALLOCATION)
+                {
+                    hasRex |= dst.register >= 8;
+                    w = dst.size == 64;
+                    x = dst.register >= 8;
+
+                    if (dst.segment != ds)
+                        buffer = dst.segment~buffer;
+                }
+
+                if ((is64Bit && (dst.size != 64 || src.size != 64)) || dst.size != 32 || src.size != 32)
+                    buffer = 0x67~buffer;
+
+                if (dst.size == 16 || src.size == 16)
+                    buffer = 0x66~buffer;
+
+                static if (SELECTOR != NP && SELECTOR != SSE)
+                {
+                    if (hasRex)
+                    {
+                        ubyte rex = 0b01000000;
+                        if (w) rex |= (1 << 3);
+                        if (r) rex |= (1 << 2);
+                        if (x) rex |= (1 << 1);
+                        if (b) rex |= (1 << 0);
+                        
+                        size_t pos = 0;
+                        foreach (i; 0..5)
+                        {
+                            if (buffer[pos] == 0xf2)
+                                pos++;
+                            else if (buffer[pos] == 0xf3)
+                                pos++;
+                            else if (buffer[pos] == 0xf0)
+                                pos++;
+                            else if (buffer[pos] == 0x66)
+                                pos++;
+                            else if (buffer[pos] == 0x67)
+                                pos++;
+                        }
+                        buffer = buffer[0..pos]~rex~buffer[pos..$];
+                    }
+                }
             }
-            else if (src.kind = Kind.ALLOCATION)
-            {
-                hasRex |= src.register >= 8;
-                w = src.size == 64;
-                b = src.register >= 8;
 
-                if (src.segment != ds)
-                    buffer = src.segment~buffer;
+            static if (SELECTOR == VEX || SELECTOR == VEXI)
+            void generatePrefix(Marker src, Marker dst, Marker stor = Marker.init)
+            {
+                prefixed = true;
+                bool r;
+                bool x;
+                bool b;
+                immutable ubyte map_select = MAP;
+                bool we = SELECTOR == VEX;
+                ubyte vvvv = 0b1111;
+                immutable bool l = SIZE != 128;
+                immutable ubyte pp = (PREFIX == 0x66) ? 1 : ((PREFIX == 0xf3) ? 2 : ((PREFIX == 0xf2) ? 3 : 0));
+
+                if (stor.kind == Kind.REGISTER)
+                {
+                    if (dst.kind == Kind.REGISTER)
+                        vvvv = cast(ubyte)~dst.index;
+                    else if (dst.kind == Kind.ALLOCATION)
+                        vvvv = cast(ubyte)~dst.register;
+
+                    dst = Marker(dst.size, stor.index, dst.extended);
+                }
+                else if (stor.kind == Kind.ALLOCATION)
+                {
+                    if (dst.kind == Kind.REGISTER)
+                        vvvv = cast(ubyte)~dst.index;
+                    else static if (dst.kind == Kind.ALLOCATION)
+                        vvvv = cast(ubyte)~dst.register;
+                        
+                    dst = Marker(dst.size, stor.register, dst.extended);
+                }
+
+                if (src.kind == Kind.REGISTER)
+                {
+                    if (SELECTOR == VEXI)
+                        we = src.size == 64;
+                    b = src.index >= 8;
+                }
+                else if (src.kind == Kind.ALLOCATION)
+                {
+                    if (SELECTOR == VEXI)
+                        we = src.size == 64;
+                    b = src.register >= 8;
+
+                    if (src.segment != ds)
+                        buffer = src.segment~buffer;
+                }
+                
+                if (dst.kind == Kind.REGISTER)
+                {
+                    if (SELECTOR == VEXI)
+                        we = dst.size == 64;
+                    r = dst.index >= 8;
+                }
+                else if (dst.kind == Kind.ALLOCATION)
+                {
+                    if (SELECTOR == VEXI)
+                        we = dst.size == 64;
+                    x = dst.register >= 8;
+
+                    if (dst.segment != ds)
+                        buffer = dst.segment~buffer;
+                }
+
+                if ((is64Bit && (dst.size != 64 || src.size != 64)) || dst.size != 32 || src.size != 32)
+                    buffer = 0x67~buffer;
+
+                if (dst.size == 16 || src.size == 16)
+                    buffer = 0x66~buffer;
+
+                ubyte[] vex;
+                if (map_select != 1 || r || x || b || MAP == XOP)
+                {
+                    static if (SELECTOR != VEXI)
+                        we = false;
+
+                    vex ~= MAP == XOP ? 0x8f : 0xc4;
+                    vex ~= (cast(ubyte)(((r ? 0 : 1) << 5) | ((x ? 0 : 1) << 6) | ((b ? 0 : 1) << 7))) | (map_select & 0b00011111);
+                }
+                else
+                    vex ~= 0xc5;
+                vex ~= we << 7 | (vvvv & 0b00001111) << 3 | (l ? 1 : 0) << 2 | (pp & 0b00000011);
+                    
+                buffer = vex~buffer;
             }
 
-            if (dst.kind == Kind.REGISTER)
+            foreach (i, arg; args)
             {
-                hasRex |= dst.size == 64 || (dst.size == 8 && dst.extended) || dst.index >= 8;
-                w = dst.size == 64;
-                b = dst.index >= 8;
-            }
-            else if (dst.kind = Kind.ALLOCATION)
-            {
-                hasRex |= dst.register >= 8;
-                w = dst.size == 64;
-                b = dst.register >= 8;
-
-                if (dst.segment != ds)
-                    buffer = dst.segment~buffer;
-            }
-
-            if ((is64Bit && (dst.size != 64 || src.size != 64)) || dst.size != 32 || src.size != 32)
-                buffer = 0x67~buffer;
-
-            if (dst.size == 16 || src.size == 16)
-                buffer = 0x66~buffer;
-        }
-
-        foreach (i, arg; args)
-        {
-            if (skip-- > 0)
-                continue;
-
-            static if (is(typeof(arg) == int))
-                buffer ~= cast(ubyte)arg;
-            else static if (is(typeof(arg) == long))
-                buffer ~= (cast(ubyte*)&arg)[0..uint.sizeof];
-            else static if (isScalarType!(typeof(arg)))
-                buffer ~= (cast(ubyte*)&arg)[0..typeof(arg).sizeof];
-            else static if (is(typeof(arg) == ubyte[]))
-                buffer ~= arg;
-            else static if (SELECTOR == NRM && is(arg == Marker))
-            {
-                if (arg.kind != Kind.REGISTER)
+                if (skip-- > 0)
                     continue;
 
-                buffer[$-1] += arg.index % 8;
-                generatePrefix(Marker(arg.size, 0, arg.extended), arg);
-            }
-            else static if (i + 2 < args.length && is(arg == Marker) && is(arg[i + 1] == Marker) && is(arg[i + 2] == Marker))
-            {
-                auto dst = args[i + 2];
-                auto src = arg;
-                buffer ~= generateModRM!OP(dst, src);
-                generatePrefix(src, args[i + 1], dst);
-                ct = 2;
-            }
-            else static if (i + 1 < args.length && is(arg == Marker) && is(arg[i + 1] == Marker))
-            {
-                Marker dst = arg;
-                Marker src = args[i + 1];
-                static if (SELECTOR == M || SELECTOR == NP || SELECTOR == NRM)
+                static if (is(typeof(arg) == int))
+                    buffer ~= cast(ubyte)arg;
+                else static if (is(typeof(arg) == long))
+                    buffer ~= (cast(ubyte*)&arg)[0..uint.sizeof];
+                else static if (isScalarType!(typeof(arg)))
+                    buffer ~= (cast(ubyte*)&arg)[0..typeof(arg).sizeof];
+                else static if (is(typeof(arg) == ubyte[]))
+                    buffer ~= arg;
+                else static if (SELECTOR == NRM && is(arg == Marker))
+                {
+                    if (arg.kind != Kind.REGISTER)
+                        continue;
+
+                    buffer[$-1] += arg.index % 8;
+                    generatePrefix(Marker(arg.size, 0, arg.extended), arg);
+                }
+                else static if (i + 2 < args.length && is(arg == Marker) && is(arg[i + 1] == Marker) && is(arg[i + 2] == Marker))
+                {
+                    auto dst = args[i + 2];
+                    auto src = arg;
                     buffer ~= generateModRM!OP(dst, src);
-                else
-                    buffer ~= generateModRM!OP(src, dst);
-                generatePrefix(src, dst);
-                skip = 1;
+                    generatePrefix(src, args[i + 1], dst);
+                    ct = 2;
+                }
+                else static if (i + 1 < args.length && is(arg == Marker) && is(arg[i + 1] == Marker))
+                {
+                    Marker dst = arg;
+                    Marker src = args[i + 1];
+                    static if (SELECTOR == M || SELECTOR == NP || SELECTOR == NRM)
+                        buffer ~= generateModRM!OP(dst, src);
+                    else
+                        buffer ~= generateModRM!OP(src, dst);
+                    generatePrefix(src, dst);
+                    skip = 1;
+                }
+                else static if (is(arg == Marker))
+                {
+                    Marker dst = arg;
+                    Marker src = Marker(arg.size, 0, arg.extended);
+                    static if (SELECTOR == M || SELECTOR == NP || SELECTOR == NRM)
+                        buffer ~= generateModRM!OP(dst, src);
+                    else
+                        buffer ~= generateModRM!OP(src, dst);
+                    generatePrefix(src, dst);
+                }
             }
-            else static if (is(arg == Marker))
+
+            // TODO: This resonates a dark, malignant, sinister otherworldly aura, could it be the demon king?
+            if (!prefixed)
             {
-                Marker dst = arg;
-                Marker src = Marker(arg.size, 0, arg.extended);
-                static if (SELECTOR == M || SELECTOR == NP || SELECTOR == NRM)
-                    buffer ~= generateModRM!OP(dst, src);
-                else
-                    buffer ~= generateModRM!OP(src, dst);
-                generatePrefix(src, dst);
+                static if (SELECTOR != M && SELECTOR != NP && SELECTOR != NP && SELECTOR != NRM)
+                    generatePrefix(Marker(typeof(args[0]).sizeof * 128, 0, false), Marker(typeof(args[0]).sizeof * 128, 0, false));
+
+                static if (SELECTOR == M || SELECTOR == NP || SELECTOR == NP || SELECTOR == NRM)
+                foreach (i, arg; args)
+                {
+                    static if (!is(typeof(arg) == int))
+                    {
+                        static if (args.length - i - 1 == 0)
+                            generatePrefix(Marker(typeof(arg).sizeof * 8, 0, false), Marker(typeof(arg).sizeof * 8, 0, false));
+                        else static if (args.length - i - 1 == 1)
+                            generatePrefix(Marker(typeof(arg).sizeof * 8, 0, false), Marker(typeof(args[i + 1]).sizeof * 8, 0, false));
+                        else static if (args.length - i - 1 == 2)
+                            generatePrefix(Marker(typeof(arg).sizeof * 8, 0, false), Marker(typeof(args[i + 1]).sizeof * 8, 0, false), Marker(typeof(args[i + 2]).sizeof * 8, 0, false));
+                        break;
+                    }
+                }
             }
+
+            this.buffer ~= buffer;
+            return buffer.length;
         }
+    }
+
+    ubyte[] finalize()
+    {
+        immutable static ubyte[][string] branchMap = [
+            "jmp1": [0xeb],
+            "jmp2": [0xe9],
+            "jmp4": [0xe9],
+            "ja1": [0x77],
+            "jae1": [0x73],
+            "jb1": [0x72],
+            "jbe1": [0x76],
+            "jc1": [0x72],
+            "jecxz1": [0xE3],
+            "jecxz1": [0xE3],
+            "jrcxz1": [0xE3],
+            "je1": [0x74],
+            "jg1": [0x7F],
+            "jge1": [0x7D],
+            "jl1": [0x7C],
+            "jle1": [0x7E],
+            "jna1": [0x76],
+            "jnae1": [0x72],
+            "jnb1": [0x73],
+            "jnbe1": [0x77],
+            "jnc1": [0x73],
+            "jne1": [0x75],
+            "jng1": [0x7E],
+            "jnge1": [0x7C],
+            "jnl1": [0x7D],
+            "jnle1": [0x7F],
+            "jno1": [0x71],
+            "jnp1": [0x7B],
+            "jns1": [0x79],
+            "jnz1": [0x75],
+            "jo1": [0x70],
+            "jp1": [0x7A],
+            "jpe1": [0x7A],
+            "jpo1": [0x7B],
+            "js1": [0x78],
+            "jz1": [0x74],
+            "ja2": [0x0F, 0x87],
+            "ja4": [0x0F, 0x87],
+            "jae2": [0x0F, 0x83],
+            "jae4": [0x0F, 0x83],
+            "jb2": [0x0F, 0x82],
+            "jb4": [0x0F, 0x82],
+            "jbe2": [0x0F, 0x86],
+            "jbe4": [0x0F, 0x86],
+            "jc2": [0x0F, 0x82],
+            "jc4": [0x0F, 0x82],
+            "je2": [0x0F, 0x84],
+            "je4": [0x0F, 0x84],
+            "jz2": [0x0F, 0x84],
+            "jz4": [0x0F, 0x84],
+            "jg2": [0x0F, 0x8F],
+            "jg4": [0x0F, 0x8F],
+            "jge2": [0x0F, 0x8D],
+            "jge4": [0x0F, 0x8D],
+            "jl2": [0x0F, 0x8C],
+            "jl4": [0x0F, 0x8C],
+            "jle2": [0x0F, 0x8E],
+            "jle4": [0x0F, 0x8E],
+            "jna2": [0x0F, 0x86],
+            "jna4": [0x0F, 0x86],
+            "jnae2": [0x0F, 0x82],
+            "jnae4": [0x0F, 0x82],
+            "jnb2": [0x0F, 0x83],
+            "jnb4": [0x0F, 0x83],
+            "jnbe2": [0x0F, 0x87],
+            "jnbe4": [0x0F, 0x87],
+            "jnc2": [0x0F, 0x83],
+            "jnc4": [0x0F, 0x83],
+            "jne2": [0x0F, 0x85],
+            "jne4": [0x0F, 0x85],
+            "jng2": [0x0F, 0x8E],
+            "jng4": [0x0F, 0x8E],
+            "jnge2": [0x0F, 0x8C],
+            "jnge4": [0x0F, 0x8C],
+            "jnl2": [0x0F, 0x8D],
+            "jnl4": [0x0F, 0x8D],
+            "jnle2": [0x0F, 0x8F],
+            "jnle4": [0x0F, 0x8F],
+            "jno2": [0x0F, 0x81],
+            "jno4": [0x0F, 0x81],
+            "jnp2": [0x0F, 0x8B],
+            "jnp4": [0x0F, 0x8B],
+            "jns2": [0x0F, 0x89],
+            "jns4": [0x0F, 0x89],
+            "jnz2": [0x0F, 0x85],
+            "jnz4": [0x0F, 0x85],
+            "jo2": [0x0F, 0x80],
+            "jo4": [0x0F, 0x80],
+            "jp2": [0x0F, 0x8A],
+            "jp4": [0x0F, 0x8A],
+            "jpe2": [0x0F, 0x8A],
+            "jpe4": [0x0F, 0x8A],
+            "jpo2": [0x0F, 0x8B],
+            "jpo4": [0x0F, 0x8B],
+            "js2": [0x0F, 0x88],
+            "js4": [0x0F, 0x88],
+            "jz2": [0x0F, 0x84],
+            "jz4": [0x0F, 0x84],
+            "loop1": [0xe2],
+            "loope1": [0xe1],
+            "loopne1": [0xe0]
+        ];
+
+        size_t abs;
+        size_t calculateBranch(T)(T branch)
+        {
+            size_t size;
+            auto rel = labels[branch[1]] - branch[0] + abs;
+            bool isRel8 = rel <= ubyte.max && rel >= ubyte.min;
+            bool isRel16 = rel <= ushort.max && rel >= ushort.min;
+
+            if (isRel8)
+                size = branchMap[branch[2]~'1'].length + 1;
+            else if (isRel16)
+                size = branchMap[branch[2]~'2'].length + 2;
+            else
+                size = branchMap[branch[2]~'4'].length + 4;
+
+            return size;
+        }
+
+        foreach (ref i, branch; branches)
+        {
+            if (i + 1 < branches.length && branches[i + 1][3] && branches[i + 1][0] == branch[0])
+                labels[branch[1]] += calculateBranch(branches[i + 1]);
+
+            ubyte[] buffer;
+
+            branch[0] += abs;
+            auto rel = labels[branch[1]] - branch[0];
+            bool isRel8 = rel <= byte.max && rel >= byte.min;
+            bool isRel16 = rel <= short.max && rel >= short.min;
+
+            buffer ~= branchMap[branch[2]~(isRel8 ? '1' : isRel16 ? '2' : '4')];
+
+            if (isRel8)
+                buffer ~= cast(ubyte)rel;
+            else if (isRel16)
+                buffer ~= (cast(ubyte*)&rel)[0..2];
+            else
+                buffer ~= (cast(ubyte*)&rel)[0..4];
+
+            abs += buffer.length;
+            this.buffer = this.buffer[0..branch[0]]~buffer~this.buffer[branch[0]..$];
+        }
+        branches = null;
+        return this.buffer;
+    }
+
+    ptrdiff_t label(string name) => labels[name] = buffer.length;
+    
+    // These categories are intended to separate instructions based on their corresponding flag,
+    // however, they do not accurately reflect this and are more whimsical than logical.
+
+    /* ====== PSEUDO/CUSTOM ====== */
+
+    size_t stage(Instruction instr)
+    {
+        with (OpCode) switch (instr.opcode)
+        {
+            default:
+                assert(0, "Invalid instruction staging!");
+        }
+        return -1;
     }
 }
 

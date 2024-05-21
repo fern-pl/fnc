@@ -1525,3 +1525,10 @@ final:
         }
     }
 } */
+
+public interface IStager
+{
+    ubyte[] finalize();
+    ptrdiff_t label(string name);
+    size_t stage(Instruction instr);
+}
