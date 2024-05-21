@@ -88,12 +88,12 @@ enum OperationVariety {
     Pipe,
     Assignment,
 
-    BitwiseNot,
+    Concatenate,
     BitwiseOr,
     BitwiseXor,
     BitwiseAnd,
 
-    BitwiseNotEq,
+    ConcatenateEq,
     BitwiseOrEq,
     BitwiseXorEq,
     BitwiseAndEq,
@@ -274,6 +274,10 @@ class AstNode {
         printTabs();
 
         switch (action) {
+            case AstAction.Voidable:
+                writeln(action);
+                voidableType.tree(tabCount + 1);
+                break;
             case AstAction.GenericOf:
                 write(action);
                 writeln(":");

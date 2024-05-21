@@ -45,16 +45,21 @@ public enum GenerationFlags {
     Common,
     Native, // Remaining features may be toggled, sourced from gallinule ID enums (not CR)
 }
+import fnc.tokenizer.make_tokens;
 
+import fnc.treegen.scope_parser;
+import fnc.treegen.expression_parser;
+import fnc.treegen.relationships;
 void main() {
-    import fnc.treegen.scope_parser : parseMultilineScope, ScopeData, tree;
-    import fnc.treegen.relationships : GLOBAL_SCOPE_PARSE;
+
 
     ScopeData globalScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
         public module foo.bar;
         int main(){
-            byte c = (1 + 5 )|> B.c;
+            !false;
+
         }
     ");
+
     globalScope.tree;
 }

@@ -709,9 +709,9 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                 ]),
 
             OperationPrecedenceEntry(OperationVariety.LogicalNot, [
-                    OPR('!'), Token(TokenType.Filler)
+                    Token(TokenType.ExclamationMark, "!".makeUnicodeString), Token(TokenType.Filler)
                 ]),
-            OperationPrecedenceEntry(OperationVariety.BitwiseNot, [
+            OperationPrecedenceEntry(OperationVariety.Concatenate, [
                     OPR('~'), Token(TokenType.Filler)
                 ]),
         ]),
@@ -849,7 +849,7 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                     Token(TokenType.Filler), OPR('|'), OPR('='),
                     Token(TokenType.Filler)
                 ]),
-            OperationPrecedenceEntry(OperationVariety.BitwiseNotEq, [
+            OperationPrecedenceEntry(OperationVariety.ConcatenateEq, [
                     Token(TokenType.Filler), OPR('~'), OPR('='),
                     Token(TokenType.Filler)
                 ]),
@@ -896,6 +896,7 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
                 operands ~= node;
                 break;
             case TokenType.QuestionMark:
+            case TokenType.ExclamationMark:
             case TokenType.Equals:
             case TokenType.Operator:
                 if (node.action != AstAction.TokenHolder)
@@ -903,7 +904,8 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
                 Token token = node.tokenBeingHeld;
                 if (token.tokenVariety != TokenType.Equals
                     && token.tokenVariety != TokenType.Operator
-                    && token.tokenVariety != TokenType.QuestionMark)
+                    && token.tokenVariety != TokenType.QuestionMark
+                    && token.tokenVariety != TokenType.ExclamationMark)
                     return false;
                 if (token.value != entry.tokens[index].value)
                     return false;
