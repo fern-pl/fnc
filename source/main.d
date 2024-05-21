@@ -53,9 +53,7 @@ void main() {
     ScopeData globalScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
         public module foo.bar;
         int main(){
-            A a;
-            uint b = a.foo();
-            byte c = (a + 1) |> B.a;
+            byte c = 1 |> B.c;
         }
     ");
     globalScope.tree;

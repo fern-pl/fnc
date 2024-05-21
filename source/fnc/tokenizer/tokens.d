@@ -24,7 +24,6 @@ enum TokenType {
     Period,
 
     // NOT USED IN TOKENIZER, see fnc/treegen/relationships.d
-    _ConversionPipe,
     Filler
 }
 

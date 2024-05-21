@@ -695,11 +695,6 @@ const auto SEPERATION_LAYER_WITH_VOIDABLE = OperatorPrecedenceLayer(OperatorOrde
 const OperatorPrecedenceLayer[] operatorPrecedence = [
     SEPERATION_LAYER,
     OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
-        OperationPrecedenceEntry(OperationVariety.ConversionPipe, [
-            Token(TokenType.Filler), Token(TokenType._ConversionPipe)
-        ]),
-    ]),
-    OperatorPrecedenceLayer(OperatorOrder.LeftToRight, [
             OperationPrecedenceEntry(OperationVariety.PreIncrement, [
                     OPR('+'), OPR('+'), Token(TokenType.Filler)
                 ]),
@@ -900,11 +895,6 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
                     return false;
                 operands ~= node;
                 break;
-            case TokenType._ConversionPipe:
-                if (node.action != AstAction.ProtoConversionPipe)
-                    return false;
-                operands ~= node;
-                break;
             case TokenType.QuestionMark:
             case TokenType.Equals:
             case TokenType.Operator:
@@ -936,12 +926,6 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
             [operands[0]],
             operands[1]
         );
-        goto trim;
-    }
-    if(entry.operation == OperationVariety.ConversionPipe){
-        oprNode.action = AstAction.ConversionPipe;
-        operands[0].writeln;
-        oprNode.conversionPipeNodeData = ConversionPipeNodeData(operands[0], operands[1].protoConversionPipeNodeData);
         goto trim;
     }
 

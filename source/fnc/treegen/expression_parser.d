@@ -141,10 +141,12 @@ NameValuePair[] genCommaSeperatedContents(AstNode expressionLike) {
 
 private bool testAndJoinConversionPipe(ref Array!AstNode nodes, size_t nodeIndex) {
     size_t startingIndex = nodeIndex;
+    Nullable!AstNode itemToConvert = nodes.nextNonWhiteNode(nodeIndex);
+    
     Nullable!AstNode op1 = nodes.nextNonWhiteNode(nodeIndex);
     Nullable!AstNode op2 = nodes.nextNonWhiteNode(nodeIndex);
 
-    if (op1 == null || op2 == null)
+    if (op1 == null || op2 == null || itemToConvert == null)
         return false;
     if (op1.value.action != AstAction.TokenHolder || op2.value.action != AstAction.TokenHolder)
         return false;
@@ -156,12 +158,25 @@ private bool testAndJoinConversionPipe(ref Array!AstNode nodes, size_t nodeIndex
     if (typeToBeConverted == null)
         return false;
     // We must split up this named unit
-    // if (typeToBeConverted.value.action == AstAction.NamedUnit && typeToBeConverted.value.namedUnit.names.length > 1){
-        // AstNode node = typeToBeConverted.value;
-        // NamedUnit realType = NamedUnit([node.namedUnit[0]]);
+    if (typeToBeConverted.value.action == AstAction.NamedUnit && typeToBeConverted.value.namedUnit.names.length > 1){
+        AstNode node = typeToBeConverted.value;
+        NamedUnit realType = NamedUnit([node.namedUnit.names[0]]);
+        NamedUnit afterType = NamedUnit(node.namedUnit.names[1..$]);
+        AstNode period = new AstNode;
+        AstNode afterTypeNode = new AstNode;
+        AstNode realTypeNode = new AstNode;
+        period.action = AstAction.TokenHolder;
+        period.tokenBeingHeld = Token(TokenType.Period, ".".makeUnicodeString);
 
-        // nodes.insert(nodeIndex, node);
-    // }
+        afterTypeNode.action = AstAction.NamedUnit;
+        afterTypeNode.namedUnit = afterType;
+
+        realTypeNode.action = AstAction.NamedUnit;
+        realTypeNode.namedUnit = realType;
+        nodes.insertBefore(nodes[nodeIndex..$], afterTypeNode);
+        nodes.insertBefore(nodes[nodeIndex..$], period);
+        typeToBeConverted.value = realTypeNode;
+    }
     Nullable!AstNode potentialCall = nodes.nextNonWhiteNode(nodeIndex);
     bool hasCall = potentialCall != null && potentialCall.value.action == AstAction.Expression;
     AstNode typeToConvertTo = typeToBeConverted.value;
@@ -175,10 +190,9 @@ private bool testAndJoinConversionPipe(ref Array!AstNode nodes, size_t nodeIndex
         typeToConvertTo = callingWith;
     }
     AstNode protoConversion = new AstNode;
-    protoConversion.action = AstAction.ProtoConversionPipe;
-    protoConversion.protoConversionPipeNodeData = typeToConvertTo;
+    protoConversion.action = AstAction.ConversionPipe;
+    protoConversion.conversionPipeNodeData = ConversionPipeNodeData(itemToConvert.value, typeToConvertTo);
     nodes[startingIndex] = protoConversion;
-    nodes[startingIndex + 1 .. nodeIndex].writeln;
     nodes.linearRemove(nodes[startingIndex + 1 .. nodeIndex]);
     return true;
 }

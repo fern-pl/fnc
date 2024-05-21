@@ -40,7 +40,6 @@ enum AstAction {
     LiteralUnit, // Ex: 6, 6L, "Hello world"
 
     TokenHolder, // A temporary Node that is yet to be parsed 
-    ProtoConversionPipe, // A temporary Node used before operators are handled
 
     ConversionPipe,
     Voidable
@@ -125,7 +124,7 @@ enum OperationVariety {
     Range, // x..y OR 0..99
     Voidable, // int?
 
-    ConversionPipe
+
 }
 
 import fnc.treegen.scope_parser : ScopeData;
@@ -210,7 +209,6 @@ class AstNode {
         NameValuePair[] arrayNodeData; // Array
         AstNode voidableType; // Voidable
 
-        AstNode protoConversionPipeNodeData; // ProtoConversionPipe
         ConversionPipeNodeData conversionPipeNodeData; // ConversionPipe
     }
 
