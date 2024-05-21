@@ -70,6 +70,9 @@ private Token[] protoTokenize(string input) {
             }
 
         }
+        if (symbol == '_' && tokens[$ - 1].tokenVariety == TokenType.Number)
+            continue;
+
         TokenType tokenType = getVarietyOfLetter(symbol);
         Token token = Token(tokenType, [symbol], index);
         if (tokenType == TokenType.Quotation) {

@@ -536,7 +536,6 @@ Nullable!(TokenGrepResult[]) matchesToken(in TokenGrepPacket[] testWith, Token[]
                 size_t potentialSize = prematureSingleTokenGroupLength(tokens, index);
                 if (!potentialSize)
                     return tokenGrepBox(null);
-                tokens[index .. index + potentialSize].writeln;
                 Array!AstNode type = expressionNodeFromTokens(tokens[index .. index + potentialSize]);
 
                 if (type.length != 1)

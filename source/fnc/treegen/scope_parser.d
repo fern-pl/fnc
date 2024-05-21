@@ -477,7 +477,6 @@ LineVarietyTestResult parseLine(const(VarietyTestPair[]) scopeParseMethod, Token
             if (expression_end == -1)
                 throw new SyntaxError("Semicolon not found!", tokens[index]);
             auto nodes = expressionNodeFromTokens(tokens[index .. expression_end]);
-            nodes.writeln;
             if (nodes.length != 1)
                 throw new SyntaxError(
                     "Expression node tree could not be parsed properly (Not reducable into single node in SimpleExpression)", nodes

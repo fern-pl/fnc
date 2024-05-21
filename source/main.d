@@ -54,9 +54,9 @@ void main() {
 
 
     ScopeData globalScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
-        public module foo.bar;
+        private module foo.bar;
         int main(){
-            x = [true] ~ false;
+            auto x = 0b0000_0011;
 
         }
     ");
