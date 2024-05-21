@@ -1004,8 +1004,48 @@ final:
         return true;
     }
 
-    this(OpCode opcode, Symbol[] operands...)
+    this(ARGS...)(OpCode opcode, ARGS args)
     {
+        Symbol[] operands;
+        foreach (arg; args)
+        {
+            static if (is(Unqual!(typeof(arg)) == Symbol))
+                operands ~= cast(Symbol)arg;
+            else
+            {
+                SymAttr attr = SymAttr.LITERAL;
+                // We don't check for if its a vector, but this shouldn't matter.
+                static if (is(typeof(arg) == string))
+                    attr |= SymAttr.STRING;
+                else static if (is(typeof(arg) == ubyte) || is(typeof(arg) == byte))
+                    attr |= SymAttr.BYTE;
+                else static if (is(typeof(arg) == ushort) || is(typeof(arg) == short))
+                    attr |= SymAttr.WORD;
+                else static if (is(typeof(arg) == uint) || is(typeof(arg) == int))
+                    attr |= SymAttr.DWORD;
+                else static if (is(typeof(arg) == ulong) || is(typeof(arg) == long))
+                    attr |= SymAttr.QWORD;
+                else static if (is(typeof(arg) == float))
+                    attr |= SymAttr.FLOAT;
+                else static if (is(typeof(arg) == double))
+                    attr |= SymAttr.DOUBLE;
+                else static if (isArray!(typeof(arg)))
+                    attr |= SymAttr.ARRAY;
+
+                static if (isStaticArray!(typeof(arg)))
+                    attr |= SymAttr.FIXARRAY;
+                else static if (isAssociativeArray!(typeof(arg)))
+                    attr |= SymAttr.ASOARRAY;
+                else static if (isDynamicArray!(typeof(arg)))
+                    attr |= SymAttr.DYNARRAY;
+
+                static if (isSigned!(typeof(arg)))
+                    attr |= SymAttr.SIGNED;
+
+                operands ~= new Symbol(glob, attr, null, null, null, null, Marker(arg));
+            }   
+        }
+
         Details detail(string fmt) pure
         {
             Details ret;
