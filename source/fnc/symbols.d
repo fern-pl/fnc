@@ -7,6 +7,8 @@ import tern.algorithm.mutation : insert, alienate;
 import tern.algorithm.searching : contains, indexOf;
 
 // All symbols may have their children accessed at comptime using `->` followed by the child name, alignment is internally align and marker is not visible.
+// TODO: Interface passing as argument, alias this. Inheriting and declaring as a field?
+//       Guarantee order of fields in a type from inheriting.
 
 /// The global glob from which all symbols should originate.
 public static Glob glob;
@@ -18,7 +20,7 @@ shared static this()
 
 public enum SymAttr : ulong
 {
-    // TODO: Make sure Fern can automatically infer long from shifting
+    // TODO: Make sure Fern can automatically infer long from shifting,
     //       D doesn't do this so 1 << 32 throws an error about the fact that 1 is assumed to be int.
 
     // Top-Level Kind

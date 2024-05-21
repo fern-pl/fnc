@@ -5,6 +5,7 @@ import fnc.emission.ir;
 import fnc.symbols;
 import std.typecons;
 import std.traits;
+import std.bitmanip;
 
 public enum CRID
 {
@@ -362,6 +363,84 @@ enum ubyte ss = 0x36;
 enum ubyte ds = 0x3e;
 enum ubyte fs = 0x64;
 enum ubyte gs = 0x65;
+
+private enum Mode
+{
+    Memory,
+    MemoryOffset8,
+    MemoryOffsetExt,
+    Register
+}
+
+private union ModRM
+{
+public:
+final:
+    struct
+    {
+        mixin(bitfields!(
+            ubyte, "src", 3,
+            ubyte, "dst", 3,
+            ubyte, "mod", 2
+        ));
+    }
+    ubyte b;
+    alias b this;
+}
+
+ubyte[] generateModRM(ubyte OP)(Marker src, Marker dst, Mode mod = Mode.Register)
+{
+    if (src.kind == Kind.REGISTER && dst.kind == Kind.REGISTER)
+    {
+        ModRM ret;
+        ret.src = (src.index % 8);
+        ret.dst = (dst.index % 8) | OP;
+        ret.mod = cast(ubyte)mod;
+        return [ret];
+    }
+    else if (src.kind == Kind.ALLOCATION && dst.kind == Kind.REGISTER)
+    {
+        if (src.size == 0)
+            return generateModRM!OP(Marker(dst.size, src.register, false), dst, Mode.Memory)~0x25~(cast(ubyte*)&src.offset)[0..uint.sizeof];
+        else
+        {
+            if (src.offset == 0)
+                return generateModRM!OP(Marker(dst.size, src.register, false), dst, Mode.Memory);
+            else
+            {
+                // TODO: SIB?
+                if (src.offset >= ubyte.max)
+                    return generateModRM!OP(Marker(dst.size, src.register, false), dst, Mode.MemoryOffset8)~cast(ubyte)src.offset;
+                else
+                    return generateModRM!OP(Marker(dst.size, src.register, false), dst, Mode.MemoryOffsetExt)~(cast(ubyte*)&src.offset)[0..uint.sizeof];
+            }
+        }
+    }
+    else if (src.kind == Kind.ALLOCATION && dst.kind == Kind.ALLOCATION)
+        return generateModRM!OP(Marker(dst.size, dst.register, false), Marker(src.size, src.register, false));
+    else if (src.kind == Kind.REGISTER && dst.kind == Kind.ALLOCATION)
+        return generateModRM!OP(dst, src);
+}
+
+enum M = 0;
+// Used for generating instructions with directly encoded registers.
+enum NRM = 1;
+// Used for generating instructions without REX prefixes.
+enum NP = 2;
+enum VEX = 3;
+// Used for generating integer VEX instructions.
+enum VEXI = 4;
+enum EVEX = 5;
+enum MVEX = 6;
+// Exactly the same as NP except flips dst and src.
+enum SSE = 7;
+
+// map_select
+enum XOP = 0;
+enum DEFAULT = 1;
+enum F38 = 2;
+enum F3A = 3;
+enum MSR = 7;
 
 public class Stager : IStager
 {
