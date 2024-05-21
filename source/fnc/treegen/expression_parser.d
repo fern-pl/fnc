@@ -142,12 +142,12 @@ NameValuePair[] genCommaSeperatedContents(AstNode expressionLike) {
 private bool testAndJoinConversionPipe(ref Array!AstNode nodes, size_t nodeIndex) {
     size_t startingIndex = nodeIndex;
     Nullable!AstNode itemToConvert = nodes.nextNonWhiteNode(nodeIndex);
-    
     Nullable!AstNode op1 = nodes.nextNonWhiteNode(nodeIndex);
     Nullable!AstNode op2 = nodes.nextNonWhiteNode(nodeIndex);
 
     if (op1 == null || op2 == null || itemToConvert == null)
         return false;
+    handleSingleNodeExpressionTest(itemToConvert.value);
     if (op1.value.action != AstAction.TokenHolder || op2.value.action != AstAction.TokenHolder)
         return false;
     if (op1.value.tokenBeingHeld.tokenVariety != TokenType.Pipe || op2.value
@@ -254,6 +254,7 @@ private bool testAndJoinIndexingInto(ref Array!AstNode nodes, size_t nodeIndex) 
     Nullable!AstNode index = nodes.nextNonWhiteNode(nodeIndex);
     if (thingBeingIndexed == null || index == null)
         return false;
+
     if (index.value.action != AstAction.ArrayGrouping)
         return false;
 
@@ -275,7 +276,20 @@ private bool testAndJoinIndexingInto(ref Array!AstNode nodes, size_t nodeIndex) 
     nodes.linearRemove(nodes[startingIndex + 1 .. nodeIndex]);
     return true;
 }
-
+private void handleSingleNodeExpressionTest(ref AstNode node){
+    if (node.action == AstAction.Expression) {
+        Array!AstNode components;
+        components ~= node.expressionNodeData.components;
+        phaseTwo(components);
+        scanAndMergeOperators(components);
+        assert(components.length == 1, "Expression is invalid");
+        node = components[0];
+    }
+    else if (node.action == AstAction.ArrayGrouping) {
+        node.arrayNodeData = genCommaSeperatedContents(node);
+        node.action = AstAction.Array;
+    }
+}
 // Handle function calls, arrays, and Generics
 void phaseTwo(ref Array!AstNode nodes) {
     for (size_t index = 0; index < nodes.length; index++) {
@@ -284,6 +298,7 @@ void phaseTwo(ref Array!AstNode nodes) {
             if (testAndJoin(sepMethod, nodes, index))
                 goto TOP;
         }
+
         if (testAndJoinConversionPipe(nodes, index))
             goto TOP;
         if (testAndJoinGeneric(nodes, index))
@@ -292,18 +307,7 @@ void phaseTwo(ref Array!AstNode nodes) {
             goto TOP;
         if (testAndJoinIndexingInto(nodes, index))
             goto TOP;
-        if (nodes[index].action == AstAction.Expression) {
-            Array!AstNode components;
-            components ~= nodes[index].expressionNodeData.components;
-            phaseTwo(components);
-            scanAndMergeOperators(components);
-            assert(components.length == 1, "Expression is invalid");
-            nodes[index] = components[0];
-        }
-        else if (nodes[index].action == AstAction.ArrayGrouping) {
-            nodes[index].arrayNodeData = genCommaSeperatedContents(nodes[index]);
-            nodes[index].action = AstAction.Array;
-        }
+        handleSingleNodeExpressionTest(nodes[index]);
 
     }
 }
