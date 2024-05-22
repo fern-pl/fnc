@@ -429,6 +429,7 @@ size_t prematureSingleTokenGroupLength(Token[] tokens, size_t index) {
             case TokenType.WhiteSpace:
                 break;
             case TokenType.Operator:
+            case TokenType.Equals:
             case TokenType.Period:
             case TokenType.ExclamationMark:
                 wasLastFinalToken = false;

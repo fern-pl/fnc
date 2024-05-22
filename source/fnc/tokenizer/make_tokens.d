@@ -8,6 +8,23 @@ import tern.typecons.common : Nullable, nullable;
 
 import fnc.tokenizer.tokens;
 
+bool isZeroStyleSpecialNumber(dchar magicLetter) {
+    switch (magicLetter) {
+        case 'o': // Octal
+        case 'O':
+
+        case 'b': // Binary
+        case 'B':
+
+        case 'x': // Hex
+        case 'X':
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 dchar[] handleMultilineCommentsAtIndex(dchar[] input, ref size_t index) {
     if (index + 1 >= input.length)
         return [];
@@ -75,6 +92,8 @@ private Token[] protoTokenize(string input) {
 
         TokenType tokenType = getVarietyOfLetter(symbol);
         Token token = Token(tokenType, [symbol], index);
+        if (tokenType == TokenType.Number)
+            token.base = SpecialNumberBase.Decimal;
         if (tokenType == TokenType.Quotation) {
             dchar last = symbol;
             index++;
@@ -121,9 +140,34 @@ private Token[] groupTokens(Token[] tokens) {
             continue;
         }
 
-        if (groupedTokens[$ - 1].tokenVariety == token.tokenVariety && groupableTokens.find(
-                token.tokenVariety).length) {
+        if (groupedTokens[$ - 1].tokenVariety == token.tokenVariety
+            && groupableTokens.find(token.tokenVariety).length) {
+
             groupedTokens[$ - 1].value ~= token.value;
+            continue;
+        }
+        bool numberAfterLetter = groupedTokens[$ - 1].tokenVariety == TokenType.Number && token.tokenVariety == TokenType
+            .Letter;
+        if (numberAfterLetter
+            && groupedTokens[$ - 1].value == "0".makeUnicodeString
+            && token.value.length == 1 && token.value[0].isZeroStyleSpecialNumber) {
+            groupedTokens[$ - 1].base = getCustomBase(token.value[0]);
+            groupedTokens[$ - 1].value ~= token.value;
+
+            continue;
+        }
+        else if (numberAfterLetter) {
+
+            foreach (i, sym; token.value) {
+                if (sym.isHexDigit)
+                    groupedTokens[$ - 1].value ~= sym;
+                else {
+                    groupedTokens ~= Token(TokenType.Letter,
+                        token.value[i .. $], i + token.startingIndex);
+                    break;
+                }
+            }
+
             continue;
         }
         if (groupedTokens[$ - 1].tokenVariety == TokenType.Letter && token.tokenVariety == TokenType

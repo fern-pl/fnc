@@ -1,7 +1,7 @@
 module tests.tokenizer;
 import fnc.tokenizer.tokens;
 import fnc.tokenizer.make_tokens;
-
+import std.stdio;
 unittest {
     foreach (example; [
             ["/*An example of a comment*/", "An example of a comment", ""],
@@ -78,4 +78,24 @@ unittest {
         }
     }
 
+}
+unittest {
+    auto toks = "0xFF".tokenizeText;
+    assert(toks.length == 1);
+    assert(toks[0].tokenVariety == TokenType.Number);
+    assert(toks[0].base == SpecialNumberBase.Hex);
+    assert(toks[0].value == "0xFF".makeUnicodeString);
+
+    toks = "0b1010_1010".tokenizeText;
+    assert(toks.length == 1);
+    assert(toks[0].tokenVariety == TokenType.Number);
+    assert(toks[0].base == SpecialNumberBase.Binary);
+    assert(toks[0].value == "0b10101010".makeUnicodeString);
+
+
+    toks = "0b1010_1010 + 1".tokenizeText;
+    assert(toks.length == 5);
+    assert(toks[0].tokenVariety == TokenType.Number);
+    assert(toks[0].base == SpecialNumberBase.Binary);
+    assert(toks[0].value == "0b10101010".makeUnicodeString);
 }

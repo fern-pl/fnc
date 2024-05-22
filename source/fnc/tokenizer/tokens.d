@@ -1,6 +1,6 @@
 module fnc.tokenizer.tokens;
 
-import std.ascii : isASCII, isDigit, isAlpha, isAlphaNum, isWhite;
+import std.ascii : isASCII, isDigit, isAlpha, isAlphaNum, isWhite, toLower;
 import std.algorithm : find, min;
 import std.string : indexOf;
 
@@ -139,10 +139,36 @@ TokenType getVarietyOfLetter(dchar symbol) {
 
 }
 
+enum SpecialNumberBase{
+    None,
+    Decimal,
+    Binary,
+    Hex,
+    Octal
+}
+SpecialNumberBase getCustomBase(dchar magicLetter) {
+    switch (magicLetter) {
+        case 'o': // Octal
+        case 'O':
+            return SpecialNumberBase.Octal;
+        case 'b': // Binary
+        case 'B':
+            return SpecialNumberBase.Binary;
+        case 'x': // Hex
+        case 'X':
+            return SpecialNumberBase.Hex;
+
+        default:
+            assert(0, "Invalid custom base");
+    }
+}
+
+
 struct Token {
     TokenType tokenVariety;
     dchar[] value;
     size_t startingIndex;
+    SpecialNumberBase base = SpecialNumberBase.None;
 }
 
 import tern.typecons.common : Nullable, nullable;
@@ -172,4 +198,13 @@ Nullable!Token nextNonWhiteToken(ref Token[] tokens, ref size_t index) {
         break;
     }
     return found;
+}
+
+
+bool isHexDigit(dchar symbol){
+    if (isDigit(symbol)) return true;
+    symbol = toLower(symbol);
+    if (symbol >= 'a' && symbol <= 'f') return true;
+    return false;
+    
 }
