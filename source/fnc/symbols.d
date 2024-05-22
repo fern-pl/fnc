@@ -13,12 +13,19 @@ import core.time;
 // TODO: Interface passing as argument, alias this. Inheriting and declaring as a field?
 //       Guarantee order of fields in a type from inheriting.
 
+public:
 /// The global glob from which all symbols should originate.
-public static Glob glob;
+static Glob glob;
+static Symbol symclass;
+static Symbol symstruct;
+static Symbol symtagged;
 
 shared static this()
 {
     glob = new Glob();
+    symstruct = new Expression("struct");
+    symclass = new Expression("class");
+    symtagged = new Expression("tagged");
 }
 
 public enum SymAttr : ulong
@@ -32,7 +39,7 @@ public enum SymAttr : ulong
     CLASS = 1L << 2,
     TAGGED = 1L << 3,
     TUPLE = 1L << 4,
-    MODULE = 1L << 5,
+    MODULE = 1L << 56,
 
     FUNCTION = 1L << 5,
     DELEGATE = 1L << 6,
@@ -98,6 +105,7 @@ public enum SymAttr : ulong
 
     GLOB = 1L << 53,
     ALIAS = 1L << 54,
+    PUBLIC_IMPORT = 1L << 55,
 
     FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD
 }
@@ -147,9 +155,41 @@ final:
         return ret;
     }
 
+    void finalize()
+    {
+        // TODO: Lock in more places for safety?
+        // TODO: Resolve partial conflicts, especially as a child.
+        waitLock();
+        scope (exit) unlock();
+        with (SymAttr) switch (symattr)
+        {
+            case TYPE:
+                glob.types[identifier] = cast(Type)this;
+                break;
+            case FIELD:
+            //case LOCAL:
+            //case PARAMETER:
+                glob.variables[identifier] = cast(Variable)this;
+                break;
+            case FUNCTION:
+                glob.functions[identifier] = cast(Function)this;
+                break;
+            case MODULE:
+                glob.modules[identifier] = cast(Module)this;
+                break;
+            case ALIAS:
+                glob.aliases[identifier] = cast(Alias)this;
+                break;
+            default:
+                break;
+        }
+        glob.symbols[identifier] = this;
+        parent.children ~= this;
+    }
+
     this()
     {
-        // stupid ass language forces an explicit default constructor to be written
+        // stupid ass default ctor
     }
     
     this(SymAttr symattr, dstring name, Symbol parent, Symbol[] children, Symbol[] attributes, Marker marker)
@@ -336,14 +376,14 @@ final:
     // This is not front-facing to the runtime.
     uint depth;
 
-    dstring type()
+    Symbol type()
     {
         if ((symattr & SymAttr.CLASS) != 0)
-            return "class";
+            return symclass;
         else if ((symattr & SymAttr.TAGGED) != 0)
-            return "tagged";
+            return symtagged;
         else //if ((symattr & SymAttr.STRUCT) != 0)
-            return "struct";
+            return symstruct;
     }
 
     bool canCast(Type val)
@@ -424,10 +464,7 @@ final:
     }
 }
 
-// Locals and parameters use Variable.
-// Expressions and literals should also be represented by a variable,
-// but I haven't yet worked this out.
-
+// Locals and parameters use Variable as well as fields.
 public class Variable : Symbol
 {
 public:
@@ -438,6 +475,22 @@ final:
     // The GC doesn't actually allocate on powers of 2, this means alignment can be anything.
     size_t alignment;
     size_t offset;
+}
+
+public class Expression : Symbol
+{
+public:
+final:
+    union
+    {
+        string str;
+        ubyte[] data;
+    }
+
+    this(string str)
+    {
+        this.str = str;
+    }
 }
 
 public class Alias : Symbol
