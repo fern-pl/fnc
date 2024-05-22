@@ -51,8 +51,7 @@ import fnc.treegen.scope_parser;
 import fnc.treegen.expression_parser;
 import fnc.treegen.relationships;
 void main() {
-
-
+    
     ScopeData globalScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
         private module foo.bar;
         int main(){

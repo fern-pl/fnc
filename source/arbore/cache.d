@@ -6,7 +6,7 @@ import std.stdio;
 public:
 void store()
 {
-    string[Module] caches;
+    dstring[Module] caches;
     foreach (symbol; glob.symbols.byValue)
     {
         if (!symbol.evaluated)
@@ -16,13 +16,13 @@ void store()
             caches[symbol._module] = null;
 
         if (!symbol.isAliasSeq)
-            caches[symbol._module] ~= "alias "~symbol.identifier~" = "~(cast(Alias)symbol).single.identifier~";";
+            caches[symbol._module] ~= "alias "d~symbol.identifier~" = "d~(cast(Alias)symbol).single.identifier~";"d;
         else
         {
-            caches[symbol._module] ~= "alias[] "~symbol.identifier~" = [";
+            caches[symbol._module] ~= "alias[] "d~symbol.identifier~" = ["d;
             foreach (sym; (cast(Alias)symbol).many)
-                caches[symbol._module] ~= sym.identifier~", ";
-            caches[symbol._module] = caches[symbol._module][0..$-2]~"];";
+                caches[symbol._module] ~= sym.identifier~", "d;
+            caches[symbol._module] = caches[symbol._module][0..$-2]~"];"d;
         }
     }
 }

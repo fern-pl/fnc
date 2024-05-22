@@ -5,6 +5,9 @@ import fnc.emission;
 import tern.state;
 import tern.algorithm.mutation : insert, alienate, filter;
 import tern.algorithm.searching : contains, indexOf;
+import tern.typecons.security : Atomic;
+import core.thread.osthread;
+import core.time;
 
 // All symbols may have their children accessed at comptime using `->` followed by the child name, alignment is internally align and marker is not visible.
 // TODO: Interface passing as argument, alias this. Inheriting and declaring as a field?
@@ -104,7 +107,7 @@ public class Symbol
 public:
 final:
     SymAttr symattr;
-    string name;
+    dstring name;
     Symbol parent;
     Symbol[] children;
     Symbol[] attributes;
@@ -112,16 +115,25 @@ final:
     Marker marker;
     size_t refcount;
     bool evaluated;
+    shared Atomic!bool lock;
 
     alias marker this;
 
-    string identifier()
+    bool unlock() => lock = false;
+    bool waitLock()
     {
-        string ret;
+        while (lock)
+            Thread.sleep(dur!("msecs")(10));
+        return lock = true;
+    }
+
+    dstring identifier()
+    {
+        dstring ret;
         Symbol sym = parent;
         while (sym !is null)
         {
-            ret ~= sym.name~'.';
+            ret ~= sym.name~"."d;
             sym = sym.parent;
         } 
         return ret~name;
@@ -140,7 +152,7 @@ final:
         // stupid ass language forces an explicit default constructor to be written
     }
     
-    this(SymAttr symattr, string name, Symbol parent, Symbol[] children, Symbol[] attributes, Marker marker)
+    this(SymAttr symattr, dstring name, Symbol parent, Symbol[] children, Symbol[] attributes, Marker marker)
     {
         this.symattr = symattr;
         this.name = name;
@@ -238,7 +250,7 @@ final:
         }
         return true;
     }
-    Function[] getOverloads(string name)
+    Function[] getOverloads(dstring name)
     {
         Function[] ret;
         if (isModule)
@@ -261,24 +273,24 @@ final:
             }
             return ret;
         }
-        throw new Throwable("Tried to iterate overloads "~name~" for a non-function carrying symbol!");
+        throw new Throwable("Tried to iterate overloads "~cast(string)name~" for a non-function carrying symbol!");
     }
 
-    Symbol getChild(string name) => glob.symbols[identifier~'.'~name];
-    Symbol getParent(string name) => glob.symbols[name~'.'~this.name];
-    Symbol getAttribute(string name) => attributes.filter!(x => x.name == name)[0];
-    Variable getField(string name) => glob.variables[identifier~'.'~name];
-    Function getFunction(string name) => glob.functions[identifier~'.'~name];
-    Symbol getInherit(string name) => (cast(Type)this).inherits.filter!(x => x.name == name)[0];
-    Alias getAlias(string name) => glob.aliases[identifier~'.'~name];
+    Symbol getChild(dstring name) => glob.symbols[identifier~'.'~name];
+    Symbol getParent(dstring name) => glob.symbols[name~'.'~this.name];
+    Symbol getAttribute(dstring name) => attributes.filter!(x => x.name == name)[0];
+    Variable getField(dstring name) => glob.variables[identifier~'.'~name];
+    Function getFunction(dstring name) => glob.functions[identifier~'.'~name];
+    Symbol getInherit(dstring name) => (cast(Type)this).inherits.filter!(x => x.name == name)[0];
+    Alias getAlias(dstring name) => glob.aliases[identifier~'.'~name];
     // Templated functions/types need to be figured out somehow
-    bool hasParent(string name) => (name~'.'~this.name in glob.symbols) != null;
-    bool hasChild(string name) => (identifier~'.'~name in glob.symbols) != null;
-    bool hasAttribute(string name) => attributes.contains!(x => x.name == name);
-    bool hasField(string name) => hasChild(name) && getChild(name).isField;
-    bool hasFunction(string name) => hasChild(name) && getChild(name).isFunction;
-    bool hasInherit(string name) => isType && (cast(Type)this).inherits.contains!(x => x.name == name);
-    bool hasAlias(string name) => identifier~'.'~name in glob.symbols && getChild(name).isAlias;
+    bool hasParent(dstring name) => (name~'.'~this.name in glob.symbols) != null;
+    bool hasChild(dstring name) => (identifier~'.'~name in glob.symbols) != null;
+    bool hasAttribute(dstring name) => attributes.contains!(x => x.name == name);
+    bool hasField(dstring name) => hasChild(name) && getChild(name).isField;
+    bool hasFunction(dstring name) => hasChild(name) && getChild(name).isFunction;
+    bool hasInherit(dstring name) => isType && (cast(Type)this).inherits.contains!(x => x.name == name);
+    bool hasAlias(dstring name) => identifier~'.'~name in glob.symbols && getChild(name).isAlias;
 
     bool hasParent(Symbol sym) => parents.contains(sym);
     bool hasChild(Symbol sym) => sym.parent == this;
@@ -324,7 +336,7 @@ final:
     // This is not front-facing to the runtime.
     uint depth;
 
-    string type()
+    dstring type()
     {
         if ((symattr & SymAttr.CLASS) != 0)
             return "class";
@@ -400,7 +412,7 @@ final:
     Instruction[] instructions;
     size_t alignment;
 
-    string type()
+    dstring type()
     {
         // ctor and dtor are also functions, so we needn't check for them.
         if ((symattr & SymAttr.FUNCTION) != 0)
@@ -461,7 +473,7 @@ final:
         return this;
     }
 
-    string type()
+    dstring type()
     {
         if (isAliasSeq)
             return "alias[]";
@@ -484,12 +496,12 @@ public class Glob : Symbol
 {
 public:
 final:
-    Symbol[string] symbols;
-    Module[string] modules;
-    Type[string] types;
-    Variable[string] variables;
-    Function[string] functions;
-    Alias[string] aliases;
+    Symbol[dstring] symbols;
+    Module[dstring] modules;
+    Type[dstring] types;
+    Variable[dstring] variables;
+    Function[dstring] functions;
+    Alias[dstring] aliases;
     Function[] unittests;
     Symbol[] context;
 }
