@@ -125,6 +125,7 @@ enum OperationVariety {
     Period, // foo.bar
     Arrow, // foo->bar
     Range, // x..y OR 0..99
+    TernaryOperator, // 1 if true else false
     Voidable, // int?
 
 
@@ -297,7 +298,10 @@ class AstNode {
                 break;
 
             case AstAction.Call:
-                writeln("Calling function resolved from:");
+                writeln("Call:");
+                tabCount++;
+                printTabs();
+                writeln("Function resolved from:");
                 callNodeData.func.tree(tabCount + 1);
                 printTabs();
                 write("With Params (");
@@ -314,8 +318,6 @@ class AstNode {
                         arg.value.tree(tabCount + 1);
 
                 }
-
-                // callNodeData.args.tree(tabCount + 1);
                 break;
             case AstAction.ConversionPipe:
                 writeln("Conversion Pipe: ");

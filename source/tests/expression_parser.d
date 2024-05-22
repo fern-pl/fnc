@@ -47,3 +47,10 @@ unittest {
     assert(2 == toks.prematureSingleTokenGroupLength(0));
     assert(8 == toks.prematureSingleTokenGroupLength(2));
 }
+
+unittest {
+    Array!AstNode nodes = expressionNodeFromTokens("t = 5 + 5 if foo() else 1 + 4".tokenizeText);
+    assert(nodes.length == 1);
+    // assert(nodes[0].);
+    nodes[0].tree;
+}

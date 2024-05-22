@@ -92,10 +92,17 @@ unittest {
     assert(toks[0].base == SpecialNumberBase.Binary);
     assert(toks[0].value == "0b10101010".makeUnicodeString);
 
+    toks = "0o1010_1010".tokenizeText;
+    assert(toks.length == 1);
+    assert(toks[0].tokenVariety == TokenType.Number);
+    assert(toks[0].base == SpecialNumberBase.Octal);
+    assert(toks[0].value == "0o10101010".makeUnicodeString);
+
 
     toks = "0b1010_1010 + 1".tokenizeText;
     assert(toks.length == 5);
     assert(toks[0].tokenVariety == TokenType.Number);
     assert(toks[0].base == SpecialNumberBase.Binary);
     assert(toks[0].value == "0b10101010".makeUnicodeString);
+    
 }

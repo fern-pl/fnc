@@ -11,6 +11,7 @@ import std.container.array;
 
 // Group letters.letters.letters into NamedUnit s
 // Group Parenthesis and indexing into AstNode.Expression s to be parsed speratly
+// This should not be used by the end user, and is only exposed for unittests
 public AstNode[] phaseOne(Token[] tokens) {
     AstNode[] ret;
     AstNode[] parenthesisStack;

@@ -816,6 +816,14 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
                 ]),
         ]),
     OperatorPrecedenceLayer(OperatorOrder.RightToLeft, [
+        OperationPrecedenceEntry(OperationVariety.TernaryOperator, [
+                Token(TokenType.Filler), Token(TokenType.Letter, "if".makeUnicodeString),
+                Token(TokenType.Filler), Token(TokenType.Letter, "else".makeUnicodeString),
+                Token(TokenType.Filler)
+            ]),
+
+    ]),
+    OperatorPrecedenceLayer(OperatorOrder.RightToLeft, [
             OperationPrecedenceEntry(OperationVariety.Assignment, [
                     Token(TokenType.Filler), OPR('='), Token(TokenType.Filler)
                 ]),
@@ -908,6 +916,14 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
                 if (node.action != AstAction.ProtoArrayEq)
                     return false;
                 potentialArrayStyleAssignmentData = node.arrayEqNodeData;
+                break;
+            case TokenType.Letter:
+                if (node.action != AstAction.NamedUnit)
+                    return false;
+                if (node.namedUnit.names.length != 1) // We don't support operators with . in it
+                    return false;
+                if (node.namedUnit.names[0] != entry.tokens[index].value)
+                    return false;
                 break;
             case TokenType.QuestionMark:
             case TokenType.ExclamationMark:
