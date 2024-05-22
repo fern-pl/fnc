@@ -103,9 +103,9 @@ public class Symbol
 {
 public:
 final:
-    Glob glob;
     SymAttr symattr;
     string name;
+    // TODO: Only one parent!
     Symbol[] parents;
     Symbol[] children;
     Symbol[string] attributes;
@@ -129,9 +129,8 @@ final:
         // stupid ass language forces an explicit default constructor to be written
     }
     
-    this(Glob glob, SymAttr symattr, string name, Symbol[] parents, Symbol[] children, Symbol[string] attributes, Marker marker)
+    this(SymAttr symattr, string name, Symbol[] parents, Symbol[] children, Symbol[string] attributes, Marker marker)
     {
-        this.glob = glob;
         this.symattr = symattr;
         this.name = name;
         this.parents = parents;

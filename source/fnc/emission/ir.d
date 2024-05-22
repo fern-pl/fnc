@@ -1043,7 +1043,7 @@ final:
                 static if (isSigned!(typeof(arg)))
                     attr |= SymAttr.SIGNED;
 
-                operands ~= new Symbol(glob, attr, null, null, null, null, Marker(arg));
+                operands ~= new Symbol(attr, null, null, null, null, Marker(arg));
             }   
         }
 
