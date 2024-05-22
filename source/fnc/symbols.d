@@ -16,16 +16,26 @@ import core.time;
 public:
 /// The global glob from which all symbols should originate.
 static Glob glob;
-static Symbol symclass;
-static Symbol symstruct;
-static Symbol symtagged;
+static Symbol _class;
+static Symbol _struct;
+static Symbol _tagged;
+static Symbol _alias;
+static Symbol _function;
+static Symbol _delegate;
+static Symbol _unittest;
+static Symbol _aliasseq;
 
 shared static this()
 {
     glob = new Glob();
-    symstruct = new Expression("struct");
-    symclass = new Expression("class");
-    symtagged = new Expression("tagged");
+    _struct = new Expression("struct");
+    _class = new Expression("class");
+    _tagged = new Expression("tagged");
+    _alias = new Expression("alias");
+    _function = new Expression("function");
+    _delegate = new Expression("delegate");
+    _unittest = new Expression("unittest");
+    _aliasseq = new Expression("alias[]");
 }
 
 public enum SymAttr : ulong
@@ -379,11 +389,11 @@ final:
     Symbol type()
     {
         if ((symattr & SymAttr.CLASS) != 0)
-            return symclass;
+            return _class;
         else if ((symattr & SymAttr.TAGGED) != 0)
-            return symtagged;
+            return _tagged;
         else //if ((symattr & SymAttr.STRUCT) != 0)
-            return symstruct;
+            return _struct;
     }
 
     bool canCast(Type val)
@@ -452,15 +462,15 @@ final:
     Instruction[] instructions;
     size_t alignment;
 
-    dstring type()
+    Symbol type()
     {
         // ctor and dtor are also functions, so we needn't check for them.
         if ((symattr & SymAttr.FUNCTION) != 0)
-            return "function";
+            return _function;
         else if ((symattr & SymAttr.UNITTEST) != 0)
-            return "unittest";
+            return _unittest;
         else
-            return "delegate";
+            return _delegate;
     }
 }
 
@@ -526,12 +536,12 @@ final:
         return this;
     }
 
-    dstring type()
+    Symbol type()
     {
         if (isAliasSeq)
-            return "alias[]";
+            return _aliasseq;
         else
-            return "alias";
+            return _alias;
     }
 }
 
