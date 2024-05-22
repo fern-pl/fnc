@@ -3,7 +3,7 @@ module fnc.symbols;
 
 import fnc.emission;
 import tern.state;
-import tern.algorithm.mutation : insert, alienate;
+import tern.algorithm.mutation : insert, alienate, filter;
 import tern.algorithm.searching : contains, indexOf;
 
 // All symbols may have their children accessed at comptime using `->` followed by the child name, alignment is internally align and marker is not visible.
@@ -107,7 +107,7 @@ final:
     string name;
     Symbol parent;
     Symbol[] children;
-    Symbol[string] attributes;
+    Symbol[] attributes;
     // This is not front-facing!
     Marker marker;
     size_t refcount;
@@ -140,7 +140,7 @@ final:
         // stupid ass language forces an explicit default constructor to be written
     }
     
-    this(SymAttr symattr, string name, Symbol parent, Symbol[] children, Symbol[string] attributes, Marker marker)
+    this(SymAttr symattr, string name, Symbol parent, Symbol[] children, Symbol[] attributes, Marker marker)
     {
         this.symattr = symattr;
         this.name = name;
@@ -266,26 +266,26 @@ final:
 
     Symbol getChild(string name) => glob.symbols[identifier~'.'~name];
     Symbol getParent(string name) => glob.symbols[name~'.'~this.name];
-    Symbol getAttribute(string name) => attributes[name];
+    Symbol getAttribute(string name) => attributes.filter!(x => x.name == name)[0];
     Variable getField(string name) => glob.variables[identifier~'.'~name];
     Function getFunction(string name) => glob.functions[identifier~'.'~name];
-    Symbol getInherit(string name) => (cast(Type)this).inherits[name];
+    Symbol getInherit(string name) => (cast(Type)this).inherits.filter!(x => x.name == name)[0];
     Alias getAlias(string name) => glob.aliases[identifier~'.'~name];
     // Templated functions/types need to be figured out somehow
     bool hasParent(string name) => (name~'.'~this.name in glob.symbols) != null;
     bool hasChild(string name) => (identifier~'.'~name in glob.symbols) != null;
-    bool hasAttribute(string name) => (name in attributes) != null;
+    bool hasAttribute(string name) => attributes.contains!(x => x.name == name);
     bool hasField(string name) => hasChild(name) && getChild(name).isField;
     bool hasFunction(string name) => hasChild(name) && getChild(name).isFunction;
-    bool hasInherit(string name) => isType && name in (cast(Type)this).inherits;
+    bool hasInherit(string name) => isType && (cast(Type)this).inherits.contains!(x => x.name == name);
     bool hasAlias(string name) => identifier~'.'~name in glob.symbols && getChild(name).isAlias;
 
     bool hasParent(Symbol sym) => parents.contains(sym);
     bool hasChild(Symbol sym) => sym.parent == this;
-    bool hasAttribute(Symbol sym) => (sym.name in attributes) != null;
+    bool hasAttribute(Symbol sym) => attributes.contains(sym);
     bool hasField(Symbol sym) => sym.isField && sym.parent == this;
     bool hasFunction(Symbol sym) => sym.isFunction && sym.parent == this;
-    bool hasInherit(Symbol sym) => isType && (sym.identifier in (cast(Type)this).inherits) != null;
+    bool hasInherit(Symbol sym) => isType && (cast(Type)this).inherits.contains(sym);
     bool hasAlias(Symbol sym) => sym.isAlias && sym.parent == this;
 
     Symbol freeze()
@@ -313,7 +313,7 @@ public class Type : Symbol
 {
 public:
 final:
-    Type[string] inherits;
+    Type[] inherits;
     Variable[] fields;
     Function[] functions;
     ubyte[] data;
