@@ -819,6 +819,11 @@ const OperatorPrecedenceLayer[] operatorPrecedence = [
             OperationPrecedenceEntry(OperationVariety.Assignment, [
                     Token(TokenType.Filler), OPR('='), Token(TokenType.Filler)
                 ]),
+            OperationPrecedenceEntry(OperationVariety.ArrayStyleAssignment, [
+                    Token(TokenType.Filler),
+                    Token(TokenType._ArrayStyleAssignment),
+                    Token(TokenType.Filler)
+                ]),
             OperationPrecedenceEntry(OperationVariety.AddEq, [
                     Token(TokenType.Filler), OPR('+'), OPR('='),
                     Token(TokenType.Filler)
@@ -884,6 +889,7 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
         return false;
     size_t nodeIndex = startIndex;
     AstNode[] operands;
+    AstNode potentialArrayStyleAssignmentData;
 
     for (size_t index = 0; index < entry.tokens.length; index++) {
         Nullable!AstNode nodeNullable = nodes.nextNonWhiteNode(nodeIndex);
@@ -897,6 +903,11 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
                 if (node.action == AstAction.TokenHolder)
                     return false;
                 operands ~= node;
+                break;
+            case TokenType._ArrayStyleAssignment:
+                if (node.action != AstAction.ProtoArrayEq)
+                    return false;
+                potentialArrayStyleAssignmentData = node.arrayEqNodeData;
                 break;
             case TokenType.QuestionMark:
             case TokenType.ExclamationMark:
@@ -938,6 +949,13 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
         oprNode.action = AstAction.Voidable;
         oprNode.voidableType = operands[0];
     }
+   else if (entry.operation == OperationVariety.ArrayStyleAssignment) {
+        oprNode.action = AstAction.NArgumentOperation;
+        assert(potentialArrayStyleAssignmentData, "potentialArrayStyleAssignmentData not resolved");
+        oprNode.nArgumentOperationNodeData = NArgumentOperationNodeData(entry.operation, operands 
+                ~ potentialArrayStyleAssignmentData 
+                );
+    }
     else if (operands.length == 1) {
 
         oprNode.action = AstAction.SingleArgumentOperation;
@@ -947,13 +965,16 @@ bool testAndJoin(const(OperationPrecedenceEntry) entry, ref Array!AstNode nodes,
         );
 
     }
-    if (operands.length == 2)
+    else if (operands.length == 2)
         oprNode.doubleArgumentOperationNodeData = DoubleArgumentOperationNodeData(
             entry.operation,
             operands[0],
             operands[1]
         );
-
+    else {
+        oprNode.action = AstAction.NArgumentOperation;
+        oprNode.nArgumentOperationNodeData = NArgumentOperationNodeData(entry.operation, operands);
+    }
 trim:
 
     nodes[startIndex] = oprNode;

@@ -29,7 +29,8 @@ enum AstAction {
 
     SingleArgumentOperation, // Ex: x++, ++x
     DoubleArgumentOperation, // Ex: 9+10 
-
+    NArgumentOperation, // Ex 5 if true else 2
+    ManyArgumentOperation, 
     GenericOf, // Not to be confused with TypeGeneric, ex: foo!bar(), foo!(bar)(), or "auto x classFoo!bar";
     Call, // Ex: foo(bar);
 
@@ -39,7 +40,8 @@ enum AstAction {
     NamedUnit, // Ex: std.io
     LiteralUnit, // Ex: 6, 6L, "Hello world"
 
-    TokenHolder, // A temporary Node that is yet to be parsed 
+    TokenHolder, // A temporary node that is yet to be parsed 
+    ProtoArrayEq, // A temporary node that is yet to be turned into a ManyArgumentOperation
 
     ConversionPipe,
     Voidable
@@ -87,6 +89,7 @@ enum OperationVariety {
 
     Pipe,
     Assignment,
+    ArrayStyleAssignment,
 
     Concatenate,
     BitwiseOr,
@@ -158,6 +161,10 @@ struct DoubleArgumentOperationNodeData {
     AstNode left;
     AstNode right;
 }
+struct NArgumentOperationNodeData {
+    OperationVariety operationVariety;
+    AstNode[] operands;
+}
 
 struct ExpressionNodeData {
     dchar opener;
@@ -196,8 +203,11 @@ class AstNode {
 
         SingleArgumentOperationNodeData singleArgumentOperationNodeData; // SingleArgumentOperation
         DoubleArgumentOperationNodeData doubleArgumentOperationNodeData; // DoubleArgumentOperation
+        NArgumentOperationNodeData nArgumentOperationNodeData; // NArgumentOperation
+
+
         CallNodeData callNodeData; // Call
-        ExpressionNodeData expressionNodeData; // Expression
+        ExpressionNodeData expressionNodeData; // Expression, ArrayGrouping
         NamedUnit namedUnit; // NamedUnit
         Token[] literalUnitCompenents; // LiteralUnit
         Token tokenBeingHeld; // TokenHolder
@@ -208,6 +218,7 @@ class AstNode {
         GenericNodeData genericNodeData; // GenericOf
         NameValuePair[] arrayNodeData; // Array
         AstNode voidableType; // Voidable
+        AstNode arrayEqNodeData; // ProtoArrayEq; the X in y [X]= z
 
         ConversionPipeNodeData conversionPipeNodeData; // ConversionPipe
     }
@@ -315,6 +326,24 @@ class AstNode {
                 printTabs();
                 writeln("To:");
                 conversionPipeNodeData.convertTo.tree(tabCount+1);
+                break;
+            case AstAction.ArrayGrouping:
+                write("Array Grouping of ");
+                write(expressionNodeData.components.length);
+                writeln(" elements: ");
+                foreach (subnode; expressionNodeData.components) {
+                    subnode.tree(tabCount + 1);
+                }
+                break;
+            case AstAction.NArgumentOperation:
+                write("opr ");
+                write(nArgumentOperationNodeData.operationVariety);
+                write("(");
+                write(nArgumentOperationNodeData.operands.length);
+                writeln(")");
+                foreach (opr; nArgumentOperationNodeData.operands) {
+                    opr.tree(tabCount + 1);    
+                }
                 break;
             case AstAction.DoubleArgumentOperation:
                 write("opr ");
@@ -429,6 +458,11 @@ void getRelatedTokens(AstNode node, ref Token[] output) {
         case AstAction.DoubleArgumentOperation:
             getRelatedTokens(node.doubleArgumentOperationNodeData.left, output);
             getRelatedTokens(node.doubleArgumentOperationNodeData.right, output);
+            break;
+        case AstAction.NArgumentOperation:
+            foreach (opr; node.nArgumentOperationNodeData.operands) {
+                getRelatedTokens(opr, output);
+            }
             break;
         case AstAction.LiteralUnit:
             output ~= node.literalUnitCompenents;

@@ -158,10 +158,11 @@ private bool testAndJoinConversionPipe(ref Array!AstNode nodes, size_t nodeIndex
     if (typeToBeConverted == null)
         return false;
     // We must split up this named unit
-    if (typeToBeConverted.value.action == AstAction.NamedUnit && typeToBeConverted.value.namedUnit.names.length > 1){
+    if (typeToBeConverted.value.action == AstAction.NamedUnit && typeToBeConverted
+        .value.namedUnit.names.length > 1) {
         AstNode node = typeToBeConverted.value;
         NamedUnit realType = NamedUnit([node.namedUnit.names[0]]);
-        NamedUnit afterType = NamedUnit(node.namedUnit.names[1..$]);
+        NamedUnit afterType = NamedUnit(node.namedUnit.names[1 .. $]);
         AstNode period = new AstNode;
         AstNode afterTypeNode = new AstNode;
         AstNode realTypeNode = new AstNode;
@@ -173,8 +174,8 @@ private bool testAndJoinConversionPipe(ref Array!AstNode nodes, size_t nodeIndex
 
         realTypeNode.action = AstAction.NamedUnit;
         realTypeNode.namedUnit = realType;
-        nodes.insertBefore(nodes[nodeIndex..$], afterTypeNode);
-        nodes.insertBefore(nodes[nodeIndex..$], period);
+        nodes.insertBefore(nodes[nodeIndex .. $], afterTypeNode);
+        nodes.insertBefore(nodes[nodeIndex .. $], period);
         typeToBeConverted.value = realTypeNode;
     }
     Nullable!AstNode potentialCall = nodes.nextNonWhiteNode(nodeIndex);
@@ -189,10 +190,10 @@ private bool testAndJoinConversionPipe(ref Array!AstNode nodes, size_t nodeIndex
         callingWith.callNodeData.args = genCommaSeperatedContents(potentialCall.value);
         typeToConvertTo = callingWith;
     }
-    AstNode protoConversion = new AstNode;
-    protoConversion.action = AstAction.ConversionPipe;
-    protoConversion.conversionPipeNodeData = ConversionPipeNodeData(itemToConvert.value, typeToConvertTo);
-    nodes[startingIndex] = protoConversion;
+    AstNode conversionPipeNode = new AstNode;
+    conversionPipeNode.action = AstAction.ConversionPipe;
+    conversionPipeNode.conversionPipeNodeData = ConversionPipeNodeData(itemToConvert.value, typeToConvertTo);
+    nodes[startingIndex] = conversionPipeNode;
     nodes.linearRemove(nodes[startingIndex + 1 .. nodeIndex]);
     return true;
 }
@@ -277,7 +278,8 @@ private bool testAndJoinIndexingInto(ref Array!AstNode nodes, size_t nodeIndex) 
     nodes.linearRemove(nodes[startingIndex + 1 .. nodeIndex]);
     return true;
 }
-private void handleSingleNodeExpressionTest(ref AstNode node){
+
+private void handleSingleNodeExpressionTest(ref AstNode node) {
     if (node.action == AstAction.Expression) {
         Array!AstNode components;
         components ~= node.expressionNodeData.components;
@@ -291,6 +293,37 @@ private void handleSingleNodeExpressionTest(ref AstNode node){
         node.action = AstAction.Array;
     }
 }
+
+// x  [1..3]= [1, 2];
+private bool transmuteArrayAssignments(ref Array!AstNode nodes, size_t nodeIndex) {
+    // Trash first node, this is because testAndJoinIndexingInto() does
+    // a simular thing, and therefore would overwise take precedense. 
+    nodes.nextNonWhiteNode(nodeIndex);
+
+    size_t startingIndex = nodeIndex;
+    Nullable!AstNode possibleArrayGroup = nodes.nextNonWhiteNode(nodeIndex);
+    
+    if (possibleArrayGroup == null)
+        return false;
+    if (possibleArrayGroup.value.action != AstAction.ArrayGrouping)
+        return false;
+    if (nodeIndex >= nodes.length)
+        return false;
+    
+    // Whitespace matters here
+    AstNode possibleEqSign = nodes[nodeIndex++];
+
+    if (possibleEqSign.action != AstAction.TokenHolder || possibleEqSign.tokenBeingHeld.tokenVariety != TokenType.Equals)
+        return false;
+
+    AstNode proto = new AstNode;
+    proto.action = AstAction.ProtoArrayEq;
+    proto.arrayEqNodeData = possibleArrayGroup.value;
+
+    nodes[startingIndex] = proto;
+    nodes.linearRemove(nodes[startingIndex + 1 .. nodeIndex]);
+    return true;
+}
 // Handle function calls, arrays, and Generics
 void phaseTwo(ref Array!AstNode nodes) {
     for (size_t index = 0; index < nodes.length; index++) {
@@ -299,7 +332,8 @@ void phaseTwo(ref Array!AstNode nodes) {
             if (testAndJoin(sepMethod, nodes, index))
                 goto TOP;
         }
-
+        if (transmuteArrayAssignments(nodes, index))
+            goto TOP;
         if (testAndJoinConversionPipe(nodes, index))
             goto TOP;
         if (testAndJoinGeneric(nodes, index))
@@ -375,6 +409,12 @@ size_t prematureSingleTokenGroupLength(Token[] tokens, size_t index) {
         }
         else if (token.tokenVariety == TokenType.CloseBraces) {
             braceCount--;
+            if (braceCount == 0 && token.value == "]".makeUnicodeString){
+                size_t testIndex = index;
+                Nullable!Token testToken = tokens.nextNonWhiteToken(testIndex);
+                if (testToken != null && testToken.value.tokenVariety == TokenType.Equals)
+                    wasLastFinalToken = false;
+            }
             if (braceCount == -1)
                 break;
             continue;

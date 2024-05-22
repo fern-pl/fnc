@@ -56,10 +56,10 @@ void main() {
     ScopeData globalScope = parseMultilineScope(GLOBAL_SCOPE_PARSE, "
         private module foo.bar;
         int main(){
-            auto x = 0b0000_0011;
+            x [1]= 69;
 
         }
     ");
     // "~a".tokenizeText.writeln;
-    globalScope.tree;
+    globalScope.writeln;
 }

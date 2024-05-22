@@ -24,7 +24,8 @@ enum TokenType {
     Period,
 
     // NOT USED IN TOKENIZER, see fnc/treegen/relationships.d
-    Filler
+    Filler,
+    _ArrayStyleAssignment
 }
 
 const dchar[] validBraceVarieties = ['{', '}', '(', ')', '[', ']'];
