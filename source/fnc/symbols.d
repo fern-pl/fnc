@@ -105,8 +105,7 @@ public:
 final:
     SymAttr symattr;
     string name;
-    // TODO: Only one parent!
-    Symbol[] parents;
+    Symbol parent;
     Symbol[] children;
     Symbol[string] attributes;
     // This is not front-facing!
@@ -119,9 +118,21 @@ final:
     string identifier()
     {
         string ret;
-        foreach (parent; parents)
-            ret ~= parent.name~'.';
+        Symbol sym = parent;
+        while (sym !is null)
+        {
+            ret ~= sym.name~'.';
+            sym = sym.parent;
+        } 
         return ret~name;
+    }
+
+    Symbol[] parents()
+    {
+        Symbol[] ret = [parent];
+        while (ret[$-1].parent !is null)
+            ret ~= ret[$-1].parent;
+        return ret;
     }
 
     this()
@@ -129,11 +140,11 @@ final:
         // stupid ass language forces an explicit default constructor to be written
     }
     
-    this(SymAttr symattr, string name, Symbol[] parents, Symbol[] children, Symbol[string] attributes, Marker marker)
+    this(SymAttr symattr, string name, Symbol parent, Symbol[] children, Symbol[string] attributes, Marker marker)
     {
         this.symattr = symattr;
         this.name = name;
-        this.parents = parents;
+        this.parent = parent;
         this.children = children;
         this.attributes = attributes;
         this.marker = marker;
@@ -206,7 +217,7 @@ final:
     bool isKReadOnly() => (symattr & SymAttr.KIND_READONLY) != 0;
     bool isKDefault() => (symattr & SymAttr.KIND_DEFAULT) != 0;
 
-    bool isNested() => parents.length > 0 && !parent.isModule;  
+    bool isNested() => !parent.isModule;  
     bool isPrimitive() => !isAggregate && !isArray;
     bool isBuiltin() => !isAggregate;
     bool hasDepth() => isType && (cast(Type)this).depth > 0;
@@ -286,11 +297,6 @@ final:
             return cast(Symbol)temp;
         }
         return this;
-    }
-
-    Symbol parent()
-    {
-        return parents[$-1];
     }
 
     // The _ should not show up when doing symbol work in Fern.
