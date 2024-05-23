@@ -368,7 +368,7 @@ final:
     // sym->module not sym->_module!
     Module _module()
     {
-        assert(parent == null, "Tried to take the module of an uncontained type!");
+        assert(parent !is null, "Tried to take the module of an uncontained type!");
         return cast(Module)parents[0];
     }
 }
