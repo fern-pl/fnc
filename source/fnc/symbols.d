@@ -10,8 +10,6 @@ import core.thread.osthread;
 import core.time;
 
 // All symbols may have their children accessed at comptime using `->` followed by the child name, alignment is internally align and marker is not visible.
-// TODO: Interface passing as argument, alias this. Inheriting and declaring as a field?
-//       Guarantee order of fields in a type from inheriting.
 
 public:
 /// The global glob from which all symbols should originate.
@@ -49,7 +47,6 @@ public enum SymAttr : ulong
     CLASS = 1L << 2,
     TAGGED = 1L << 3,
     TUPLE = 1L << 4,
-    MODULE = 1L << 56,
 
     FUNCTION = 1L << 5,
     DELEGATE = 1L << 6,
@@ -116,6 +113,8 @@ public enum SymAttr : ulong
     GLOB = 1L << 53,
     ALIAS = 1L << 54,
     PUBLIC_IMPORT = 1L << 55,
+    MODULE = 1L << 56,
+    //OPTIONAL = 1L << 57,
 
     FORMAT_MASK = DYNARRAY | ASOARRAY | SIGNED | FLOAT | DOUBLE | BITFIELD
 }
@@ -124,15 +123,19 @@ public class Symbol
 {
 public:
 final:
+    // Declaring all of this causes redundancy and increased allocation size, but I don't think it would benefit
+    // performance or anything if we split this up to only giving the members to symbols that need it.
     SymAttr symattr;
     dstring name;
     Symbol parent;
     Symbol[] children;
     Symbol[] attributes;
+    /// This should contain the pending evaluations from the mixin thing.
+    // You know what I mean Mitchell I sent you a paragraph on it.
+    dstring[] evaluations;
     // This is not front-facing!
     Marker marker;
-    size_t refcount;
-    bool evaluated;
+    size_t references;
     shared Atomic!bool lock;
 
     alias marker this;
@@ -365,17 +368,17 @@ final:
     // sym->module not sym->_module!
     Module _module()
     {
-        // if (isPrimitive)
-            throw new Throwable("Tried to take the module of a primitive type!");
+        assert(parent == null, "Tried to take the module of an uncontained type!");
         return cast(Module)parents[0];
     }
 }
 
+/// For associative arrays the type symbol should be the key type (with SymAttr.ASOARRAY) with a first child symbol as the value type.
 public class Type : Symbol
 {
 public:
 final:
-    Type[] inherits;
+    Symbol[] inherits;
     Variable[] fields;
     Function[] functions;
     ubyte[] data;
@@ -413,9 +416,9 @@ final:
             return false;
 
         if (fields.length == 1 && val.fields.length == 0)
-            return fields[0].type.canCast(val);
+            return (cast(Type)fields[0].type).canCast(val);
         else if (val.fields.length == 1 && fields.length == 0)
-            return val.fields[0].type.canCast(this);
+            return (cast(Type)val.fields[0].type).canCast(this);
         else if (val.fields.length == 0 && fields.length == 0)
         {
             return !val.symattr.hasFlag(SymAttr.DYNARRAY) &&
@@ -430,7 +433,7 @@ final:
         {
             if (field.offset != fields[i].offset ||
                 (field.type.symattr & SymAttr.FORMAT_MASK) != (fields[i].type.symattr & SymAttr.FORMAT_MASK) ||
-                !field.type.canCast(fields[i].type))
+                !(cast(Type)field.type).canCast(cast(Type)fields[i].type))
                 return false;
         }
 
@@ -474,12 +477,14 @@ final:
     }
 }
 
-// Locals and parameters use Variable as well as fields.
+/// Locals and parameters use Variable as well as fields.
+/// Any default assignment of a field in a type should result in that being postponed and added as instructions to the default ctor.
+// TODO: Decide how optional and named parameters work in the IR.
 public class Variable : Symbol
 {
 public:
 final:
-    Type type;
+    Symbol type;
     ubyte[] data;
     size_t size;
     // The GC doesn't actually allocate on powers of 2, this means alignment can be anything.
@@ -493,11 +498,13 @@ public:
 final:
     union
     {
-        string str;
+        dstring str;
         ubyte[] data;
     }
 
-    this(string str)
+    alias str this;
+
+    this(dstring str...)
     {
         this.str = str;
     }
@@ -553,6 +560,14 @@ final:
     Type[] types;
     Variable[] fields;
     Function[] functions;
+
+    dstring[] queryIdentifiers()
+    {
+        dstring[] ret = [identifier];
+        foreach (_import; imports)
+            ret ~= _import.identifier;
+        return ret;
+    }
 }
 
 public class Glob : Symbol

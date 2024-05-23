@@ -21,6 +21,10 @@ public enum OpCode : ushort
     //  SYSCALL
     FREE,
     ALLOC,
+    WHILE,
+    FOREACH,
+    FOREACH_REVERSE,
+    // TODO: Temp variables how????
     
     CRIDVME,
     CRIDPVI,
