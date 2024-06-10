@@ -11,129 +11,12 @@ import core.time;
 
 // All symbols may have their children accessed at comptime using `->` followed by the child name, alignment is internally align and marker is not visible.
 
-public:
 /// The global glob from which all symbols should originate.
-static Glob glob;
-static Symbol _struct;
-static Symbol _class;
-static Symbol _tagged;
-static Symbol _alias;
-static Symbol _function;
-static Symbol _delegate;
-static Symbol _unittest;
-static Symbol _aliasseq;
-static Symbol _return;
-static Symbol _this;
-static Symbol _delete;
-static Symbol _bool;
-static Symbol _true;
-static Symbol _false;
-static Symbol _byte;
-static Symbol _ubyte;
-static Symbol _short;
-static Symbol _ushort;
-static Symbol _int;
-static Symbol _uint;
-static Symbol _long;
-static Symbol _ulong;
-static Symbol _float;
-static Symbol _double;
-static Symbol _nint;
-static Symbol _nuint;
-static Symbol _void;
-static Symbol _char;
-static Symbol _wchar;
-static Symbol _dchar;
-static Symbol _string;
-static Symbol _wstring;
-static Symbol _dstring;
-static Symbol _pure;
-static Symbol _const;
-static Symbol _static;
-static Symbol _public;
-static Symbol _private;
-static Symbol _internal;
-static Symbol _partial;
-static Symbol _system;
-static Symbol _trusted;
-static Symbol _safe;
-static Symbol _inline;
-static Symbol _mustuse;
-static Symbol _ref;
-static Symbol _atomic;
-static Symbol _import;
-static Symbol _if;
-static Symbol _else;
-static Symbol _foreach;
-static Symbol _foreach_reverse;
-static Symbol _while;
-static Symbol _goto;
-static Symbol _with;
-static Symbol _break;
-static Symbol _continue;
-static Symbol _is;
+public static Glob glob;
 
-shared static this()
+public shared static this()
 {
     glob = new Glob();
-    _struct = new Expression("struct");
-    _class = new Expression("class");
-    _tagged = new Expression("tagged");
-    _alias = new Expression("alias");
-    _function = new Expression("function");
-    _delegate = new Expression("delegate");
-    _unittest = new Expression("unittest");
-    _aliasseq = new Expression("alias[]");
-    _return = new Expression("return");
-    _this = new Expression("this");
-    _delete = new Expression("delete");
-    _bool = new Expression("bool");
-    _true = new Expression("true");
-    _false = new Expression("false");
-    _byte = new Expression("byte");
-    _ubyte = new Expression("ubyte");
-    _short = new Expression("short");
-    _ushort = new Expression("ushort");
-    _int = new Expression("int");
-    _uint = new Expression("uint");
-    _long = new Expression("long");
-    _ulong = new Expression("ulong");
-    _float = new Expression("float");
-    _double = new Expression("double");
-    _nint = new Expression("nint");
-    _nuint = new Expression("nuint");
-    _void = new Expression("void");
-    _char = new Expression("char");
-    _wchar = new Expression("wchar");
-    _dchar = new Expression("dchar");
-    _string = new Expression("string");
-    _wstring = new Expression("wstring");
-    _dstring = new Expression("dstring");
-    _pure = new Expression("pure");
-    _const = new Expression("const");
-    _static = new Expression("static");
-    _public = new Expression("public");
-    _private = new Expression("private");
-    _internal = new Expression("internal");
-    _partial = new Expression("partial");
-    _system = new Expression("system");
-    _trusted = new Expression("trusted");
-    _safe = new Expression("safe");
-    _inline = new Expression("inline");
-    _mustuse = new Expression("mustuse");
-    _ref = new Expression("ref");
-    _atomic = new Expression("atomic");
-    _import = new Expression("import");
-    _if = new Expression("if");
-    _else = new Expression("else");
-    _foreach = new Expression("foreach");
-    _foreach_reverse = new Expression("foreach_reverse");
-    _while = new Expression("while");
-    _goto = new Expression("goto");
-    _with = new Expression("with");
-    _break = new Expression("break");
-    _continue = new Expression("continue");
-    _is = new Expression("is");
 }
 
 public enum SymAttr : ulong
@@ -167,14 +50,14 @@ public enum SymAttr : ulong
 
     // Functions
     DELEGATE = 1L << 15,
-    UNITTEST = 1L << 16,
-    LAMBDA = 1L << 17,
-    CTOR = 1L << 18,
-    DTOR = 1L << 19,
-    PURE = 1L << 20,
-    SAFE = 1L << 21,
-    TRUSTED = 1L << 22,
-    SYSTEM = 1L << 23,
+    //UNITTEST = 1L << 16,
+    CTOR = 1L << 17,
+    DTOR = 1L << 18,
+    PURE = 1L << 19,
+    SAFE = 1L << 20,
+    TRUSTED = 1L << 21,
+    SYSTEM = 1L << 22,
+    ENTRYPOINT = 1L << 23,
 
     // Variables
     // Is this variable's data not TLS?
@@ -205,22 +88,12 @@ public enum SymAttr : ulong
     DOUBLE = 1L << 34,
     SIGNED = 1L << 35,
 
-    STRUCT = 1L << 36,
-    CLASS = 1L << 37,
-    TAGGED = 1L << 38,
-    TUPLE = 1L << 39,
-    KIND_HEAP = 1L << 40,
-    KIND_STACK = 1L << 41,
-    KIND_SCALAR = 1L << 42,
-    KIND_FLOAT = 1L << 43,
-    KIND_XMM = 1L << 44,
-    KIND_YMM = 1L << 45,
-    KIND_ZMM = 1L << 46,
-    KIND_READONLY = 1L << 47,
-    KIND_DEFAULT = 1L << 48,
-
-    /// Is this symbol a pointer or variable passed by ref?
+    VALUE = 1L << 36,
+    /// Is this symbol a pointer or passed by ref?
     REF = 1L << 25,
+    TAGGED = 1L << 37,
+    TUPLE = 1L << 38,
+    MMVEC = 1L << 49,
 
     FIELD = VARIABLE | LOCAL | PARAMETER,
     AGGREGATE = TYPE | MODULE,
@@ -327,10 +200,11 @@ final:
     }
 
     bool isType() => (symattr & SymAttr.TYPE) != 0;
-    bool isClass() => (symattr & SymAttr.CLASS) != 0;
-    bool isStruct() => (symattr & SymAttr.STRUCT) != 0;
+    bool isReferenceType() => isType && (symattr & SymAttr.REF) != 0;
+    bool isValueType() => (symattr & SymAttr.VALUE) != 0;
     bool isTagged() => (symattr & SymAttr.TAGGED) != 0;
     bool isTuple() => (symattr & SymAttr.TUPLE) != 0;
+    bool isMMVec() => (symattr & SymAttr.MMVEC) != 0;
 
     bool isModule() => (symattr & SymAttr.MODULE) != 0;
     bool isGlob() => (symattr & SymAttr.GLOB) != 0;
@@ -340,10 +214,8 @@ final:
 
     bool isFunction() => (symattr & SymAttr.FUNCTION) != 0;
     bool isDelegate() => (symattr & SymAttr.DELEGATE) != 0;
-    bool isLambda() => (symattr & SymAttr.LAMBDA) != 0;
     bool isCtor() => (symattr & SymAttr.CTOR) != 0;
     bool isDtor() => (symattr & SymAttr.DTOR) != 0;
-    bool isUnittest() => (symattr & SymAttr.UNITTEST) != 0;
 
     bool isField() => (symattr & SymAttr.FIELD) == SymAttr.VARIABLE;
     bool isLocal() => (symattr & SymAttr.LOCAL) != 0;
@@ -363,8 +235,6 @@ final:
     bool isIntegral() => (symattr & SymAttr.INTEGRAL) != 0;
     bool isFloating() => (symattr & SymAttr.FLOATING) != 0;
     bool isNumeric() => isIntegral || isFloating;
-    bool isByRef() => isClass || isKHeap || isRef;
-    bool isVector() => isKXMM || isKYMM || isKZMM;
 
     bool isPublic() => (symattr & SymAttr.PUBLIC) != 0;
     bool isPrivate() => (symattr & SymAttr.PRIVATE) != 0;
@@ -381,22 +251,11 @@ final:
     bool isBitfield() => (symattr & SymAttr.BITFIELD) != 0;
     bool isPure() => (symattr & SymAttr.PURE) != 0;
     bool isConst() => (symattr & SymAttr.CONST) != 0;
-    bool isRef() => (symattr & SymAttr.REF) != 0;
-
-    bool isKHeap() => (symattr & SymAttr.KIND_HEAP) != 0;
-    bool isKStack() => (symattr & SymAttr.KIND_STACK) != 0;
-    bool isKScalar() => (symattr & SymAttr.KIND_SCALAR) != 0;
-    bool isKFloat() => (symattr & SymAttr.KIND_FLOAT) != 0;
-    bool isKXMM() => (symattr & SymAttr.KIND_XMM) != 0;
-    bool isKYMM() => (symattr & SymAttr.KIND_YMM) != 0;
-    bool isKZMM() => (symattr & SymAttr.KIND_ZMM) != 0;
-    bool isKReadOnly() => (symattr & SymAttr.KIND_READONLY) != 0;
-    bool isKDefault() => (symattr & SymAttr.KIND_DEFAULT) != 0;
+    bool isByRef() => (symattr & SymAttr.REF) != 0;
 
     bool isNested() => !parent.isModule;  
     bool isPrimitive() => !isAggregate && !isArray;
     bool isBuiltin() => !isAggregate;
-    bool hasDepth() => isType && (cast(Type)this).depth > 0;
     bool hasBody() => isFunction && (cast(Function)this).instructions.length > 0;
     bool hasDataAllocations() => (isFunction && (cast(Function)this).locals.length > 0) || (isAggregate && (cast(Type)this).fields.length > 0);
     bool isEnum()
@@ -498,16 +357,15 @@ final:
     size_t alignment;
     // For pointer and arrays, how deeply nested they are.
     // This is not front-facing to the runtime.
-    uint depth;
+    uint array_depth;
+    uint pointer_depth;
 
     Symbol type()
     {
-        if ((symattr & SymAttr.CLASS) != 0)
-            return _class;
-        else if ((symattr & SymAttr.TAGGED) != 0)
-            return _tagged;
+        if (isReferenceType)
+            return expression("ref");
         else //if ((symattr & SymAttr.STRUCT) != 0)
-            return _struct;
+            return expression("value");
     }
 
     bool canCast(Type val)
@@ -578,13 +436,7 @@ final:
 
     Symbol type()
     {
-        // ctor and dtor are also functions, so we needn't check for them.
-        if ((symattr & SymAttr.FUNCTION) != 0)
-            return _function;
-        else if ((symattr & SymAttr.UNITTEST) != 0)
-            return _unittest;
-        else
-            return _delegate;
+        return expression("function");
     }
 }
 
@@ -619,6 +471,11 @@ final:
     {
         this.str = str;
     }
+}
+
+static Expression expression(dstring str)
+{
+    return str in glob.symbols ? cast(Expression)glob.symbols[str] : (cast(Expression)(glob.symbols[str] = new Expression(str)));
 }
 
 public class Alias : Symbol
@@ -657,9 +514,9 @@ final:
     Symbol type()
     {
         if (isAliasSeq)
-            return _aliasseq;
+            return expression("alias[]");
         else
-            return _alias;
+            return expression("alias");
     }
 }
 

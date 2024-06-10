@@ -401,23 +401,23 @@ ubyte[] generateModRM(ubyte OP)(Marker src, Marker dst, Mode mod = Mode.Register
     else if (src.kind == Kind.ALLOCATION && dst.kind == Kind.REGISTER)
     {
         if (src.size == 0)
-            return generateModRM!OP(Marker(dst.size, src.register, false), dst, Mode.Memory)~0x25~(cast(ubyte*)&src.offset)[0..uint.sizeof];
+            return generateModRM!OP(Marker(dst.size, src.baseIndex, false), dst, Mode.Memory)~0x25~(cast(ubyte*)&src.offset)[0..uint.sizeof];
         else
         {
             if (src.offset == 0)
-                return generateModRM!OP(Marker(dst.size, src.register, false), dst, Mode.Memory);
+                return generateModRM!OP(Marker(dst.size, src.baseIndex, false), dst, Mode.Memory);
             else
             {
                 // TODO: SIB?
                 if (src.offset >= ubyte.max)
-                    return generateModRM!OP(Marker(dst.size, src.register, false), dst, Mode.MemoryOffset8)~cast(ubyte)src.offset;
+                    return generateModRM!OP(Marker(dst.size, src.baseIndex, false), dst, Mode.MemoryOffset8)~cast(ubyte)src.offset;
                 else
-                    return generateModRM!OP(Marker(dst.size, src.register, false), dst, Mode.MemoryOffsetExt)~(cast(ubyte*)&src.offset)[0..uint.sizeof];
+                    return generateModRM!OP(Marker(dst.size, src.baseIndex, false), dst, Mode.MemoryOffsetExt)~(cast(ubyte*)&src.offset)[0..uint.sizeof];
             }
         }
     }
     else if (src.kind == Kind.ALLOCATION && dst.kind == Kind.ALLOCATION)
-        return generateModRM!OP(Marker(dst.size, dst.register, false), Marker(src.size, src.register, false));
+        return generateModRM!OP(Marker(dst.size, dst.baseIndex, false), Marker(src.size, src.baseIndex, false));
     else if (src.kind == Kind.REGISTER && dst.kind == Kind.ALLOCATION)
         return generateModRM!OP(dst, src);
 }
@@ -475,11 +475,11 @@ final:
                     w = src.size == 64;
                     b = src.index >= 8;
                 }
-                else if (src.kind = Kind.ALLOCATION)
+                else if (src.kind == Kind.ALLOCATION)
                 {
-                    hasRex |= src.register >= 8;
+                    hasRex |= src.baseIndex >= 8;
                     w = src.size == 64;
-                    b = src.register >= 8;
+                    b = src.baseIndex >= 8;
 
                     if (src.segment != ds)
                         buffer = src.segment~buffer;
@@ -491,11 +491,11 @@ final:
                     w = dst.size == 64;
                     b = dst.index >= 8;
                 }
-                else if (dst.kind = Kind.ALLOCATION)
+                else if (dst.kind == Kind.ALLOCATION)
                 {
-                    hasRex |= dst.register >= 8;
+                    hasRex |= dst.baseIndex >= 8;
                     w = dst.size == 64;
-                    x = dst.register >= 8;
+                    x = dst.baseIndex >= 8;
 
                     if (dst.segment != ds)
                         buffer = dst.segment~buffer;
@@ -554,7 +554,7 @@ final:
                     if (dst.kind == Kind.REGISTER)
                         vvvv = cast(ubyte)~dst.index;
                     else if (dst.kind == Kind.ALLOCATION)
-                        vvvv = cast(ubyte)~dst.register;
+                        vvvv = cast(ubyte)~dst.baseIndex;
 
                     dst = Marker(dst.size, stor.index, dst.extended);
                 }
@@ -563,9 +563,9 @@ final:
                     if (dst.kind == Kind.REGISTER)
                         vvvv = cast(ubyte)~dst.index;
                     else static if (dst.kind == Kind.ALLOCATION)
-                        vvvv = cast(ubyte)~dst.register;
+                        vvvv = cast(ubyte)~dst.baseIndex;
                         
-                    dst = Marker(dst.size, stor.register, dst.extended);
+                    dst = Marker(dst.size, stor.baseIndex, dst.extended);
                 }
 
                 if (src.kind == Kind.REGISTER)
@@ -578,7 +578,7 @@ final:
                 {
                     if (SELECTOR == VEXI)
                         we = src.size == 64;
-                    b = src.register >= 8;
+                    b = src.baseIndex >= 8;
 
                     if (src.segment != ds)
                         buffer = src.segment~buffer;
@@ -594,7 +594,7 @@ final:
                 {
                     if (SELECTOR == VEXI)
                         we = dst.size == 64;
-                    x = dst.register >= 8;
+                    x = dst.baseIndex >= 8;
 
                     if (dst.segment != ds)
                         buffer = dst.segment~buffer;
@@ -860,658 +860,759 @@ final:
         with (OpCode) switch (instr.opcode)
         {
             case CRIDVME:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.VME));
             case CRIDPVI:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PVI));
             case CRIDTSD:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.TSD));
             case CRIDDE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.DE));
             case CRIDPSE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PSE));
             case CRIDPAE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PAE));
             case CRIDMCE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.MCE));
             case CRIDPGE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PGE));
             case CRIDPCE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PCE));
             case CRIDOSFXSR:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.OSFXSR));
             case CRIDOSXMMEXCPT:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.OSXMMEXCPT));
             case CRIDUMIP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.UMIP));
             case CRIDVMXE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.VMXE));
             case CRIDSMXE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.SMXE));
             case CRIDFSGSBASE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.FSGSBASE));
             case CRIDPCIDE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PCIDE));
             case CRIDOSXSAVE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.OSXSAVE));
             case CRIDSMEP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.SMEP));
             case CRIDSMAP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.SMAP));
             case CRIDPKE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PKE));
             case CRIDCET:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.CET));
             case CRIDPKS:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.PKS));
             case CRIDUINTR:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.MOV, instr.operands[0], cr4)) +
                 stage(Instruction(OpCode.AND, instr.operands[0], 1 << CRID.UINTR));
 
             case IDAVX512VL:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512VL)) +
                 // NOTE: This would have problems depending on what marker is the first operand.
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDAVX512BW:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512BW)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDSHA:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SHA)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDAVX512CD:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512CD)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDAVX512ER:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512ER)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDAVX512PF:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512PF)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDPT:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.PT)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDCLWB:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.CLWB)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDCLFLUSHOPT:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.CLFLUSHOPT)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDPCOMMIT:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.PCOMMIT)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDAVX512IFMA:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512IFMA)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDSMAP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SMAP)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDADX:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.ADX)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDRDSEED:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.RDSEED)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDAVX512DQ:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512DQ)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDAVX512F:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512F)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDPQE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.PQE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDRTM:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.RTM)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDINVPCID:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.INVPCID)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDERMS:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.ERMS)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDBMI2:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.BMI2)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDSMEP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SMEP)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDFPDP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.FPDP)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDAVX2:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX2)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDHLE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.HLE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDBMI1:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.BMI1)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDSGX:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SGX)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDTSCADJ:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.TSC_ADJUST)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
             case IDFSGSBASE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.FSGSBASE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ebx));
 
             case IDPREFETCHWT1:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.PREFETCHWT1)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDAVX512VBMI:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512VBMI)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDUMIP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.UMIP)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDPKU:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.PKU)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDOSPKE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.OSPKE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDAVX512VBMI2:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512VBMI2)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDCET:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.CET)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDGFNI:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.GFNI)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDVAES:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.VAES)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDVPCL:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.VPCL)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDAVX512VNNI:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512VNNI)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDAVX512BITALG:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512BITALG)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDTME:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.TME)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDAVX512VP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512VP)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDVA57:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.VA57)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDRDPID:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.RDPID)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDSGXLC:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.SGX_LC)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
 
             case IDAVX512QVNNIW:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.AVX512QVNNIW)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDAVX512QFMA:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.AVX512QFMA)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDPCONFIG:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.PCONFIG)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDIBRSIBPB:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.IBRS_IBPB)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDSTIBP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.STIBP)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
 
             case IDSSE3:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SSE3)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDPCLMUL:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.PCLMUL)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDDTES64:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.DTES64)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDMON:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.MON)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDDSCPL:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.DSCPL)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDVMX:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.VMX)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDSMX:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SMX)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDEST:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.EST)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDTM2:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.TM2)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDSSSE3:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SSSE3)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDCID:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.CID)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDSDBG:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SDBG)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDFMA:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.FMA)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDCX16:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.CX16)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDXTPR:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.XTPR)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDPDCM:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.PDCM)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDPCID:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.PCID)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDDCA:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.DCA)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDSSE41:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SSE4_1)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDSSE42:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SSE4_2)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDX2APIC:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.X2APIC)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDMOVBE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.MOVBE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDPOPCNT:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.POPCNT)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDTSCD:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.TSCD)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDAES:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.AES)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDXSAVE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.XSAVE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDOSXSAVE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.OSXSAVE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDAVX:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.AVX)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDF16C:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.F16C)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDRDRAND:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.RDRAND)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
             case IDHV:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.HV)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], ecx));
 
             case IDFPU:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.FPU)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDVME:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.VME)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDDE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.DE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDPSE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PSE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDTSC:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.TSC)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDMSR:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.MSR)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDPAE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PAE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDCX8:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.CX8)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDAPIC:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.APIC)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDSEP:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.SEP)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDMTRR:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.MTRR)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDPGE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PGE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDMCA:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.MCA)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDCMOV:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.CMOV)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDPAT:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PAT)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDPSE36:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PSE36)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDPSN:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PSN)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDCLFL:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.CLFL)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDDS:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.DS)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDACPI:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.ACPI)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDMMX:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.MMX)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDFXSR:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.FXSR)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDSSE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.SSE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDSSE2:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.SSE2)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDSS:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.SS)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDHTT:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.HTT)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDTM:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.TM)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDIA64:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.IA64)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
             case IDPBE:
-                assert(instr.markFormat("n"));
+                assert(instr.markFormat("n."));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PBE)) +
                 stage(Instruction(OpCode.MOV, instr.operands[0], edx));
+
+            case PFADD:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x9e);
+            case PFSUB:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x9a);
+            case PFSUBR:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xaa);
+            case PFMUL:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xb4);
+            case PFCMPEQ:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xb0);
+            case PFCMPGE:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x90);
+            case PFCMPGT:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xa0);
+            case PF2ID:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x1d);
+            case PI2FD:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x0d);
+            case PF2IW:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x1c);
+            case PI2FW:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x0c);
+            case PFMAX:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xa4);
+            case PFMIN:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x9d);
+            case PFRCP:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x96);
+            case PFRSQRT:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x97);
+            case PFRCPIT1:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xa6);
+            case PFRSQIT1:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xa7);
+            case PFRCPIT2:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xb6);
+            case PFACC:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xae);
+            case PFNACC:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x8a);
+            case PFPNACC:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0x8e);
+            case PMULHRW:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xb7);
+            case PAVGUSB:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xbf);
+            case PSWAPD:
+                assert(instr.markFormat("8n."));
+                return emit!0(0x0f, 0x0f, instr, 0xbb);
+            case FEMMS:
+                assert(instr.markFormat("."));
+                return emit!0(0x0f, 0x0e);
+
+            case ICEBP:
+                assert(instr.markFormat("."));
+                return emit!0(0xf1);
+
+            case PTWRITE:
+                assert(instr.markFormat("4.") || 
+                    instr.markFormat("8."));
+                return emit!4(0xf3, 0x0f, 0xae, instr);
+
+            case CLWB:
+                assert(instr.markFormat("1."));
+                return emit!6(0x66, 0x0f, 0xae, instr);
+
+            case CLFLUSHOPT:
+                assert(instr.markFormat("1."));
+                return emit!7(0x66, 0x0f, 0xae, instr);
+
+            case STAC:
+                assert(instr.markFormat("."));
+                return emit!0(0x0f, 0x01, 0xcb);
+            case CLAC:
+                assert(instr.markFormat("."));
+                return emit!0(0x0f, 0x01, 0xca);
+
             default:
                 assert(0, "Invalid instruction staging!");
         }

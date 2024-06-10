@@ -21,10 +21,7 @@ public enum OpCode : ushort
     //  SYSCALL
     FREE,
     ALLOC,
-    WHILE,
-    FOREACH,
-    FOREACH_REVERSE,
-    // TODO: Temp variables how????
+    LOOPRCC,
     
     CRIDVME,
     CRIDPVI,
@@ -987,19 +984,19 @@ final:
                         return false;
                     break;
                 case '1':
-                    if (operands[i].size != 1)
+                    if (operands[i].size != 8)
                         return false;
                     break;
                 case '2':
-                    if (operands[i].size != 2)
+                    if (operands[i].size != 16)
                         return false;
                     break;
                 case '4':
-                    if (operands[i].size != 4)
+                    if (operands[i].size != 32)
                         return false;
                     break;
                 case '8':
-                    if (operands[i].size != 8)
+                    if (operands[i].size != 64)
                         return false;
                     break;
                 default:
