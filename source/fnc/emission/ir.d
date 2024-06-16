@@ -902,7 +902,7 @@ final:
     this(T)(T val)
     {
         this.kind = Kind.LITERAL;
-        this.size = T.sizeof;
+        this.size = T.sizeof * 8;
 
         /* static if (is(T : U*, U))
         {
@@ -920,30 +920,12 @@ final:
         else static if (T.sizeof == 8)
             q = cast(ulong)val;
     }
-
-    T as(T)()
-    {
-        static if (isInstanceOf!(Reg, T))
-        if (kind == Kind.REGISTER)
-            return T(index, extended);
-
-        static if (isInstanceOf!(Address, T))
-        if (kind == Kind.ALLOCATION)
-        {
-            if (baseIndex != 255)
-            {
-                T ret = T(offset, segment);
-                ret.register = baseIndex;
-                ret.size = cast(short)(baseSize * 8);
-                return ret;
-            }
-            else
-                return T(offset, segment);
-        }
-
-        assert(0, "Attempted to convert a local not of kind REGISTER or ALLOCATION to a type!");
-    }
 }
+
+package class RM(ushort SIZE) { }
+package class Reg(ushort SIZE) { }
+package class Addr(ushort SIZE) { }
+package class Literal { }
 
 public struct Instruction
 {
@@ -954,54 +936,44 @@ final:
     Details details;
     int score;
 
-    bool markFormat(string fmt)
+    Marker first() => operands[0];
+    Marker second() => operands[1];
+    Marker third() => operands[2];
+
+    bool markFormat(FMT...)()
     {
-        if (fmt.length > operands.length)
+        if (FMT.length != operands.length)
             return false;
 
-        foreach (i, c; fmt)
+        foreach (i, k; FMT)
         {
-            switch (c)
+            if (is(k == Literal) && operands[i].kind != Kind.LITERAL)
+                return false;
+            else if (is(k == ubyte) && operands[i].size != 8)
+                return false;
+            else if (is(k == ushort) && operands[i].size != 16)
+                return false;
+            else if (is(k == uint) && operands[i].size != 32)
+                return false;
+            else if (is(k == ulong) && operands[i].size != 64)
+                return false;
+            else static if (isInstanceOf!(RM, k))
             {
-                case 'l':
-                    if (operands[i].kind != Kind.LITERAL)
-                        return false;
-                    break;
-                case 'm':
-                    if (operands[i].kind != Kind.ALLOCATION)
-                        return false;
-                    break;
-                case 'r':
-                    if (operands[i].kind != Kind.REGISTER)
-                        return false;
-                    break;
-                case 'n':
-                    if (operands[i].kind == Kind.LITERAL)
-                        return false;
-                    break;
-                case '.':
-                    if (fmt.length != operands.length)
-                        return false;
-                    break;
-                case '1':
-                    if (operands[i].size != 8)
-                        return false;
-                    break;
-                case '2':
-                    if (operands[i].size != 16)
-                        return false;
-                    break;
-                case '4':
-                    if (operands[i].size != 32)
-                        return false;
-                    break;
-                case '8':
-                    if (operands[i].size != 64)
-                        return false;
-                    break;
-                default:
-                    assert(0, "Invalid character in mask format comparison '"~fmt~"'!");
+                if ((operands[i].kind != Kind.REGISTER && operands[i].kind != Kind.ALLOCATION) || TemplateArgsOf!(k)[0] != operands[i].size)
+                    return false;
             }
+            else static if (isInstanceOf!(Reg, k))
+            {
+                if (operands[i].kind != Kind.REGISTER || TemplateArgsOf!(k)[0] != operands[i].size)
+                    return false;
+            }
+            else static if (isInstanceOf!(Addr, k))
+            {
+                if (operands[i].kind != Kind.ALLOCATION || TemplateArgsOf!(k)[0] != operands[i].size)
+                    return false;
+            }
+            else
+                assert(0, "kill yourself");
         }
         return true;
     }
@@ -1106,7 +1078,7 @@ final:
             // TODO: Floats, add more flags??
             case AAD:
             case AAM:
-                if (markFormat("l"))
+                if (markFormat!(Literal))
                     details = detail("ra");
                 else
                     details = detail("a");
@@ -1115,7 +1087,7 @@ final:
             case JCC:
             case LOOPCC:
             case CALL:
-                if (markFormat("n"))
+                if (markFormat!(RM))
                     details = detail("r");
                 break;
             case ADD:
