@@ -562,7 +562,7 @@ final:
                 {
                     if (dst.kind == Kind.REGISTER)
                         vvvv = cast(ubyte)~dst.index;
-                    else static if (dst.kind == Kind.ALLOCATION)
+                    else if (dst.kind == Kind.ALLOCATION)
                         vvvv = cast(ubyte)~dst.baseIndex;
                         
                     dst = Marker(dst.size, stor.baseIndex, dst.extended);
@@ -867,832 +867,1278 @@ final:
 
     size_t stage(Instruction instr)
     {
+        if (instr.details & Details.LOCK)
+            buffer ~= 0xf0;
+
         with (OpCode) switch (instr.opcode)
         {
             case CRIDVME:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.VME));
             case CRIDPVI:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.PVI));
             case CRIDTSD:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.TSD));
             case CRIDDE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.DE));
             case CRIDPSE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.PSE));
             case CRIDPAE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.PAE));
             case CRIDMCE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.MCE));
             case CRIDPGE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.PGE));
             case CRIDPCE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.PCE));
             case CRIDOSFXSR:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.OSFXSR));
             case CRIDOSXMMEXCPT:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.OSXMMEXCPT));
             case CRIDUMIP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.UMIP));
             case CRIDVMXE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.VMXE));
             case CRIDSMXE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.SMXE));
             case CRIDFSGSBASE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.FSGSBASE));
             case CRIDPCIDE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.PCIDE));
             case CRIDOSXSAVE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.OSXSAVE));
             case CRIDSMEP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.SMEP));
             case CRIDSMAP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.SMAP));
             case CRIDPKE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.PKE));
             case CRIDCET:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.CET));
             case CRIDPKS:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.PKS));
             case CRIDUINTR:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.MOV, instr.first, cr4)) +
                 stage(Instruction(OpCode.AND, instr.first, 1 << CRID.UINTR));
 
             case IDAVX512VL:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512VL)) +
                 // NOTE: This would have problems depending on what marker is the first operand.
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDAVX512BW:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512BW)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDSHA:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SHA)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDAVX512CD:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512CD)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDAVX512ER:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512ER)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDAVX512PF:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512PF)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDPT:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.PT)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDCLWB:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.CLWB)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDCLFLUSHOPT:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.CLFLUSHOPT)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDPCOMMIT:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.PCOMMIT)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDAVX512IFMA:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512IFMA)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDSMAP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SMAP)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDADX:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.ADX)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDRDSEED:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.RDSEED)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDAVX512DQ:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512DQ)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDAVX512F:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX512F)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDPQE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.PQE)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDRTM:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.RTM)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDINVPCID:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.INVPCID)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDERMS:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.ERMS)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDBMI2:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.BMI2)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDSMEP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SMEP)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDFPDP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.FPDP)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDAVX2:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.AVX2)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDHLE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.HLE)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDBMI1:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.BMI1)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDSGX:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.SGX)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDTSCADJ:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.TSC_ADJUST)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
             case IDFSGSBASE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ebx, 1 << CPUID7_EBX.FSGSBASE)) +
                 stage(Instruction(OpCode.MOV, instr.first, ebx));
 
             case IDPREFETCHWT1:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.PREFETCHWT1)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDAVX512VBMI:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512VBMI)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDUMIP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.UMIP)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDPKU:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.PKU)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDOSPKE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.OSPKE)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDAVX512VBMI2:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512VBMI2)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDCET:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.CET)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDGFNI:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.GFNI)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDVAES:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.VAES)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDVPCL:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.VPCL)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDAVX512VNNI:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512VNNI)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDAVX512BITALG:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512BITALG)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDTME:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.TME)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDAVX512VP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.AVX512VP)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDVA57:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.VA57)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDRDPID:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.RDPID)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDSGXLC:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID7_ECX.SGX_LC)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
 
             case IDAVX512QVNNIW:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.AVX512QVNNIW)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDAVX512QFMA:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.AVX512QFMA)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDPCONFIG:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.PCONFIG)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDIBRSIBPB:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.IBRS_IBPB)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDSTIBP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 7)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID7_EDX.STIBP)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
 
             case IDSSE3:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SSE3)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDPCLMUL:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.PCLMUL)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDDTES64:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.DTES64)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDMON:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.MON)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDDSCPL:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.DSCPL)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDVMX:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.VMX)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDSMX:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SMX)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDEST:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.EST)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDTM2:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.TM2)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDSSSE3:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SSSE3)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDCID:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.CID)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDSDBG:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SDBG)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDFMA:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.FMA)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDCX16:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.CX16)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDXTPR:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.XTPR)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDPDCM:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.PDCM)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDPCID:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.PCID)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDDCA:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.DCA)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDSSE41:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SSE4_1)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDSSE42:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.SSE4_2)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDX2APIC:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.X2APIC)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDMOVBE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.MOVBE)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDPOPCNT:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.POPCNT)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDTSCD:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.TSCD)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDAES:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.AES)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDXSAVE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.XSAVE)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDOSXSAVE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.OSXSAVE)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDAVX:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.AVX)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDF16C:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.F16C)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDRDRAND:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.RDRAND)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
             case IDHV:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, ecx, 1 << CPUID1_ECX.HV)) +
                 stage(Instruction(OpCode.MOV, instr.first, ecx));
 
             case IDFPU:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.FPU)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDVME:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.VME)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDDE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.DE)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDPSE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PSE)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDTSC:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.TSC)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDMSR:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.MSR)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDPAE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PAE)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDCX8:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.CX8)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDAPIC:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.APIC)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDSEP:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.SEP)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDMTRR:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.MTRR)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDPGE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PGE)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDMCA:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.MCA)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDCMOV:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.CMOV)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDPAT:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PAT)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDPSE36:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PSE36)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDPSN:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PSN)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDCLFL:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.CLFL)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDDS:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.DS)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDACPI:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.ACPI)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDMMX:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.MMX)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDFXSR:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.FXSR)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDSSE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.SSE)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDSSE2:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.SSE2)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDSS:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.SS)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDHTT:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.HTT)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDTM:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.TM)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDIA64:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.IA64)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
             case IDPBE:
-                assert(instr.markFormat!(RM!64));
+                assert(instr.format!(RM!64));
                 return stage(Instruction(OpCode.CPUID, 1)) +
                 stage(Instruction(OpCode.AND, edx, 1 << CPUID1_EDX.PBE)) +
                 stage(Instruction(OpCode.MOV, instr.first, edx));
 
             case PFADD:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x9e);
             case PFSUB:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x9a);
             case PFSUBR:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xaa);
             case PFMUL:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xb4);
             case PFCMPEQ:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xb0);
             case PFCMPGE:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x90);
             case PFCMPGT:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xa0);
             case PF2ID:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x1d);
             case PI2FD:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x0d);
             case PF2IW:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x1c);
             case PI2FW:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x0c);
             case PFMAX:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xa4);
             case PFMIN:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x9d);
             case PFRCP:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x96);
             case PFRSQRT:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x97);
             case PFRCPIT1:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xa6);
             case PFRSQIT1:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xa7);
             case PFRCPIT2:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xb6);
             case PFACC:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xae);
             case PFNACC:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x8a);
             case PFPNACC:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0x8e);
             case PMULHRW:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xb7);
             case PAVGUSB:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xbf);
             case PSWAPD:
-                assert(instr.markFormat!(ulong, RM!64));
+                assert(instr.format!(ulong, RM!64));
                 return emit!0(0x0f, 0x0f, instr.first, instr.second, 0xbb);
             case FEMMS:
-                assert(instr.markFormat!());
+                assert(instr.format!());
                 return emit!0(0x0f, 0x0e);
 
             case ICEBP:
-                assert(instr.markFormat!());
+                assert(instr.format!());
                 return emit!0(0xf1);
 
             case PTWRITE:
-                assert(instr.markFormat!(uint) || 
-                    instr.markFormat!(ulong));
+                assert(instr.format!(uint) || 
+                    instr.format!(ulong));
                 return emit!4(0xf3, 0x0f, 0xae, instr.first);
 
             case CLWB:
-                assert(instr.markFormat!(ubyte));
+                assert(instr.format!(ubyte));
                 return emit!6(0x66, 0x0f, 0xae, instr.first);
 
             case CLFLUSHOPT:
-                assert(instr.markFormat!(ubyte));
+                assert(instr.format!(ubyte));
                 return emit!7(0x66, 0x0f, 0xae, instr.first);
 
             case STAC:
-                assert(instr.markFormat!());
+                assert(instr.format!());
                 return emit!0(0x0f, 0x01, 0xcb);
             case CLAC:
-                assert(instr.markFormat!());
+                assert(instr.format!());
                 return emit!0(0x0f, 0x01, 0xca);
 
             case ADC:
-                if (instr.markFormat!(ubyte))
+                if (instr.format!(ubyte))
                     return emit!0(0x14, instr.first); // ADC AL, imm8
-                if (instr.markFormat!(ushort))
+                if (instr.format!(ushort))
                     return emit!0(0x15, instr.first); // ADC AX, imm16
-                if (instr.markFormat!(uint))
+                if (instr.format!(uint))
                     return emit!0(0x15, instr.first); // ADC EAX, imm32
-                if (instr.markFormat!(ulong))
+                if (instr.format!(ulong))
                     return emit!0(0x15, instr.first); // ADC RAX, imm32 (sign-extended)
 
-                if (instr.markFormat!(RM!8, ubyte))
+                if (instr.format!(RM!8, ubyte))
                     return emit!2(0x80, instr.first, instr.second); // ADC r/m8, imm8
-                if (instr.markFormat!(RM!16, ushort))
+                if (instr.format!(RM!16, ushort))
                     return emit!2(0x81, instr.first, instr.second); // ADC r/m16, imm16
-                if (instr.markFormat!(RM!32, uint))
+                if (instr.format!(RM!32, uint))
                     return emit!2(0x81, instr.first, instr.second); // ADC r/m32, imm32
-                if (instr.markFormat!(RM!64, uint))
+                if (instr.format!(RM!64, uint))
                     return emit!2(0x81, instr.first, instr.second); // ADC r/m64, imm32 (sign-extended)
-                if (instr.markFormat!(RM!16, ubyte))
+                if (instr.format!(RM!16, ubyte))
                     return emit!2(0x83, instr.first, instr.second); // ADC r/m16, imm8 (sign-extended)
-                if (instr.markFormat!(RM!32, ubyte))
+                if (instr.format!(RM!32, ubyte))
                     return emit!2(0x83, instr.first, instr.second); // ADC r/m32, imm8 (sign-extended)
-                if (instr.markFormat!(RM!64, ubyte))
+                if (instr.format!(RM!64, ubyte))
                     return emit!2(0x83, instr.first, instr.second); // ADC r/m64, imm8 (sign-extended)
 
-                if (instr.markFormat!(RM!8, Reg!8))
+                if (instr.format!(RM!8, Reg!8))
                     return emit!0(0x10, instr.first, instr.second); // ADC r/m8, r8
-                if (instr.markFormat!(RM!16, Reg!16))
+                if (instr.format!(RM!16, Reg!16))
                     return emit!0(0x11, instr.first, instr.second); // ADC r/m16, r16
-                if (instr.markFormat!(RM!32, Reg!32))
+                if (instr.format!(RM!32, Reg!32))
                     return emit!0(0x11, instr.first, instr.second); // ADC r/m32, r32
-                if (instr.markFormat!(RM!64, Reg!64))
+                if (instr.format!(RM!64, Reg!64))
                     return emit!0(0x11, instr.first, instr.second); // ADC r/m64, r64
 
-                if (instr.markFormat!(Reg!8, Address!8))
+                if (instr.format!(Reg!8, Addr!8))
                     return emit!0(0x12, instr.first, instr.second); // ADC r8, m8
-                if (instr.markFormat!(Reg!16, Address!16))
+                if (instr.format!(Reg!16, Addr!16))
                     return emit!0(0x13, instr.first, instr.second); // ADC r16, m16
-                if (instr.markFormat!(Reg!32, Address!32))
+                if (instr.format!(Reg!32, Addr!32))
                     return emit!0(0x13, instr.first, instr.second); // ADC r32, m32
-                if (instr.markFormat!(Reg!64, Address!64))
+                if (instr.format!(Reg!64, Addr!64))
                     return emit!0(0x13, instr.first, instr.second); // ADC r64, m64
 
                 assert(0);
 
             case ADCX:
-                if (instr.markFormat!(Reg!32, RM!32))
+                if (instr.format!(Reg!32, RM!32))
                     return emit!0(0x0F, 0x38, 0xF6, instr.first, instr.second); // ADCX r32, r/m32
-                if (instr.markFormat!(Reg!64, RM!64))
+                if (instr.format!(Reg!64, RM!64))
                     return emit!0(0x0F, 0x38, 0xF6, instr.first, instr.second); // ADCX r64, r/m64
 
                 assert(0);
 
             case ADOX:
-                if (instr.markFormat!(Reg!32, RM!32))
+                if (instr.format!(Reg!32, RM!32))
                     return emit!0(0xF3, 0x0F, 0x38, 0xF6, instr.first, instr.second); // ADOX r32, r/m32
-                if (instr.markFormat!(Reg!64, RM!64))
+                if (instr.format!(Reg!64, RM!64))
                     return emit!0(0xF3, 0x0F, 0x38, 0xF6, instr.first, instr.second); // ADOX r64, r/m64
 
                 assert(0);
 
             case RDSEED:
-                if (instr.markFormat!(Reg!16))
+                if (instr.format!(Reg!16))
                     return emit!7(0x0f, 0xc7, instr.first); // RDSEED r16
-                if (instr.markFormat!(Reg!32))
+                if (instr.format!(Reg!32))
                     return emit!7(0x0f, 0xc7, instr.first); // RDSEED r32
-                if (instr.markFormat!(Reg!64))
+                if (instr.format!(Reg!64))
                     return emit!7(0x0f, 0xc7, instr.first); // RDSEED r64
 
                 assert(0);
+
+            case BNDCL:
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!0(0xf3, 0x0f, 0x1a, instr.first, instr.second); // BNDCL r32, r/m32
+                if (instr.format!(Reg!64, RM!64))
+                    return emit!0(0xf3, 0x0f, 0x1a, instr.first, instr.second); // BNDCL r64, r/m64
+
+                assert(0);
+
+            case BNDCU:
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!0(0xf2, 0x0f, 0x1a, instr.first, instr.second); // BNDCU r32, r/m32
+                if (instr.format!(Reg!64, RM!64))
+                    return emit!0(0xf2, 0x0f, 0x1a, instr.first, instr.second); // BNDCU r64, r/m64
+
+                assert(0);
+
+            case BNDCN:
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!0(0xf2, 0x0f, 0x1b, instr.first, instr.second); // BNDCN r32, r/m32
+                if (instr.format!(Reg!64, RM!64))
+                    return emit!0(0xf2, 0x0f, 0x1b, instr.first, instr.second); // BNDCN r64, r/m64
+
+                assert(0);
+
+            case BNDLDX:
+                assert(instr.format!(Reg!64, RM!64));
+                return emit!(0, NP)(0x0f, 0x1a, instr.first, instr.second); // BNDLDX r64, r/m64
+
+            case BNDSTX:
+                assert(instr.format!(RM!64, Reg!64));
+                return emit!(0, NP)(0x0f, 0x1b, instr.first, instr.second); // BNDSTX r/m64, r64
+
+            case BNDMK:
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!0(0xf3, 0x0f, 0x1b, instr.first, instr.second); // BNDMK r32, r/m32
+                if (instr.format!(Reg!64, RM!64))
+                    return emit!0(0xf3, 0x0f, 0x1b, instr.first, instr.second); // BNDMK r64, r/m64
+
+                assert(0);
+
+            case BNDMOV:
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!0(0x0f, 0x1a, instr.first, instr.second); // BNDMOV r32, r/m32
+                if (instr.format!(Reg!64, RM!64))
+                    return emit!0(0x0f, 0x1a, instr.first, instr.second); // BNDMOV r64, r/m64
+                if (instr.format!(Addr!32, Reg!32))
+                    return emit!0(0x0f, 0x1b, instr.first, instr.second); // BNDMOV m32, r32
+                if (instr.format!(Addr!64, Reg!32))
+                    return emit!0(0x0f, 0x1b, instr.first, instr.second); // BNDMOV m64, r32
+
+                assert(0);
+
+            case BOUND:
+                if (instr.format!(Reg!16, RM!16))
+                    return emit!0(0x62, instr.first, instr.second); // BOUND r16, m16
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!0(0x62, instr.first, instr.second); // BOUND r32, m32
+
+                assert(0);
+                
+            case XEND:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xd5);
+
+            case XABORT:
+                assert(instr.format!(ubyte));
+                return emit!0(0xc6, 0xf8, instr.first); // XABORT imm8
+
+            case XBEGIN:
+                if (instr.format!(ushort))
+                    return emit!0(0xc7, 0xf8, instr.first); // XBEGIN rel16
+                if (instr.format!(uint))
+                    return emit!0(0xc7, 0xf8, instr.first); // XBEGIN rel32
+
+                assert(0);
+
+            case XTEST:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xd6);
+
+            case INVPCID:
+                if (instr.format!(Reg!32, Addr!128))
+                    return emit!0(0x0f, 0x38, 0x82, instr.first, instr.second); // INVPCID r32, m128
+                if (instr.format!(Reg!64, Addr!128))
+                    return emit!0(0x0f, 0x38, 0x82, instr.first, instr.second); // INVPCID r64, m128
+
+                assert(0);
+
+            case TZCNT:
+                if (instr.format!(Reg!16, RM!16))
+                    return emit!0(0xf3, 0x0f, 0xbc, instr.first, instr.second);
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!0(0xf3, 0x0f, 0xbc, instr.first, instr.second);
+                if (instr.format!(Reg!64 , RM!64))
+                    return emit!0(0xf3, 0x0f, 0xbc, instr.first, instr.second);
+
+                assert(0);
+
+            case LZCNT:
+                if (instr.format!(Reg!16, RM!16))
+                    return emit!0(0xf3, 0x0f, 0xbd, instr.first, instr.second);
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!0(0xf3, 0x0f, 0xbd, instr.first, instr.second);
+                if (instr.format!(Reg!64 , RM!64))
+                    return emit!0(0xf3, 0x0f, 0xbd, instr.first, instr.second);
+
+                assert(0);
+
+            case ANDN:
+                if (instr.format!(Reg!32, Reg!32, RM!32))
+                    return emit!(0, VEXI, 128, F38, 0)(0xf2, instr.first, instr.second, instr.third);
+                if (instr.format!(Reg!64, Reg!32, RM!64))
+                    return emit!(0, VEXI, 128, F38, 0)(0xf2, instr.first, instr.second, instr.third);
+
+                assert(0);
+
+            case ECREATE:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 0)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EADD:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 1)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EINIT:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 2)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EREMOVE:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 3)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EDBGRD:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 4)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EDBGWR:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 5)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EEXTEND:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 6)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case ELDB:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 7)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case ELDU:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 8)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EBLOCK:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 9)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EPA:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 10)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EWB:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 11)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case ETRACK:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 12)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EAUG:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 13)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EMODPR:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 14)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case EMODT:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 15)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case ERDINFO:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 16)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case ETRACKC:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 17)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case ELDBC:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 18)) +
+                emit!0(0x0f, 0x01, 0xcf);
+            case ELDUC:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 19)) +
+                emit!0(0x0f, 0x01, 0xcf);
+                
+            case EREPORT:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 0)) +
+                emit!0(0x0f, 0x01, 0xd7);
+            case EGETKEY:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 1)) +
+                emit!0(0x0f, 0x01, 0xd7);
+            case EENTER:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 2)) +
+                emit!0(0x0f, 0x01, 0xd7);
+            case ERESUME:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 3)) +
+                emit!0(0x0f, 0x01, 0xd7);
+            case EEXIT:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 4)) +
+                emit!0(0x0f, 0x01, 0xd7);
+            case EACCEPT:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 5)) +
+                emit!0(0x0f, 0x01, 0xd7);
+            case EMODPE:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 6)) +
+                emit!0(0x0f, 0x01, 0xd7);
+            case EACCEPTCOPY:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 7)) +
+                emit!0(0x0f, 0x01, 0xd7);
+            case EDECCSSA:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 9)) +
+                emit!0(0x0f, 0x01, 0xd7);
+                
+            case EDECVIRTCHILD:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 0)) +
+                emit!0(0x0f, 0x01, 0xc0);
+            case EINCVIRTCHILD:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 1)) +
+                emit!0(0x0f, 0x01, 0xc0);
+            case ESETCONTEXT:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 2)) +
+                emit!0(0x0f, 0x01, 0xc0);
+                
+            case MONITOR:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xc8);
+            case MWAIT:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xc9);
+
+            case INVVPID:
+                if (instr.format!(Reg!32, Addr!128))
+                    return emit!0(0x66, 0x0f, 0x38, 0x81, instr.first, instr.second); // INVVPID r32, m128
+                if (instr.format!(Reg!64, Addr!128))
+                    return emit!0(0x66, 0x0f, 0x38, 0x81, instr.first, instr.second); // INVVPID r64, m128
+
+                assert(0);
+
+            case INVEPT:
+                if (instr.format!(Reg!32, Addr!128))
+                    return emit!0(0x66, 0x0f, 0x38, 0x80, instr.first, instr.second); // INVEPT r32, m128
+                if (instr.format!(Reg!64, Addr!128))
+                    return emit!0(0x66, 0x0f, 0x38, 0x80, instr.first, instr.second); // INVEPT r64, m128
+                    
+                assert(0);
+
+            case VMCALL:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xc9);
+            case VMFUNC:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xd4);
+            case VMCLEAR:
+                assert(instr.format!(RM!64));
+                return emit!6(0x66, 0x0f, 0xc7, instr.first);
+            case VMLAUNCH:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xc2);
+            case VMRESUME:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xc3);
+            case VMXOFF:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xc4);
+            case VMXON:
+                assert(instr.format!(RM!64));
+                return emit!6(0xf3, 0x0f, 0xc7, instr.first);
+
+            case VMWRITE:
+                if (instr.format!(Reg!64, RM!64))
+                    return emit!(0, NP)(0x0f, 0x79, instr.first, instr.second); // VMWRITE r64, r/m64
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!(0, NP)(0x0f, 0x79, instr.first, instr.second); // VMWRITE r32, r/m32
+
+                assert(0);
+
+            case VMREAD:
+                if (instr.format!(RM!64, Reg!64))
+                    return emit!(0, NP)(0x0f, 0x78, instr.first, instr.second); // VMREAD r/m64, r64
+                if (instr.format!(RM!32, Reg!32))
+                    return emit!(0, NP)(0x0f, 0x78, instr.first, instr.second); // VMREAD r/m32, r32
+
+                assert(0);
+
+            case VMPTRST:
+                assert(instr.format!(RM!64));
+                return emit!(7, NP)(0x0f, 0xc7, instr.first); // VMPTRST r/m64
+            case VMPTRLD:
+                assert(instr.format!(RM!64));
+                return emit!(6, NP)(0x0f, 0xc7, instr.first); // VMPTRLD r/m64
+                
+            case CAPABILITIES:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 0)) +
+                emit!0(0x0f, 0x37);
+            case ENTERACCS:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 2)) +
+                emit!0(0x0f, 0x37);
+            case EXITAC:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 3)) +
+                emit!0(0x0f, 0x37);
+            case SENTER:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 4)) +
+                emit!0(0x0f, 0x37);
+            case SEXIT:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 5)) +
+                emit!0(0x0f, 0x37);
+            case PARAMETERS:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 6)) +
+                emit!0(0x0f, 0x37);
+            case SMCTRL:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 7)) +
+                emit!0(0x0f, 0x37);
+            case WAKEUP:
+                assert(instr.format!());
+                return stage(Instruction(OpCode.MOV, eax, 8)) +
+                emit!0(0x0f, 0x37);
+
+            case VMPTRST:
+                assert(instr.format!(Addr!128));
+                return emit!1(0x48, 0x0f, 0xc7, instr.first);
+                
+            case POPCNT:
+                if (instr.format!(Reg!16, RM!16))
+                    return emit!0(0xf3, 0x0f, 0xb8, instr.first, instr.second); // POPCNT r16, r/m16
+                if (instr.format!(Reg!32, RM!32))
+                    return emit!0(0xf3, 0x0f, 0xb8, instr.first, instr.second); // POPCNT r32, r/m32
+                if (instr.format!(Reg!64, RM!64))
+                    return emit!0(0xf3, 0x0f, 0xb8, instr.first, instr.second); // POPCNT r64, r/m64
+
+                assert(0);
+
+            case XGETBV:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xd0);
+            case XSETBV:
+                assert(instr.format!());
+                return emit!0(0x0f, 0x01, 0xd1);
+
+            // These are supposed to take addresses, but I didn't implement that and don't care
+            case XRSTOR:
+                return emit!(5, NP)(0x0f, 0xae, instr.first); // XRSTOR m
+            case XSAVE:
+                return emit!(4, NP)(0x0f, 0xae, instr.first); // XSAVE m
+
+            case XRSTORS:
+                return emit!(3, NP)(0x0f, 0xc7, instr.first); // XRSTORS m
+            case XSAVES:
+                return emit!(5, NP)(0x0f, 0xc7, instr.first); // XSAVES m
+
+            case XSAVEOPT:
+                return emit!(6, NP)(0x0f, 0xae, instr.first); // XSAVEOPT m
+            case XSAVEC:
+                return emit!(4, NP)(0x0f, 0xc7, instr.first); // XSAVEC m
+                
+            case RDRAND:
+                if (instr.format!(Reg!16))
+                    return emit!6(0x0f, 0xc7, instr.first); // RDRAND r16
+                if (instr.format!(Reg!32))
+                    return emit!6(0x0f, 0xc7, instr.first); // RDRAND r32
+                if (instr.format!(Reg!64))
+                    return emit!6(0x0f, 0xc7, instr.first); // RDRAND r64
+
+                assert(0);
+
+            case FABS:
+                assert(instr.format!());
+                return emit!0(0xd9, 0xe1);
+            case FCHS:
+                assert(instr.format!());
+                return emit!0(0xd9, 0xe0);
+
+            case FCLEX:
+                assert(instr.format!());
+                return emit!0(0x9b, 0xdb, 0xe2);
+            case FNCLEX:
+                assert(instr.format!());
+                return emit!0(0xdb, 0xe2);
+
+            case FADD:
+                if (instr.format!(Addr!32))
+                    return emit!(0, NP)(0xd8, instr.first);
+                if (instr.format!(Addr!64))
+                    return emit!(0, NP)(0xdc, instr.first);
+                if (instr.format!(Reg!(-3), Reg!(-3)))
+                {
+                    if (instr.first.index == 0)
+                        emit!(0, NRM)(0xd8, 0xc0, instr.second);
+                    else if (instr.second.index == 0)
+                        emit!(0, NRM)(0xdc, 0xc0, instr.first);
+                    else
+                        assert(0, "Cannot encode 'fadd' with no 'st0' operand!");
+                }
+
+                assert(0);
+            case FADDP:
+                assert(instr.format!(Reg!(-3)));
+                return emit!(0, NRM)(0xde, 0xc0, instr.first);
+            case FIADD:
+                if (instr.format!(Addr!32))
+                    return emit!(0, NP)(0xda, instr.first);
+                if (instr.format!(Addr!16))
+                    return emit!(0, NP)(0xde, instr.first);
+
+                assert(0);
+
+            case FBLD:
+                assert(instr.format!(Addr!80));
+                return emit!(4, NP)(0xdf, instr.first);
+            case FBSTP:
+                assert(instr.format!(Addr!80));
+                return emit!(6, NP)(0xdf, instr.first);
 
             default:
                 assert(0, "Invalid instruction staging!");

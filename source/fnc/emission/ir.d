@@ -3,6 +3,7 @@ module fnc.emission.ir;
 import gallinule.x86;
 import fnc.symbols;
 import std.traits;
+import tern.meta;
 
 public enum OpCode : ushort
 {
@@ -237,6 +238,7 @@ public enum OpCode : ushort
     ANDN,
     //
     ECREATE,
+    EADD,
     EINIT,
     EREMOVE,
     EDBGRD,
@@ -259,6 +261,7 @@ public enum OpCode : ushort
     EREPORT,
     EGETKEY,
     EENTER,
+    ERESUME,
     EEXIT,
     EACCEPT,
     EMODPE,
@@ -647,8 +650,6 @@ public enum OpCode : ushort
     PAUSE,
     SWAPGS,
 
-    LOCK,
-
     WAIT,
     FWAIT,
 
@@ -821,7 +822,8 @@ public enum Details
     ZERO = 1 << 20,
     NZERO = 1 << 21,
     TAKEN = 1 << 22,
-    NOT_TAKEN = 1 << 23
+    NOT_TAKEN = 1 << 23,
+    LOCK = 1 << 24,
 }
 
 public enum Kind : ubyte
@@ -940,7 +942,7 @@ final:
     Marker second() => operands[1];
     Marker third() => operands[2];
 
-    bool markFormat(FMT...)()
+    bool format(FMT...)()
     {
         if (FMT.length != operands.length)
             return false;
@@ -1078,7 +1080,7 @@ final:
             // TODO: Floats, add more flags??
             case AAD:
             case AAM:
-                if (markFormat!(Literal))
+                if (format!(Literal))
                     details = detail("ra");
                 else
                     details = detail("a");
@@ -1087,7 +1089,7 @@ final:
             case JCC:
             case LOOPCC:
             case CALL:
-                if (markFormat!(RM))
+                if (format!(RM))
                     details = detail("r");
                 break;
             case ADD:
@@ -1270,6 +1272,7 @@ final:
             case CRIDVME:
             case CRIDVMXE:
             case ECREATE:
+            case EADD:
             case EINIT:
             case EREMOVE:
             case EDBGRD:
@@ -1291,6 +1294,7 @@ final:
             case EREPORT:
             case EGETKEY:
             case EENTER:
+            case ERESUME:
             case EEXIT:
             case EACCEPT:
             case EMODPE:
