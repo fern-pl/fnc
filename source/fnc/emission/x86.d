@@ -2044,10 +2044,6 @@ final:
                 assert(instr.format!());
                 return stage(Instruction(OpCode.MOV, eax, 8)) +
                 emit!0(0x0f, 0x37);
-
-            case VMPTRST:
-                assert(instr.format!(Addr!128));
-                return emit!1(0x48, 0x0f, 0xc7, instr.first);
                 
             case POPCNT:
                 if (instr.format!(Reg!16, RM!16))

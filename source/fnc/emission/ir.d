@@ -924,9 +924,9 @@ final:
     }
 }
 
-package class RM(ushort SIZE) { }
-package class Reg(ushort SIZE) { }
-package class Addr(ushort SIZE) { }
+package class RM(short SIZE) { }
+package class Reg(short SIZE) { }
+package class Addr(short SIZE) { }
 package class Literal { }
 
 public struct Instruction
