@@ -3,7 +3,9 @@ module fnc.emission.ir;
 import gallinule.x86;
 import fnc.symbols;
 import std.traits;
+static import tern.traits;
 import tern.meta;
+import std.conv;
 
 public enum OpCode : ushort
 {
@@ -924,10 +926,17 @@ final:
     }
 }
 
-package class RM(short SIZE) { }
-package class Reg(short SIZE) { }
-package class Addr(short SIZE) { }
-package class Literal { }
+public template ParameterIdentifiers(alias F)
+    if (isCallable!F)
+{
+    static if (tern.traits.isLambda!F && !__traits(compiles, { alias _ = std.traits.ParameterIdentifierTuple!F; }))
+    {
+        typeof(toDelegate(F)) dg;
+        alias ParameterIdentifiers = std.traits.ParameterIdentifierTuple!dg;
+    }  
+    else
+        alias ParameterIdentifiers = std.traits.ParameterIdentifierTuple!F;
+}
 
 public struct Instruction
 {
@@ -942,40 +951,52 @@ final:
     Marker second() => operands[1];
     Marker third() => operands[2];
 
+    size_t match(ARGS...)(ARGS args)
+    {
+        foreach (i, arg; args)
+        {
+            if (format!(ParameterIdentifiers!arg))
+                return arg(seqMap!("0", ParameterIdentifiers!arg));
+        }
+        assert(0);
+    }
+
     bool format(FMT...)()
     {
         if (FMT.length != operands.length)
             return false;
 
-        foreach (i, k; FMT)
+        foreach (i, n; FMT)
         {
-            if (is(k == Literal) && operands[i].kind != Kind.LITERAL)
-                return false;
-            else if (is(k == ubyte) && operands[i].size != 8)
-                return false;
-            else if (is(k == ushort) && operands[i].size != 16)
-                return false;
-            else if (is(k == uint) && operands[i].size != 32)
-                return false;
-            else if (is(k == ulong) && operands[i].size != 64)
-                return false;
-            else static if (isInstanceOf!(RM, k))
+            static if (n.length > 0)
             {
-                if ((operands[i].kind != Kind.REGISTER && operands[i].kind != Kind.ALLOCATION) || TemplateArgsOf!(k)[0] != operands[i].size)
+                static if (n[0] == 'l')
+                {
+                    if (operands[i].kind != Kind.LITERAL)
+                        return false;
+                }
+                else static if (n[0] == 'm')
+                {
+                    if (operands[i].kind != Kind.ALLOCATION)
+                        return false;
+                }
+                else static if (n[0] == 'r')
+                {
+                    if (operands[i].kind != Kind.REGISTER)
+                        return false;
+                }
+                else static if (n[0] == 'x')
+                {
+                    if (operands[i].kind != Kind.REGISTER && operands[i].kind != Kind.ALLOCATION)
+                        return false;
+                }
+            }
+            
+            static if (n.length > 1)
+            {
+                if (n[1..$].to!short != operands[i].size)
                     return false;
             }
-            else static if (isInstanceOf!(Reg, k))
-            {
-                if (operands[i].kind != Kind.REGISTER || TemplateArgsOf!(k)[0] != operands[i].size)
-                    return false;
-            }
-            else static if (isInstanceOf!(Addr, k))
-            {
-                if (operands[i].kind != Kind.ALLOCATION || TemplateArgsOf!(k)[0] != operands[i].size)
-                    return false;
-            }
-            else
-                assert(0, "kill yourself");
         }
         return true;
     }
@@ -1080,7 +1101,7 @@ final:
             // TODO: Floats, add more flags??
             case AAD:
             case AAM:
-                if (format!(Literal))
+                if (format!("l"))
                     details = detail("ra");
                 else
                     details = detail("a");
@@ -1089,7 +1110,7 @@ final:
             case JCC:
             case LOOPCC:
             case CALL:
-                if (format!(RM))
+                if (format!("x"))
                     details = detail("r");
                 break;
             case ADD:
